@@ -1,92 +1,210 @@
-# :package_description
+# Laravel Queue Monitor
 
-[![Latest Version on Packagist](https://img.shields.io/packagist/v/:vendor_slug/:package_slug.svg?style=flat-square)](https://packagist.org/packages/:vendor_slug/:package_slug)
-[![GitHub Tests Action Status](https://img.shields.io/github/actions/workflow/status/:vendor_slug/:package_slug/run-tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/:vendor_slug/:package_slug/actions?query=workflow%3Arun-tests+branch%3Amain)
-[![GitHub Code Style Action Status](https://img.shields.io/github/actions/workflow/status/:vendor_slug/:package_slug/fix-php-code-style-issues.yml?branch=main&label=code%20style&style=flat-square)](https://github.com/:vendor_slug/:package_slug/actions?query=workflow%3A"Fix+PHP+code+style+issues"+branch%3Amain)
-[![Total Downloads](https://img.shields.io/packagist/dt/:vendor_slug/:package_slug.svg?style=flat-square)](https://packagist.org/packages/:vendor_slug/:package_slug)
-<!--delete-->
----
-This repo can be used to scaffold a Laravel package. Follow these steps to get started:
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/gophpeek/laravel-queue-monitor.svg?style=flat-square)](https://packagist.org/packages/gophpeek/laravel-queue-monitor)
+[![Total Downloads](https://img.shields.io/packagist/dt/gophpeek/laravel-queue-monitor.svg?style=flat-square)](https://packagist.org/packages/gophpeek/laravel-queue-monitor)
 
-1. Press the "Use this template" button at the top of this repo to create a new repo with the contents of this skeleton.
-2. Run "php ./configure.php" to run a script that will replace all placeholders throughout all the files.
-3. Have fun creating your package.
-4. If you need help creating a package, consider picking up our <a href="https://laravelpackage.training">Laravel Package Training</a> video course.
----
-<!--/delete-->
-This is where your description should go. Limit it to a paragraph or two. Consider adding a small example.
+**Production-ready Laravel queue monitoring with individual job tracking, payload storage, and comprehensive analytics.**
 
-## Support us
+Track every queue job with detailed metrics, replay failed jobs from stored payloads, and gain deep insights into your queue performance. Built on top of [laravel-queue-metrics](https://github.com/gophpeek/laravel-queue-metrics) for enhanced resource tracking.
 
-[<img src="https://github-ads.s3.eu-central-1.amazonaws.com/:package_name.jpg?t=1" width="419px" />](https://spatie.be/github-ad-click/:package_name)
+## Features
 
-We invest a lot of resources into creating [best in class open source packages](https://spatie.be/open-source). You can support us by [buying one of our paid products](https://spatie.be/open-source/support-us).
+- ✅ **Individual Job Tracking** - Monitor every job from queue to completion
+- ✅ **Full Payload Storage** - Store complete job payloads for replay capability
+- ✅ **Worker & Server Identification** - Track which server/worker processed each job
+- ✅ **Horizon Support** - Automatic detection of Horizon vs queue:work
+- ✅ **Job Replay** - Re-dispatch failed jobs from stored payloads
+- ✅ **Resource Metrics** - CPU, memory, file descriptor tracking via queue-metrics integration
+- ✅ **Retry Chain Tracking** - Complete visibility into job retry attempts
+- ✅ **Comprehensive Analytics** - Per-queue, per-server, per-job-class statistics
+- ✅ **REST API** - Full-featured API for dashboard integration
+- ✅ **Tag Analytics** - Track and analyze jobs by custom tags
+- ✅ **Artisan Commands** - CLI tools for monitoring and maintenance
+- ✅ **PHPStan Level 9** - Maximum static analysis compliance
+- ✅ **Pest 4 Ready** - Modern testing framework support
 
-We highly appreciate you sending us a postcard from your hometown, mentioning which of our package(s) you are using. You'll find our address on [our contact page](https://spatie.be/about-us). We publish all received postcards on [our virtual postcard wall](https://spatie.be/open-source/postcards).
+## Requirements
+
+- PHP 8.3+
+- Laravel 10+
+- **gophpeek/laravel-queue-metrics** ^1.0 (hard dependency)
 
 ## Installation
 
-You can install the package via composer:
+Install via Composer:
 
 ```bash
-composer require :vendor_slug/:package_slug
+composer require gophpeek/laravel-queue-monitor
 ```
 
-You can publish and run the migrations with:
+Publish configuration and run migrations:
 
 ```bash
-php artisan vendor:publish --tag=":package_slug-migrations"
+php artisan vendor:publish --tag="queue-monitor-config"
 php artisan migrate
 ```
 
-You can publish the config file with:
+That's it! The package automatically starts monitoring all queue jobs.
 
-```bash
-php artisan vendor:publish --tag=":package_slug-config"
+## Quick Start
+
+### Facade Usage
+
+```php
+use PHPeek\LaravelQueueMonitor\Facades\LaravelQueueMonitor as QueueMonitor;
+
+// Get job details
+$job = QueueMonitor::getJob($uuid);
+
+// Replay a failed job
+$replayData = QueueMonitor::replay($uuid);
+
+// Get statistics
+$stats = QueueMonitor::statistics();
+echo "Success Rate: {$stats['success_rate']}%";
+
+// Query jobs with filters
+$filters = new JobFilterData(
+    statuses: [JobStatus::FAILED],
+    queuedAfter: Carbon::now()->subHours(24)
+);
+$failedJobs = QueueMonitor::getJobs($filters);
 ```
 
-This is the contents of the published config file:
+### Artisan Commands
+
+```bash
+# Show statistics
+php artisan queue-monitor:stats
+
+# Replay a job
+php artisan queue-monitor:replay {uuid}
+
+# Prune old jobs
+php artisan queue-monitor:prune --days=30 --statuses=completed
+```
+
+### REST API
+
+```bash
+# List jobs
+GET /api/queue-monitor/jobs?statuses[]=failed&limit=50
+
+# Get job details
+GET /api/queue-monitor/jobs/{uuid}
+
+# Replay job
+POST /api/queue-monitor/jobs/{uuid}/replay
+
+# Get statistics
+GET /api/queue-monitor/statistics
+
+# Queue health
+GET /api/queue-monitor/statistics/queue-health
+```
+
+## Architecture
+
+### Action Pattern
+All business logic is encapsulated in single-responsibility Action classes:
+
+```php
+RecordJobQueuedAction
+RecordJobStartedAction
+RecordJobCompletedAction
+RecordJobFailedAction
+ReplayJobAction
+CalculateJobStatisticsAction
+```
+
+### DTO Pattern
+All data transfer uses strictly-typed DTOs:
+
+```php
+JobMonitorData
+WorkerContextData
+ExceptionData
+JobFilterData
+JobReplayData
+```
+
+### Repository Pattern
+Data access through contracts with Eloquent implementations:
+
+```php
+JobMonitorRepositoryContract
+TagRepositoryContract
+StatisticsRepositoryContract
+```
+
+### Event-Driven
+Integrates seamlessly with Laravel Queue events and queue-metrics events.
+
+## Configuration
+
+Key configuration options in `config/queue-monitor.php`:
 
 ```php
 return [
+    // Enable/disable monitoring
+    'enabled' => env('QUEUE_MONITOR_ENABLED', true),
+
+    // Payload storage for replay
+    'storage' => [
+        'store_payload' => env('QUEUE_MONITOR_STORE_PAYLOAD', true),
+        'payload_max_size' => 65535,
+    ],
+
+    // Data retention
+    'retention' => [
+        'days' => 30,
+        'prune_statuses' => ['completed'],
+    ],
+
+    // REST API
+    'api' => [
+        'enabled' => env('QUEUE_MONITOR_API_ENABLED', true),
+        'prefix' => 'api/queue-monitor',
+        'middleware' => ['api'],
+    ],
+
+    // Worker detection
+    'worker_detection' => [
+        'server_name_callable' => null,
+        'horizon_detection' => true,
+    ],
 ];
 ```
 
-Optionally, you can publish the views using
+## Documentation
 
-```bash
-php artisan vendor:publish --tag=":package_slug-views"
-```
+- [Installation Guide](docs/installation.md)
+- [Configuration](docs/configuration.md)
+- [API Reference](docs/api-reference.md)
+- [Facade Usage](docs/facade-usage.md)
+- [Job Replay](docs/job-replay.md)
 
-## Usage
+## Integration with Queue-Metrics
 
-```php
-$variable = new VendorName\Skeleton();
-echo $variable->echoPhrase('Hello, VendorName!');
-```
+This package is built on top of [laravel-queue-metrics](https://github.com/gophpeek/laravel-queue-metrics) and automatically:
+
+- Captures CPU time, memory usage, and file descriptors
+- Subscribes to `MetricsRecorded` events
+- Enriches job records with performance metrics
+- Leverages Horizon detection utilities
 
 ## Testing
 
 ```bash
 composer test
+composer analyse  # PHPStan Level 9
+composer format   # Laravel Pint
 ```
-
-## Changelog
-
-Please see [CHANGELOG](CHANGELOG.md) for more information on what has changed recently.
-
-## Contributing
-
-Please see [CONTRIBUTING](CONTRIBUTING.md) for details.
-
-## Security Vulnerabilities
-
-Please review [our security policy](../../security/policy) on how to report security vulnerabilities.
 
 ## Credits
 
-- [:author_name](https://github.com/:author_username)
-- [All Contributors](../../contributors)
+- [Sylvester Damgaard](https://github.com/PHPeek)
+- Built with [laravel-package-tools](https://github.com/spatie/laravel-package-tools)
 
 ## License
 
