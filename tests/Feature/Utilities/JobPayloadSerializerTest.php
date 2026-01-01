@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-use PHPeek\LaravelQueueMonitor\Utilities\JobPayloadSerializer;
 use PHPeek\LaravelQueueMonitor\Tests\Support\ExampleJob;
+use PHPeek\LaravelQueueMonitor\Utilities\JobPayloadSerializer;
 
 test('serializes job instance to payload', function () {
     $job = new ExampleJob('test data');

@@ -20,23 +20,26 @@ final readonly class BatchDeleteAction
      */
     public function execute(JobFilterData $filters, int $maxJobs = 1000): array
     {
-        $jobs = $this->repository->query($filters);
-        $jobs = $jobs->take($maxJobs);
+        /** @var int $chunkSize */
+        $chunkSize = config('queue-monitor.batch.chunk_size', 100);
+        $jobs = $this->repository->query($filters)->take($maxJobs);
 
         $deleted = 0;
         $failed = 0;
 
-        foreach ($jobs as $job) {
-            try {
-                if ($this->repository->delete($job->uuid)) {
-                    $deleted++;
-                } else {
+        $jobs->chunk($chunkSize)->each(function ($chunk) use (&$deleted, &$failed): void {
+            foreach ($chunk as $job) {
+                try {
+                    if ($this->repository->delete($job->uuid)) {
+                        $deleted++;
+                    } else {
+                        $failed++;
+                    }
+                } catch (\Throwable) {
                     $failed++;
                 }
-            } catch (\Throwable $e) {
-                $failed++;
             }
-        }
+        });
 
         return [
             'deleted' => $deleted,
@@ -52,20 +55,24 @@ final readonly class BatchDeleteAction
      */
     public function executeByUuids(array $uuids): array
     {
+        /** @var int $chunkSize */
+        $chunkSize = config('queue-monitor.batch.chunk_size', 100);
         $deleted = 0;
         $failed = 0;
 
-        foreach ($uuids as $uuid) {
-            try {
-                if ($this->repository->delete($uuid)) {
-                    $deleted++;
-                } else {
+        collect($uuids)->chunk($chunkSize)->each(function ($chunk) use (&$deleted, &$failed): void {
+            foreach ($chunk as $uuid) {
+                try {
+                    if ($this->repository->delete($uuid)) {
+                        $deleted++;
+                    } else {
+                        $failed++;
+                    }
+                } catch (\Throwable) {
                     $failed++;
                 }
-            } catch (\Throwable $e) {
-                $failed++;
             }
-        }
+        });
 
         return [
             'deleted' => $deleted,

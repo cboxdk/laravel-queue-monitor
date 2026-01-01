@@ -625,25 +625,61 @@ parameters:
 			path: src/Repositories/Eloquent/EloquentStatisticsRepository.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Repositories\\Eloquent\\EloquentStatisticsRepository\:\:getJobClassStatistics\(\) should return array\<string, mixed\> but returns array\<int, mixed\>\.$#'
+			message: '#^Method PHPeek\\LaravelQueueMonitor\\Repositories\\Eloquent\\EloquentStatisticsRepository\:\:computeFailurePatterns\(\) should return array\{top_exceptions\: array\<int, array\<string, mixed\>\>\} but returns array\{top_exceptions\: array\<int, mixed\>\}\.$#'
 			identifier: return.type
 			count: 1
 			path: src/Repositories/Eloquent/EloquentStatisticsRepository.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Repositories\\Eloquent\\EloquentStatisticsRepository\:\:getQueueHealth\(\) should return array\<string, mixed\> but returns array\<int, mixed\>\.$#'
+			message: '#^Method PHPeek\\LaravelQueueMonitor\\Repositories\\Eloquent\\EloquentStatisticsRepository\:\:computeGlobalStatistics\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Repositories/Eloquent/EloquentStatisticsRepository.php
+
+		-
+			message: '#^Method PHPeek\\LaravelQueueMonitor\\Repositories\\Eloquent\\EloquentStatisticsRepository\:\:computeJobClassStatistics\(\) should return array\<int, array\<string, mixed\>\> but returns array\<int, mixed\>\.$#'
 			identifier: return.type
 			count: 1
 			path: src/Repositories/Eloquent/EloquentStatisticsRepository.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Repositories\\Eloquent\\EloquentStatisticsRepository\:\:getQueueStatistics\(\) should return array\<string, mixed\> but returns array\<int, mixed\>\.$#'
+			message: '#^Method PHPeek\\LaravelQueueMonitor\\Repositories\\Eloquent\\EloquentStatisticsRepository\:\:computeQueueHealth\(\) should return array\<int, array\<string, mixed\>\> but returns array\<int, mixed\>\.$#'
 			identifier: return.type
 			count: 1
 			path: src/Repositories/Eloquent/EloquentStatisticsRepository.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Repositories\\Eloquent\\EloquentStatisticsRepository\:\:getServerStatistics\(\) should return array\<string, mixed\> but returns array\<int, mixed\>\.$#'
+			message: '#^Method PHPeek\\LaravelQueueMonitor\\Repositories\\Eloquent\\EloquentStatisticsRepository\:\:computeQueueStatistics\(\) should return array\<int, array\<string, mixed\>\> but returns array\<int, mixed\>\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Repositories/Eloquent/EloquentStatisticsRepository.php
+
+		-
+			message: '#^Method PHPeek\\LaravelQueueMonitor\\Repositories\\Eloquent\\EloquentStatisticsRepository\:\:computeServerStatistics\(\) should return array\<int, array\<string, mixed\>\> but returns array\<int, mixed\>\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Repositories/Eloquent/EloquentStatisticsRepository.php
+
+		-
+			message: '#^Method PHPeek\\LaravelQueueMonitor\\Repositories\\Eloquent\\EloquentStatisticsRepository\:\:getJobClassStatistics\(\) should return array\<string, mixed\> but returns array\<int, array\<string, mixed\>\>\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Repositories/Eloquent/EloquentStatisticsRepository.php
+
+		-
+			message: '#^Method PHPeek\\LaravelQueueMonitor\\Repositories\\Eloquent\\EloquentStatisticsRepository\:\:getQueueHealth\(\) should return array\<string, mixed\> but returns array\<int, array\<string, mixed\>\>\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Repositories/Eloquent/EloquentStatisticsRepository.php
+
+		-
+			message: '#^Method PHPeek\\LaravelQueueMonitor\\Repositories\\Eloquent\\EloquentStatisticsRepository\:\:getQueueStatistics\(\) should return array\<string, mixed\> but returns array\<int, array\<string, mixed\>\>\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Repositories/Eloquent/EloquentStatisticsRepository.php
+
+		-
+			message: '#^Method PHPeek\\LaravelQueueMonitor\\Repositories\\Eloquent\\EloquentStatisticsRepository\:\:getServerStatistics\(\) should return array\<string, mixed\> but returns array\<int, array\<string, mixed\>\>\.$#'
 			identifier: return.type
 			count: 1
 			path: src/Repositories/Eloquent/EloquentStatisticsRepository.php

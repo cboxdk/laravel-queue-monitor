@@ -17,7 +17,15 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class Tag extends Model
 {
-    protected $guarded = [];
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
+    protected $fillable = [
+        'job_id',
+        'tag',
+    ];
 
     /**
      * Get the table name with prefix from config

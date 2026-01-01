@@ -100,6 +100,33 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Cache Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Configure caching for statistics queries to improve performance.
+    |
+    */
+    'cache' => [
+        'enabled' => env('QUEUE_MONITOR_CACHE_ENABLED', true),
+        'store' => env('QUEUE_MONITOR_CACHE_STORE'),
+        'ttl' => env('QUEUE_MONITOR_CACHE_TTL', 60), // seconds
+        'prefix' => 'queue_monitor_',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Batch Operations Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Configure batch operation behavior for bulk actions.
+    |
+    */
+    'batch' => [
+        'chunk_size' => env('QUEUE_MONITOR_BATCH_CHUNK_SIZE', 100),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | REST API Configuration
     |--------------------------------------------------------------------------
     |

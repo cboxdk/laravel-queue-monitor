@@ -22,22 +22,25 @@ final readonly class BatchReplayAction
      */
     public function execute(JobFilterData $filters, int $maxJobs = 100): array
     {
-        $jobs = $this->repository->query($filters);
-        $jobs = $jobs->take($maxJobs);
+        /** @var int $chunkSize */
+        $chunkSize = config('queue-monitor.batch.chunk_size', 100);
+        $jobs = $this->repository->query($filters)->take($maxJobs);
 
         $success = 0;
         $failed = 0;
         $errors = [];
 
-        foreach ($jobs as $job) {
-            try {
-                $this->replayAction->execute($job->uuid);
-                $success++;
-            } catch (\Throwable $e) {
-                $failed++;
-                $errors[$job->uuid] = $e->getMessage();
+        $jobs->chunk($chunkSize)->each(function ($chunk) use (&$success, &$failed, &$errors): void {
+            foreach ($chunk as $job) {
+                try {
+                    $this->replayAction->execute($job->uuid);
+                    $success++;
+                } catch (\Throwable $e) {
+                    $failed++;
+                    $errors[$job->uuid] = $e->getMessage();
+                }
             }
-        }
+        });
 
         return [
             'success' => $success,
@@ -54,19 +57,23 @@ final readonly class BatchReplayAction
      */
     public function executeByUuids(array $uuids): array
     {
+        /** @var int $chunkSize */
+        $chunkSize = config('queue-monitor.batch.chunk_size', 100);
         $success = 0;
         $failed = 0;
         $errors = [];
 
-        foreach ($uuids as $uuid) {
-            try {
-                $this->replayAction->execute($uuid);
-                $success++;
-            } catch (\Throwable $e) {
-                $failed++;
-                $errors[$uuid] = $e->getMessage();
+        collect($uuids)->chunk($chunkSize)->each(function ($chunk) use (&$success, &$failed, &$errors): void {
+            foreach ($chunk as $uuid) {
+                try {
+                    $this->replayAction->execute($uuid);
+                    $success++;
+                } catch (\Throwable $e) {
+                    $failed++;
+                    $errors[$uuid] = $e->getMessage();
+                }
             }
-        }
+        });
 
         return [
             'success' => $success,

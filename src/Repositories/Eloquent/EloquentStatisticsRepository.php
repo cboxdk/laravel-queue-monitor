@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace PHPeek\LaravelQueueMonitor\Repositories\Eloquent;
 
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use PHPeek\LaravelQueueMonitor\Enums\JobStatus;
 use PHPeek\LaravelQueueMonitor\Repositories\Contracts\StatisticsRepositoryContract;
@@ -11,6 +12,11 @@ use PHPeek\LaravelQueueMonitor\Repositories\Contracts\StatisticsRepositoryContra
 final class EloquentStatisticsRepository implements StatisticsRepositoryContract
 {
     public function getGlobalStatistics(): array
+    {
+        return $this->remember('global_statistics', fn () => $this->computeGlobalStatistics());
+    }
+
+    private function computeGlobalStatistics(): array
     {
         $prefix = config('queue-monitor.database.table_prefix', 'queue_monitor_');
 
@@ -55,6 +61,16 @@ final class EloquentStatisticsRepository implements StatisticsRepositoryContract
 
     public function getServerStatistics(?string $serverName = null): array
     {
+        $cacheKey = 'server_statistics_'.($serverName ?? 'all');
+
+        return $this->remember($cacheKey, fn () => $this->computeServerStatistics($serverName));
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function computeServerStatistics(?string $serverName = null): array
+    {
         $prefix = config('queue-monitor.database.table_prefix', 'queue_monitor_');
 
         $query = DB::table($prefix.'jobs')
@@ -91,6 +107,16 @@ final class EloquentStatisticsRepository implements StatisticsRepositoryContract
     }
 
     public function getQueueStatistics(?string $queue = null): array
+    {
+        $cacheKey = 'queue_statistics_'.($queue ?? 'all');
+
+        return $this->remember($cacheKey, fn () => $this->computeQueueStatistics($queue));
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function computeQueueStatistics(?string $queue = null): array
     {
         $prefix = config('queue-monitor.database.table_prefix', 'queue_monitor_');
 
@@ -134,6 +160,16 @@ final class EloquentStatisticsRepository implements StatisticsRepositoryContract
 
     public function getJobClassStatistics(?string $jobClass = null): array
     {
+        $cacheKey = 'job_class_statistics_'.($jobClass !== null ? md5($jobClass) : 'all');
+
+        return $this->remember($cacheKey, fn () => $this->computeJobClassStatistics($jobClass));
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function computeJobClassStatistics(?string $jobClass = null): array
+    {
         $prefix = config('queue-monitor.database.table_prefix', 'queue_monitor_');
 
         $query = DB::table($prefix.'jobs')
@@ -174,6 +210,14 @@ final class EloquentStatisticsRepository implements StatisticsRepositoryContract
 
     public function getFailurePatterns(): array
     {
+        return $this->remember('failure_patterns', fn () => $this->computeFailurePatterns());
+    }
+
+    /**
+     * @return array{top_exceptions: array<int, array<string, mixed>>}
+     */
+    private function computeFailurePatterns(): array
+    {
         $prefix = config('queue-monitor.database.table_prefix', 'queue_monitor_');
 
         $exceptionStats = DB::table($prefix.'jobs')
@@ -200,6 +244,14 @@ final class EloquentStatisticsRepository implements StatisticsRepositoryContract
     }
 
     public function getQueueHealth(): array
+    {
+        return $this->remember('queue_health', fn () => $this->computeQueueHealth(), 30);
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function computeQueueHealth(): array
     {
         $prefix = config('queue-monitor.database.table_prefix', 'queue_monitor_');
 
@@ -242,5 +294,38 @@ final class EloquentStatisticsRepository implements StatisticsRepositoryContract
             ->toArray();
 
         return $queueHealth;
+    }
+
+    /**
+     * Cache a value with configurable TTL
+     *
+     * @template T
+     *
+     * @param  \Closure(): T  $callback
+     * @return T
+     */
+    private function remember(string $key, \Closure $callback, ?int $ttl = null): mixed
+    {
+        /** @var bool $cacheEnabled */
+        $cacheEnabled = config('queue-monitor.cache.enabled', true);
+
+        if (! $cacheEnabled) {
+            return $callback();
+        }
+
+        /** @var string $prefix */
+        $prefix = config('queue-monitor.cache.prefix', 'queue_monitor_');
+        /** @var string|null $store */
+        $store = config('queue-monitor.cache.store');
+        /** @var int $defaultTtl */
+        $defaultTtl = config('queue-monitor.cache.ttl', 60);
+
+        $cache = $store !== null ? Cache::store($store) : Cache::store();
+
+        return $cache->remember(
+            $prefix.$key,
+            $ttl ?? $defaultTtl,
+            $callback
+        );
     }
 }
