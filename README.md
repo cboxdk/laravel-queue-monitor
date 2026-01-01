@@ -161,11 +161,11 @@ return [
         'prune_statuses' => ['completed'],
     ],
 
-    // REST API
+    // REST API (see Security section for authentication)
     'api' => [
         'enabled' => env('QUEUE_MONITOR_API_ENABLED', true),
         'prefix' => 'api/queue-monitor',
-        'middleware' => ['api'],
+        'middleware' => ['api', 'auth:sanctum'], // Add authentication!
     ],
 
     // Worker detection
@@ -174,6 +174,84 @@ return [
         'horizon_detection' => true,
     ],
 ];
+```
+
+## Security
+
+### API Authentication
+
+**The REST API exposes sensitive queue data including job payloads and exception traces.** You should always add authentication middleware in production.
+
+#### Recommended Setup (Laravel Sanctum)
+
+```php
+// config/queue-monitor.php
+'api' => [
+    'enabled' => env('QUEUE_MONITOR_API_ENABLED', true),
+    'prefix' => 'api/queue-monitor',
+    'middleware' => ['api', 'auth:sanctum'],
+],
+```
+
+#### Alternative Authentication Methods
+
+```php
+// Using Laravel's built-in auth
+'middleware' => ['api', 'auth'],
+
+// Using custom middleware
+'middleware' => ['api', 'auth.admin'],
+
+// Using abilities/permissions
+'middleware' => ['api', 'auth:sanctum', 'ability:queue-monitor'],
+```
+
+#### IP Whitelisting (Additional Layer)
+
+For maximum security, combine authentication with IP restrictions:
+
+```php
+// app/Http/Middleware/QueueMonitorAccess.php
+class QueueMonitorAccess
+{
+    public function handle($request, Closure $next)
+    {
+        $allowedIps = ['10.0.0.0/8', '192.168.0.0/16'];
+
+        if (!$this->ipIsAllowed($request->ip(), $allowedIps)) {
+            abort(403);
+        }
+
+        return $next($request);
+    }
+}
+```
+
+### Payload Storage
+
+Job payloads may contain sensitive data. Consider:
+
+1. **Disable payload storage** if replay isn't needed:
+   ```php
+   'storage' => ['store_payload' => false],
+   ```
+
+2. **Use a separate database** for monitoring data:
+   ```php
+   'database' => ['connection' => 'queue_monitor'],
+   ```
+
+3. **Implement data retention policies** to limit exposure:
+   ```php
+   'retention' => ['days' => 7],
+   ```
+
+### Environment-Based Configuration
+
+Disable the API in production if only using the facade/commands:
+
+```env
+QUEUE_MONITOR_API_ENABLED=false
 ```
 
 ## Documentation

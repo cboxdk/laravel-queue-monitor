@@ -46,9 +46,11 @@ class LaravelQueueMonitorServiceProvider extends PackageServiceProvider
 
     public function packageBooted(): void
     {
-        $this->registerEventListeners();
+        // Order matters: repositories and actions must be bound before event listeners
+        // because listeners depend on action classes which depend on repositories
         $this->registerRepositories();
         $this->registerActions();
+        $this->registerEventListeners();
         $this->registerRoutes();
     }
 

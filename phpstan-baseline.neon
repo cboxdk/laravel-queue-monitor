@@ -1,6 +1,24 @@
 parameters:
 	ignoreErrors:
 		-
+			message: '#^Binary operation "\." between mixed and ''jobs'' results in an error\.$#'
+			identifier: binaryOp.invalid
+			count: 4
+			path: database/migrations/2024_01_01_000000_create_queue_monitor_jobs_table.php
+
+		-
+			message: '#^Binary operation "\." between mixed and ''tags'' results in an error\.$#'
+			identifier: binaryOp.invalid
+			count: 2
+			path: database/migrations/2024_01_01_000000_create_queue_monitor_jobs_table.php
+
+		-
+			message: '#^Parameter \#1 \$name of static method Illuminate\\Support\\Facades\\Schema\:\:connection\(\) expects string\|null, mixed given\.$#'
+			identifier: argument.type
+			count: 4
+			path: database/migrations/2024_01_01_000000_create_queue_monitor_jobs_table.php
+
+		-
 			message: '#^Cannot cast mixed to string\.$#'
 			identifier: cast.string
 			count: 1
@@ -169,24 +187,6 @@ parameters:
 			path: src/DataTransferObjects/WorkerContextData.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Http\\Controllers\\ExportController\:\:failedJobs\(\) should return Illuminate\\Http\\Response but returns Illuminate\\Http\\JsonResponse\.$#'
-			identifier: return.type
-			count: 1
-			path: src/Http/Controllers/ExportController.php
-
-		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Http\\Controllers\\ExportController\:\:json\(\) should return Illuminate\\Http\\Response but returns Illuminate\\Http\\JsonResponse\.$#'
-			identifier: return.type
-			count: 1
-			path: src/Http/Controllers/ExportController.php
-
-		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Http\\Controllers\\ExportController\:\:statistics\(\) should return Illuminate\\Http\\Response but returns Illuminate\\Http\\JsonResponse\.$#'
-			identifier: return.type
-			count: 1
-			path: src/Http/Controllers/ExportController.php
-
-		-
 			message: '#^Cannot cast mixed to string\.$#'
 			identifier: cast.string
 			count: 1
@@ -271,7 +271,13 @@ parameters:
 			path: src/Models/JobMonitor.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Models\\JobMonitor\:\:getConnectionName\(\) should return string but returns mixed\.$#'
+			message: '#^Class PHPeek\\LaravelQueueMonitor\\Models\\JobMonitor uses generic trait Illuminate\\Database\\Eloquent\\Factories\\HasFactory but does not specify its types\: TFactory$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Models/JobMonitor.php
+
+		-
+			message: '#^Method PHPeek\\LaravelQueueMonitor\\Models\\JobMonitor\:\:getConnectionName\(\) should return string\|null but returns mixed\.$#'
 			identifier: return.type
 			count: 1
 			path: src/Models/JobMonitor.php
@@ -797,18 +803,6 @@ parameters:
 			identifier: missingType.iterableValue
 			count: 2
 			path: src/Utilities/PerformanceAnalyzer.php
-
-		-
-			message: '#^Access to constant HORIZON on an unknown class PHPeek\\LaravelQueueMonitor\\Utilities\\WorkerType\.$#'
-			identifier: class.notFound
-			count: 1
-			path: src/Utilities/QueryBuilderHelper.php
-
-		-
-			message: '#^Access to constant QUEUE_WORK on an unknown class PHPeek\\LaravelQueueMonitor\\Utilities\\WorkerType\.$#'
-			identifier: class.notFound
-			count: 1
-			path: src/Utilities/QueryBuilderHelper.php
 
 		-
 			message: '#^Method PHPeek\\LaravelQueueMonitor\\Utilities\\QueryBuilderHelper\:\:between\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'

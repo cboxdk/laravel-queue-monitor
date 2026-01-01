@@ -2,14 +2,22 @@
 
 declare(strict_types=1);
 
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPeek\LaravelQueueMonitor\Tests\TestCase;
 
-uses(TestCase::class)
-    ->beforeEach(fn () => $this->artisan('migrate:fresh'))
-    ->in(__DIR__);
+uses(TestCase::class, RefreshDatabase::class)->in(__DIR__);
 
-uses(RefreshDatabase::class)->in('Feature');
+/*
+|--------------------------------------------------------------------------
+| Helper Functions
+|--------------------------------------------------------------------------
+*/
+
+function yesterday(): Carbon
+{
+    return Carbon::yesterday();
+}
 
 // Expectations
 expect()->extend('toBeJobStatus', function (string $expected) {

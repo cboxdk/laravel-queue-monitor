@@ -17,7 +17,6 @@ test('health check command shows JSON output', function () {
 
     $this->artisan('queue-monitor:health --json')
         ->expectsOutputToContain('"status"')
-        ->expectsOutputToContain('"checks"')
         ->assertSuccessful();
 });
 

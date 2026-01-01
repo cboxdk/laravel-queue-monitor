@@ -28,6 +28,10 @@ final class JobPayloadSerializer
 
     /**
      * Deserialize payload to job instance
+     *
+     * Security: Only allows deserialization of the specific class declared in the payload.
+     * This prevents object injection attacks where a malicious serialized payload could
+     * instantiate arbitrary classes.
      */
     public static function deserialize(array $payload): ?object
     {
@@ -35,10 +39,27 @@ final class JobPayloadSerializer
             return null;
         }
 
-        try {
-            $command = unserialize($payload['data']['command']);
+        // Get the expected class name from the payload
+        $expectedClass = $payload['data']['commandName'] ?? null;
 
-            return is_object($command) ? $command : null;
+        if ($expectedClass === null || ! class_exists($expectedClass)) {
+            return null;
+        }
+
+        try {
+            // Security: Only allow the specific expected class to be deserialized
+            // This prevents object injection attacks via crafted serialized data
+            $command = unserialize(
+                $payload['data']['command'],
+                ['allowed_classes' => [$expectedClass]]
+            );
+
+            // Verify the deserialized object is actually the expected class
+            if (! is_object($command) || ! $command instanceof $expectedClass) {
+                return null;
+            }
+
+            return $command;
         } catch (\Throwable $e) {
             return null;
         }

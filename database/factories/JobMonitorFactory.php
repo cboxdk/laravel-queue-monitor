@@ -9,6 +9,7 @@ use Illuminate\Support\Str;
 use PHPeek\LaravelQueueMonitor\Enums\JobStatus;
 use PHPeek\LaravelQueueMonitor\Enums\WorkerType;
 use PHPeek\LaravelQueueMonitor\Models\JobMonitor;
+use PHPeek\LaravelQueueMonitor\Tests\Support\ExampleJob;
 
 /**
  * @extends Factory<JobMonitor>
@@ -22,7 +23,7 @@ class JobMonitorFactory extends Factory
         return [
             'uuid' => Str::uuid()->toString(),
             'job_id' => (string) $this->faker->randomNumber(5),
-            'job_class' => 'App\\Jobs\\'.ucfirst($this->faker->word()).'Job',
+            'job_class' => ExampleJob::class,
             'display_name' => $this->faker->sentence(3),
             'connection' => 'redis',
             'queue' => $this->faker->randomElement(['default', 'emails', 'notifications']),

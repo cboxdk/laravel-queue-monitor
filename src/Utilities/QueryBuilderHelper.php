@@ -7,6 +7,7 @@ namespace PHPeek\LaravelQueueMonitor\Utilities;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use PHPeek\LaravelQueueMonitor\Enums\JobStatus;
+use PHPeek\LaravelQueueMonitor\Enums\WorkerType;
 use PHPeek\LaravelQueueMonitor\Models\JobMonitor;
 
 final class QueryBuilderHelper

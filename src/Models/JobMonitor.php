@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace PHPeek\LaravelQueueMonitor\Models;
 
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -43,7 +44,48 @@ use PHPeek\LaravelQueueMonitor\Enums\WorkerType;
  */
 class JobMonitor extends Model
 {
-    protected $guarded = [];
+    use HasFactory;
+
+    /**
+     * Create a new factory instance for the model.
+     */
+    protected static function newFactory(): \PHPeek\LaravelQueueMonitor\Database\Factories\JobMonitorFactory
+    {
+        return \PHPeek\LaravelQueueMonitor\Database\Factories\JobMonitorFactory::new();
+    }
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
+    protected $fillable = [
+        'uuid',
+        'job_id',
+        'job_class',
+        'display_name',
+        'connection',
+        'queue',
+        'payload',
+        'status',
+        'attempt',
+        'max_attempts',
+        'retried_from_id',
+        'server_name',
+        'worker_id',
+        'worker_type',
+        'cpu_time_ms',
+        'memory_peak_mb',
+        'file_descriptors',
+        'duration_ms',
+        'exception_class',
+        'exception_message',
+        'exception_trace',
+        'tags',
+        'queued_at',
+        'started_at',
+        'completed_at',
+    ];
 
     /**
      * Get the table name with prefix from config
@@ -58,9 +100,15 @@ class JobMonitor extends Model
     /**
      * Get the database connection for the model
      */
-    public function getConnectionName(): string
+    public function getConnectionName(): ?string
     {
-        return config('queue-monitor.database.connection') ?? parent::getConnectionName();
+        $connection = config('queue-monitor.database.connection');
+
+        if ($connection !== null) {
+            return $connection;
+        }
+
+        return parent::getConnectionName();
     }
 
     /**

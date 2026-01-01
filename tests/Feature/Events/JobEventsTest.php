@@ -25,9 +25,18 @@ test('replay job fires JobReplayRequested event', function () {
     Event::fake([JobReplayRequested::class]);
     Queue::fake();
 
-    $job = JobMonitor::factory()->failed()->create();
+    // Factory uses ExampleJob::class which exists and has proper payload
+    $job = JobMonitor::factory()->failed()->create([
+        'payload' => [
+            'displayName' => 'Test Job',
+            'job' => 'Illuminate\\Queue\\CallQueuedHandler@call',
+            'data' => ['command' => 'test'],
+        ],
+    ]);
 
-    QueueMonitor::replay($job->uuid);
+    // Call through HTTP controller to trigger event dispatch
+    $this->postJson("/api/queue-monitor/jobs/{$job->uuid}/replay")
+        ->assertSuccessful();
 
     Event::assertDispatched(JobReplayRequested::class, function ($event) use ($job) {
         return $event->originalJob->uuid === $job->uuid

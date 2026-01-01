@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace PHPeek\LaravelQueueMonitor\Http\Controllers;
 
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Routing\Controller;
@@ -34,7 +35,7 @@ class ExportController extends Controller
     /**
      * Export jobs to JSON
      */
-    public function json(Request $request): Response
+    public function json(Request $request): JsonResponse
     {
         $filters = JobFilterData::fromRequest($request->all());
 
@@ -52,7 +53,7 @@ class ExportController extends Controller
     /**
      * Export statistics report
      */
-    public function statistics(): Response
+    public function statistics(): JsonResponse
     {
         $report = $this->exportService->statisticsReport();
 
@@ -62,7 +63,7 @@ class ExportController extends Controller
     /**
      * Export failed jobs report
      */
-    public function failedJobs(): Response
+    public function failedJobs(): JsonResponse
     {
         $report = $this->exportService->failedJobsReport();
 

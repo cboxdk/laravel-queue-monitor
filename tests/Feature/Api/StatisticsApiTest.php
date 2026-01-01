@@ -82,6 +82,6 @@ test('statistics show correct success rate', function () {
     $response = $this->getJson('/api/queue-monitor/statistics');
 
     $data = $response->json('data');
-    expect($data['success_rate'])->toBe(50.0);
-    expect($data['failure_rate'])->toBe(50.0);
+    expect((float) $data['success_rate'])->toEqual(50.0);
+    expect((float) $data['failure_rate'])->toEqual(50.0);
 });

@@ -8,6 +8,7 @@ use PHPeek\LaravelQueueMonitor\Enums\WorkerType;
 use PHPeek\LaravelQueueMonitor\Models\JobMonitor;
 
 test('prune command removes old jobs', function () {
+    // Create old job and manually update created_at using query builder (bypasses Eloquent timestamp)
     $old = JobMonitor::create([
         'uuid' => Str::uuid()->toString(),
         'job_class' => 'App\\Jobs\\TestJob',
@@ -20,8 +21,11 @@ test('prune command removes old jobs', function () {
         'worker_id' => 'worker-123',
         'worker_type' => WorkerType::QUEUE_WORK,
         'queued_at' => now(),
-        'created_at' => now()->subDays(40),
     ]);
+
+    // Update created_at directly using query builder to bypass Eloquent timestamp handling
+    JobMonitor::where('id', $old->id)->update(['created_at' => now()->subDays(40)]);
+    $old->refresh();
 
     $recent = JobMonitor::create([
         'uuid' => Str::uuid()->toString(),

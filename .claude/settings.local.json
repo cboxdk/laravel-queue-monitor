@@ -1,7 +1,14 @@
 {
   "permissions": {
     "allow": [
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(composer run analyse:*)",
+      "Bash(composer test:*)",
+      "Bash(wc:*)",
+      "Bash(find:*)",
+      "Bash(vendor/bin/pest:*)",
+      "Bash(vendor/bin/phpstan analyse:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []

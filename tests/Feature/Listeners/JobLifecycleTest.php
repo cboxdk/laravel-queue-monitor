@@ -10,13 +10,15 @@ use Illuminate\Support\Facades\Event;
 use PHPeek\LaravelQueueMonitor\Enums\JobStatus;
 use PHPeek\LaravelQueueMonitor\Events\JobMonitorRecorded;
 use PHPeek\LaravelQueueMonitor\Models\JobMonitor;
+use PHPeek\LaravelQueueMonitor\Tests\Support\ExampleJob;
 
 test('job queued event creates monitor record', function () {
     Event::fake([JobMonitorRecorded::class]);
 
-    $job = new \Tests\Support\ExampleJob;
+    $job = new ExampleJob;
 
-    event(new JobQueued('redis', $job));
+    // Laravel 11 JobQueued constructor: $connectionName, $queue, $id, $job, $payload, $delay
+    event(new JobQueued('redis', 'default', '12345', $job, '{}', null));
 
     expect(JobMonitor::count())->toBe(1);
 
@@ -33,6 +35,7 @@ test('job processing event updates status', function () {
     $mockJob = Mockery::mock(\Illuminate\Contracts\Queue\Job::class);
     $mockJob->shouldReceive('getJobId')->andReturn('12345');
     $mockJob->shouldReceive('attempts')->andReturn(1);
+    $mockJob->shouldReceive('payload')->andReturn([]);
 
     event(new JobProcessing('redis', $mockJob));
 
@@ -78,17 +81,18 @@ test('job failed event captures exception', function () {
 });
 
 test('complete job lifecycle is tracked', function () {
-    $job = new \Tests\Support\ExampleJob;
+    // Use factory to create a properly linked job record
+    $monitor = JobMonitor::factory()->queued()->create([
+        'job_id' => '12345',
+    ]);
 
-    // 1. Queued
-    event(new JobQueued('redis', $job));
-    $monitor = JobMonitor::first();
     expect($monitor->status)->toBe(JobStatus::QUEUED);
 
     // 2. Processing
     $mockJob = Mockery::mock(\Illuminate\Contracts\Queue\Job::class);
-    $mockJob->shouldReceive('getJobId')->andReturn($monitor->job_id ?? '999');
+    $mockJob->shouldReceive('getJobId')->andReturn('12345');
     $mockJob->shouldReceive('attempts')->andReturn(1);
+    $mockJob->shouldReceive('payload')->andReturn([]);
 
     event(new JobProcessing('redis', $mockJob));
     $monitor->refresh();

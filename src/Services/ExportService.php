@@ -24,21 +24,55 @@ final readonly class ExportService
 
         foreach ($jobs as $job) {
             $csv .= implode(',', [
-                $job->uuid,
-                '"'.$job->job_class.'"',
-                $job->queue,
-                $job->status->value,
+                $this->escapeCsvValue($job->uuid),
+                $this->escapeCsvValue($job->job_class),
+                $this->escapeCsvValue($job->queue),
+                $this->escapeCsvValue($job->status->value),
                 $job->attempt,
                 $job->duration_ms ?? '',
                 $job->memory_peak_mb ?? '',
-                $job->queued_at->toIso8601String(),
-                $job->started_at?->toIso8601String() ?? '',
-                $job->completed_at?->toIso8601String() ?? '',
-                $job->exception_class ? '"'.$job->exception_class.'"' : '',
+                $this->escapeCsvValue($job->queued_at->toIso8601String()),
+                $this->escapeCsvValue($job->started_at?->toIso8601String() ?? ''),
+                $this->escapeCsvValue($job->completed_at?->toIso8601String() ?? ''),
+                $this->escapeCsvValue($job->exception_class ?? ''),
             ])."\n";
         }
 
         return $csv;
+    }
+
+    /**
+     * Escape a value for safe CSV output
+     *
+     * Prevents CSV injection attacks by:
+     * 1. Quoting values that contain special characters
+     * 2. Escaping embedded quotes
+     * 3. Prefixing formula characters with a single quote to prevent execution
+     */
+    private function escapeCsvValue(string $value): string
+    {
+        if ($value === '') {
+            return '';
+        }
+
+        // Characters that could trigger formula execution in spreadsheet software
+        $formulaChars = ['=', '+', '-', '@', "\t", "\r", "\n", '|'];
+
+        // Prefix formula characters with a single quote to prevent execution
+        $firstChar = mb_substr($value, 0, 1);
+        if (in_array($firstChar, $formulaChars, true)) {
+            $value = "'".$value;
+        }
+
+        // Escape double quotes by doubling them
+        $value = str_replace('"', '""', $value);
+
+        // Wrap in quotes if contains comma, quote, newline, or starts with formula char
+        if (str_contains($value, ',') || str_contains($value, '"') || str_contains($value, "\n") || str_contains($value, "'")) {
+            return '"'.$value.'"';
+        }
+
+        return $value;
     }
 
     /**

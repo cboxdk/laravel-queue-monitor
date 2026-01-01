@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Support;
+namespace PHPeek\LaravelQueueMonitor\Tests\Support;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
