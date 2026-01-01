@@ -2,9 +2,45 @@
 
 All notable changes to `laravel-queue-monitor` will be documented in this file.
 
+## v1.0.0 - Initial Release - 2026-01-01
+
+### Laravel Queue Monitor v1.0.0
+
+First stable release of Laravel Queue Monitor - a comprehensive job monitoring solution for Laravel.
+
+#### Features
+
+- **Job Lifecycle Tracking**: Complete monitoring of queued, processing, completed, failed, and timeout states
+- **Performance Metrics**: CPU time, memory usage, duration tracking for all jobs
+- **Exception Capture**: Full exception details including class, message, and trace
+- **Tagging System**: Tag jobs for easy filtering and organization
+- **REST API**: Complete API for external integrations and dashboards
+- **Health Checks**: System health monitoring with degraded state detection
+- **Statistics & Analytics**: Per-queue, per-server, and per-job-class statistics
+- **Replay Functionality**: Replay failed jobs with preserved context
+- **Batch Operations**: Bulk replay and delete operations
+- **Pruning**: Automatic cleanup of old job records
+- **Horizon Integration**: Detection and context capture for Horizon workers
+
+#### Requirements
+
+- PHP 8.3+
+- Laravel 11.x or 12.x
+
+#### Installation
+
+```bash
+composer require gophpeek/laravel-queue-monitor
+
+```
+#### Documentation
+
+See the [README](https://github.com/gophpeek/laravel-queue-monitor#readme) for full documentation.
+
 ## 1.0.0 - 2025-01-21
 
 ### Added
+
 - Initial release
 - Individual queue job tracking
 - Full payload storage for job replay
@@ -26,6 +62,7 @@ All notable changes to `laravel-queue-monitor` will be documented in this file.
 - Comprehensive documentation
 
 ### Package Features
+
 - **Action Pattern**: All business logic in dedicated Action classes
 - **DTO Pattern**: Type-safe data transfer objects throughout
 - **Repository Pattern**: Clean data access layer with contracts
@@ -35,6 +72,7 @@ All notable changes to `laravel-queue-monitor` will be documented in this file.
 - **Strict Types**: declare(strict_types=1) on all files
 
 ### API Endpoints
+
 - `GET /api/queue-monitor/jobs` - List and filter jobs
 - `GET /api/queue-monitor/jobs/{uuid}` - Job details
 - `POST /api/queue-monitor/jobs/{uuid}/replay` - Replay job
@@ -48,11 +86,13 @@ All notable changes to `laravel-queue-monitor` will be documented in this file.
 - `POST /api/queue-monitor/prune` - Prune old records
 
 ### Artisan Commands
+
 - `queue-monitor:stats` - Display statistics in terminal
 - `queue-monitor:replay {uuid}` - Replay specific job
 - `queue-monitor:prune` - Prune old job records
 
 ### Dependencies
+
 - PHP ^8.3
 - Laravel ^10.0 || ^11.0 || ^12.0
 - gophpeek/laravel-queue-metrics ^1.0 (hard dependency)
