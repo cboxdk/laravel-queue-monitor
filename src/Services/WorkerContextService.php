@@ -4,15 +4,22 @@ declare(strict_types=1);
 
 namespace PHPeek\LaravelQueueMonitor\Services;
 
+use PHPeek\LaravelQueueMetrics\DataTransferObjects\HorizonContext;
 use PHPeek\LaravelQueueMetrics\Utilities\HorizonDetector;
 use PHPeek\LaravelQueueMonitor\DataTransferObjects\WorkerContextData;
 use PHPeek\LaravelQueueMonitor\Enums\WorkerType;
 
 final readonly class WorkerContextService
 {
-    public function __construct(
-        private ?HorizonDetector $horizonDetector = null,
-    ) {}
+    private ?HorizonContext $horizonContext;
+
+    public function __construct()
+    {
+        // Detect Horizon context on construction
+        $this->horizonContext = config('queue-monitor.horizon_detection', true)
+            ? HorizonDetector::detect()
+            : null;
+    }
 
     /**
      * Capture current worker context
@@ -58,10 +65,6 @@ final readonly class WorkerContextService
      */
     private function detectWorkerType(): WorkerType
     {
-        if (! config('queue-monitor.horizon_detection', true)) {
-            return WorkerType::QUEUE_WORK;
-        }
-
         return $this->isHorizon() ? WorkerType::HORIZON : WorkerType::QUEUE_WORK;
     }
 
@@ -70,11 +73,11 @@ final readonly class WorkerContextService
      */
     private function isHorizon(): bool
     {
-        if ($this->horizonDetector === null) {
+        if ($this->horizonContext === null) {
             return false;
         }
 
-        return $this->horizonDetector->isHorizon();
+        return $this->horizonContext->isHorizon;
     }
 
     /**
@@ -87,12 +90,9 @@ final readonly class WorkerContextService
             return (string) $_SERVER['HORIZON_SUPERVISOR'];
         }
 
-        // Fallback to detecting from running process
-        if ($this->horizonDetector !== null) {
-            $supervisorName = $this->horizonDetector->getSupervisorName();
-            if ($supervisorName !== null) {
-                return $supervisorName;
-            }
+        // Get from detected context
+        if ($this->horizonContext?->supervisorName !== null) {
+            return $this->horizonContext->supervisorName;
         }
 
         // Ultimate fallback to PID
