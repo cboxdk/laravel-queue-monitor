@@ -1,5 +1,18 @@
 parameters:
 	ignoreErrors:
+		# Global patterns for common mixed type issues (cross-version compatibility)
+		-
+			message: '#^Cannot cast mixed to int\.$#'
+			identifier: cast.int
+
+		-
+			message: '#^Cannot cast mixed to string\.$#'
+			identifier: cast.string
+
+		-
+			message: '#^Cannot cast mixed to float\.$#'
+			identifier: cast.double
+
 		-
 			message: '#^Binary operation "\." between mixed and ''jobs'' results in an error\.$#'
 			identifier: binaryOp.invalid
