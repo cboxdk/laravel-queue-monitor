@@ -7,3 +7,4 @@ parameters:
         - src
         - database
     tmpDir: build/phpstan
+    reportUnmatchedIgnoredErrors: false
