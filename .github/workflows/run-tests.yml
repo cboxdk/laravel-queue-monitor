@@ -29,6 +29,10 @@ jobs:
             testbench: 10.*
           - laravel: 11.*
             testbench: 9.*
+        exclude:
+          # Laravel 12 prefer-lowest causes PHPUnit/Pest compatibility issues
+          - laravel: 12.*
+            stability: prefer-lowest
 
     name: P${{ matrix.php }} - L${{ matrix.laravel }} - ${{ matrix.stability }} - ${{ matrix.os }}
 
