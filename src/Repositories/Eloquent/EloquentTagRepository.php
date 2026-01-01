@@ -10,7 +10,7 @@ use PHPeek\LaravelQueueMonitor\Enums\JobStatus;
 use PHPeek\LaravelQueueMonitor\Models\Tag;
 use PHPeek\LaravelQueueMonitor\Repositories\Contracts\TagRepositoryContract;
 
-final class EloquentTagRepository implements TagRepositoryContract
+final readonly class EloquentTagRepository implements TagRepositoryContract
 {
     public function storeTags(int $jobId, array $tags): void
     {
@@ -39,7 +39,8 @@ final class EloquentTagRepository implements TagRepositoryContract
 
     public function getTagStatistics(): Collection
     {
-        $prefix = config('queue-monitor.database.table_prefix', 'queue_monitor_');
+        /** @var string $prefix */
+        $prefix = config('queue-monitor.table_prefix', 'queue_monitor_');
 
         return DB::table($prefix.'tags as t')
             ->join($prefix.'jobs as j', 't.job_id', '=', 'j.id')

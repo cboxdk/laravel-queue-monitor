@@ -10,6 +10,29 @@ use PHPeek\LaravelQueueMonitor\Enums\JobStatus;
 final readonly class JobFilterData
 {
     /**
+     * Allowed columns for sorting to prevent SQL injection
+     */
+    private const ALLOWED_SORT_COLUMNS = [
+        'id',
+        'uuid',
+        'job_id',
+        'job_class',
+        'connection',
+        'queue',
+        'status',
+        'attempt',
+        'server_name',
+        'worker_id',
+        'duration_ms',
+        'memory_peak_mb',
+        'queued_at',
+        'started_at',
+        'completed_at',
+        'created_at',
+        'updated_at',
+    ];
+
+    /**
      * @param  array<JobStatus>|null  $statuses
      * @param  array<string>|null  $queues
      * @param  array<string>|null  $jobClasses
@@ -80,11 +103,8 @@ final readonly class JobFilterData
             search: isset($data['search']) ? (string) $data['search'] : null,
             limit: isset($data['limit']) ? min((int) $data['limit'], 1000) : 50,
             offset: isset($data['offset']) ? (int) $data['offset'] : 0,
-            sortBy: isset($data['sort_by']) ? (string) $data['sort_by'] : 'queued_at',
-            sortDirection: isset($data['sort_direction']) &&
-                in_array(strtolower((string) $data['sort_direction']), ['asc', 'desc'])
-                ? strtolower((string) $data['sort_direction'])
-                : 'desc',
+            sortBy: self::validateSortColumn($data['sort_by'] ?? null),
+            sortDirection: self::validateSortDirection($data['sort_direction'] ?? null),
         );
     }
 
@@ -144,5 +164,33 @@ final readonly class JobFilterData
             || $this->minDurationMs !== null
             || $this->maxDurationMs !== null
             || $this->search !== null;
+    }
+
+    /**
+     * Validate and return sort column
+     */
+    private static function validateSortColumn(mixed $column): string
+    {
+        if ($column === null) {
+            return 'queued_at';
+        }
+
+        $column = (string) $column;
+
+        return in_array($column, self::ALLOWED_SORT_COLUMNS, true) ? $column : 'queued_at';
+    }
+
+    /**
+     * Validate and return sort direction
+     */
+    private static function validateSortDirection(mixed $direction): string
+    {
+        if ($direction === null) {
+            return 'desc';
+        }
+
+        $direction = strtolower((string) $direction);
+
+        return in_array($direction, ['asc', 'desc'], true) ? $direction : 'desc';
     }
 }

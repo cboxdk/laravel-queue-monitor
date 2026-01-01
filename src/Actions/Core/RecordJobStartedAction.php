@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace PHPeek\LaravelQueueMonitor\Actions\Core;
 
 use Illuminate\Contracts\Queue\Job;
+use Illuminate\Support\Facades\DB;
 use PHPeek\LaravelQueueMonitor\Enums\JobStatus;
+use PHPeek\LaravelQueueMonitor\Models\JobMonitor;
 use PHPeek\LaravelQueueMonitor\Repositories\Contracts\JobMonitorRepositoryContract;
 use PHPeek\LaravelQueueMonitor\Services\WorkerContextService;
 
@@ -14,17 +16,16 @@ final readonly class RecordJobStartedAction
     public function __construct(
         private JobMonitorRepositoryContract $repository,
         private WorkerContextService $workerContext,
+        private RecordJobQueuedAction $recordQueuedAction,
     ) {}
 
     /**
      * Record when a job starts processing
+     *
+     * Note: Caller (listener) is responsible for checking if monitoring is enabled.
      */
     public function execute(object $event): void
     {
-        if (! config('queue-monitor.enabled', true)) {
-            return;
-        }
-
         $job = $event->job ?? null;
 
         if ($job === null) {
@@ -32,26 +33,32 @@ final readonly class RecordJobStartedAction
         }
 
         $jobId = $this->getJobId($job);
-        $jobMonitor = $this->repository->findByJobId($jobId);
 
-        if ($jobMonitor === null) {
-            // Job wasn't queued through normal means, create record now
-            $this->createFromProcessing($event);
+        // Use transaction with pessimistic locking to prevent race conditions
+        DB::transaction(function () use ($event, $job, $jobId): void {
+            // Lock the row if it exists to prevent concurrent updates
+            /** @var JobMonitor|null $jobMonitor */
+            $jobMonitor = JobMonitor::query()->where('job_id', $jobId)->lockForUpdate()->first();
 
-            return;
-        }
+            if ($jobMonitor === null) {
+                // Job wasn't queued through normal means, create record now
+                $this->createFromProcessing($event);
 
-        $workerContext = $this->workerContext->capture();
+                return;
+            }
 
-        $this->repository->update($jobMonitor->uuid, [
-            'status' => JobStatus::PROCESSING,
-            'job_id' => $jobId,
-            'attempt' => $job->attempts(),
-            'started_at' => now(),
-            'server_name' => $workerContext->serverName,
-            'worker_id' => $workerContext->workerId,
-            'worker_type' => $workerContext->workerType->value,
-        ]);
+            $workerContext = $this->workerContext->capture();
+
+            $this->repository->update($jobMonitor->uuid, [
+                'status' => JobStatus::PROCESSING,
+                'job_id' => $jobId,
+                'attempt' => $job->attempts(),
+                'started_at' => now(),
+                'server_name' => $workerContext->serverName,
+                'worker_id' => $workerContext->workerId,
+                'worker_type' => $workerContext->workerType->value,
+            ]);
+        });
     }
 
     /**
@@ -65,8 +72,8 @@ final readonly class RecordJobStartedAction
             return;
         }
 
-        $action = app(RecordJobQueuedAction::class);
-        $jobMonitor = $action->execute($event);
+        // Use injected action instead of service locator
+        $jobMonitor = $this->recordQueuedAction->execute($event);
 
         // Immediately update to processing
         $this->repository->update($jobMonitor->uuid, [

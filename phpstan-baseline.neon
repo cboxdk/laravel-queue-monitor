@@ -87,7 +87,7 @@ parameters:
 		-
 			message: '#^Cannot cast mixed to string\.$#'
 			identifier: cast.string
-			count: 8
+			count: 7
 			path: src/DataTransferObjects/JobFilterData.php
 
 		-
@@ -565,12 +565,6 @@ parameters:
 			path: src/Repositories/Eloquent/EloquentJobMonitorRepository.php
 
 		-
-			message: '#^Binary operation "\." between mixed and ''jobs'' results in an error\.$#'
-			identifier: binaryOp.invalid
-			count: 6
-			path: src/Repositories/Eloquent/EloquentStatisticsRepository.php
-
-		-
 			message: '#^Cannot access property \$avg_duration_ms on object\|null\.$#'
 			identifier: property.nonObject
 			count: 2
@@ -683,18 +677,6 @@ parameters:
 			identifier: return.type
 			count: 1
 			path: src/Repositories/Eloquent/EloquentStatisticsRepository.php
-
-		-
-			message: '#^Binary operation "\." between mixed and ''jobs as j'' results in an error\.$#'
-			identifier: binaryOp.invalid
-			count: 1
-			path: src/Repositories/Eloquent/EloquentTagRepository.php
-
-		-
-			message: '#^Binary operation "\." between mixed and ''tags as t'' results in an error\.$#'
-			identifier: binaryOp.invalid
-			count: 1
-			path: src/Repositories/Eloquent/EloquentTagRepository.php
 
 		-
 			message: '#^Call to an undefined static method PHPeek\\LaravelQueueMonitor\\Models\\Tag\:\:distinct\(\)\.$#'

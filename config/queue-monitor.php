@@ -63,6 +63,10 @@ return [
 
         // Maximum payload size in bytes (default: 64KB)
         'payload_max_size' => 65535,
+
+        // Defer tag storage to queue for better performance
+        // When true, tags are stored asynchronously after job completion
+        'deferred_tags' => env('QUEUE_MONITOR_DEFERRED_TAGS', false),
     ],
 
     /*

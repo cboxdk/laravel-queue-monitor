@@ -16,10 +16,15 @@ if (! config('queue-monitor.api.enabled', true)) {
     return;
 }
 
+$rateLimit = config('queue-monitor.api.rate_limit', '60,1');
+
 Route::prefix(config('queue-monitor.api.prefix', 'api/queue-monitor'))
     ->middleware(array_merge(
         config('queue-monitor.api.middleware', ['api']),
-        [EnsureQueueMonitorEnabled::class]
+        [
+            EnsureQueueMonitorEnabled::class,
+            'throttle:'.$rateLimit,
+        ]
     ))
     ->name('queue-monitor.')
     ->group(function (): void {

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace PHPeek\LaravelQueueMonitor\Actions\Core;
 
-use Illuminate\Contracts\Queue\Job;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use PHPeek\LaravelQueueMonitor\DataTransferObjects\JobMonitorData;
 use PHPeek\LaravelQueueMonitor\Enums\JobStatus;
@@ -21,13 +21,11 @@ final readonly class RecordJobQueuedAction
 
     /**
      * Record a queued job
+     *
+     * Note: Caller (listener) is responsible for checking if monitoring is enabled.
      */
     public function execute(object $event): JobMonitor
     {
-        if (! config('queue-monitor.enabled', true)) {
-            throw new \RuntimeException('Queue monitor is disabled');
-        }
-
         // JobQueued event structure: connectionName, job (the actual job object, not Job interface)
         $jobInstance = $event->job ?? null;
         $connectionName = $event->connectionName ?? 'default';
@@ -70,7 +68,8 @@ final readonly class RecordJobQueuedAction
             updatedAt: now(),
         );
 
-        return $this->repository->create($data);
+        /** @var JobMonitor */
+        return DB::transaction(fn (): JobMonitor => $this->repository->create($data));
     }
 
     /**

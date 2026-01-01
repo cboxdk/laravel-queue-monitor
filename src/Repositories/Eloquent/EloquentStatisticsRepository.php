@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\DB;
 use PHPeek\LaravelQueueMonitor\Enums\JobStatus;
 use PHPeek\LaravelQueueMonitor\Repositories\Contracts\StatisticsRepositoryContract;
 
-final class EloquentStatisticsRepository implements StatisticsRepositoryContract
+final readonly class EloquentStatisticsRepository implements StatisticsRepositoryContract
 {
     public function getGlobalStatistics(): array
     {
@@ -18,7 +18,8 @@ final class EloquentStatisticsRepository implements StatisticsRepositoryContract
 
     private function computeGlobalStatistics(): array
     {
-        $prefix = config('queue-monitor.database.table_prefix', 'queue_monitor_');
+        /** @var string $prefix */
+        $prefix = config('queue-monitor.table_prefix', 'queue_monitor_');
 
         $stats = DB::table($prefix.'jobs')
             ->select([
@@ -71,7 +72,8 @@ final class EloquentStatisticsRepository implements StatisticsRepositoryContract
      */
     private function computeServerStatistics(?string $serverName = null): array
     {
-        $prefix = config('queue-monitor.database.table_prefix', 'queue_monitor_');
+        /** @var string $prefix */
+        $prefix = config('queue-monitor.table_prefix', 'queue_monitor_');
 
         $query = DB::table($prefix.'jobs')
             ->select([
@@ -118,7 +120,8 @@ final class EloquentStatisticsRepository implements StatisticsRepositoryContract
      */
     private function computeQueueStatistics(?string $queue = null): array
     {
-        $prefix = config('queue-monitor.database.table_prefix', 'queue_monitor_');
+        /** @var string $prefix */
+        $prefix = config('queue-monitor.table_prefix', 'queue_monitor_');
 
         $query = DB::table($prefix.'jobs')
             ->select([
@@ -170,7 +173,8 @@ final class EloquentStatisticsRepository implements StatisticsRepositoryContract
      */
     private function computeJobClassStatistics(?string $jobClass = null): array
     {
-        $prefix = config('queue-monitor.database.table_prefix', 'queue_monitor_');
+        /** @var string $prefix */
+        $prefix = config('queue-monitor.table_prefix', 'queue_monitor_');
 
         $query = DB::table($prefix.'jobs')
             ->select([
@@ -218,7 +222,8 @@ final class EloquentStatisticsRepository implements StatisticsRepositoryContract
      */
     private function computeFailurePatterns(): array
     {
-        $prefix = config('queue-monitor.database.table_prefix', 'queue_monitor_');
+        /** @var string $prefix */
+        $prefix = config('queue-monitor.table_prefix', 'queue_monitor_');
 
         $exceptionStats = DB::table($prefix.'jobs')
             ->select([
@@ -253,7 +258,8 @@ final class EloquentStatisticsRepository implements StatisticsRepositoryContract
      */
     private function computeQueueHealth(): array
     {
-        $prefix = config('queue-monitor.database.table_prefix', 'queue_monitor_');
+        /** @var string $prefix */
+        $prefix = config('queue-monitor.table_prefix', 'queue_monitor_');
 
         $queueHealth = DB::table($prefix.'jobs')
             ->select([
@@ -306,25 +312,26 @@ final class EloquentStatisticsRepository implements StatisticsRepositoryContract
      */
     private function remember(string $key, \Closure $callback, ?int $ttl = null): mixed
     {
-        /** @var bool $cacheEnabled */
-        $cacheEnabled = config('queue-monitor.cache.enabled', true);
-
-        if (! $cacheEnabled) {
+        if (! config('queue-monitor.cache.enabled', true)) {
             return $callback();
         }
 
-        /** @var string $prefix */
-        $prefix = config('queue-monitor.cache.prefix', 'queue_monitor_');
-        /** @var string|null $store */
-        $store = config('queue-monitor.cache.store');
-        /** @var int $defaultTtl */
-        $defaultTtl = config('queue-monitor.cache.ttl', 60);
+        /** @var string|null $cacheStore */
+        $cacheStore = config('queue-monitor.cache.store');
 
-        $cache = $store !== null ? Cache::store($store) : Cache::store();
+        $cache = $cacheStore !== null
+            ? Cache::store($cacheStore)
+            : Cache::store();
+
+        /** @var string $cachePrefix */
+        $cachePrefix = config('queue-monitor.cache.prefix', 'queue_monitor:');
+
+        /** @var int $cacheTtl */
+        $cacheTtl = config('queue-monitor.cache.ttl', 60);
 
         return $cache->remember(
-            $prefix.$key,
-            $ttl ?? $defaultTtl,
+            $cachePrefix.$key,
+            $ttl ?? $cacheTtl,
             $callback
         );
     }

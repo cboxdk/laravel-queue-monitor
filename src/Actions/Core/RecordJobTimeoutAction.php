@@ -16,13 +16,11 @@ final readonly class RecordJobTimeoutAction
 
     /**
      * Record when a job times out
+     *
+     * Note: Caller (listener) is responsible for checking if monitoring is enabled.
      */
     public function execute(object $event): void
     {
-        if (! config('queue-monitor.enabled', true)) {
-            return;
-        }
-
         $job = $event->job ?? null;
 
         if ($job === null) {

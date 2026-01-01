@@ -59,7 +59,7 @@ class LaravelQueueMonitorServiceProvider extends PackageServiceProvider
      */
     protected function registerRoutes(): void
     {
-        if (! config('queue-monitor.api.enabled', true)) {
+        if (! config('queue-monitor.api.enabled', false)) {
             return;
         }
 

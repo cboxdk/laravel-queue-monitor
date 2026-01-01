@@ -7,6 +7,7 @@ namespace PHPeek\LaravelQueueMonitor\Actions\Core;
 use Carbon\Carbon;
 use PHPeek\LaravelQueueMonitor\DataTransferObjects\ExceptionData;
 use PHPeek\LaravelQueueMonitor\Enums\JobStatus;
+use PHPeek\LaravelQueueMonitor\Jobs\StoreJobTagsJob;
 use PHPeek\LaravelQueueMonitor\Repositories\Contracts\JobMonitorRepositoryContract;
 use PHPeek\LaravelQueueMonitor\Repositories\Contracts\TagRepositoryContract;
 use Throwable;
@@ -20,13 +21,11 @@ final readonly class RecordJobFailedAction
 
     /**
      * Record when a job fails
+     *
+     * Note: Caller (listener) is responsible for checking if monitoring is enabled.
      */
     public function execute(object $event): void
     {
-        if (! config('queue-monitor.enabled', true)) {
-            return;
-        }
-
         $job = $event->job ?? null;
         $exception = $event->exception ?? null;
 
@@ -55,8 +54,24 @@ final readonly class RecordJobFailedAction
         ]);
 
         // Store normalized tags if present
-        if ($jobMonitor->tags !== null && count($jobMonitor->tags) > 0) {
-            $this->tagRepository->storeTags($jobMonitor->id, $jobMonitor->tags);
+        $this->storeTagsIfPresent($jobMonitor->id, $jobMonitor->tags);
+    }
+
+    /**
+     * Store tags either synchronously or via deferred job
+     *
+     * @param  array<string>|null  $tags
+     */
+    private function storeTagsIfPresent(int $jobMonitorId, ?array $tags): void
+    {
+        if ($tags === null || count($tags) === 0) {
+            return;
+        }
+
+        if (config('queue-monitor.deferred_tag_storage', false)) {
+            StoreJobTagsJob::dispatch($jobMonitorId, $tags);
+        } else {
+            $this->tagRepository->storeTags($jobMonitorId, $tags);
         }
     }
 

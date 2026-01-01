@@ -8,10 +8,10 @@ use PHPeek\LaravelQueueMetrics\Utilities\HorizonDetector;
 use PHPeek\LaravelQueueMonitor\DataTransferObjects\WorkerContextData;
 use PHPeek\LaravelQueueMonitor\Enums\WorkerType;
 
-final class WorkerContextService
+final readonly class WorkerContextService
 {
     public function __construct(
-        private readonly ?HorizonDetector $horizonDetector = null
+        private ?HorizonDetector $horizonDetector = null,
     ) {}
 
     /**
@@ -31,7 +31,8 @@ final class WorkerContextService
      */
     private function getServerName(): string
     {
-        $callable = config('queue-monitor.worker_detection.server_name_callable');
+        /** @var callable|null $callable */
+        $callable = config('queue-monitor.server_name');
 
         if (is_callable($callable)) {
             return (string) $callable();
@@ -57,7 +58,7 @@ final class WorkerContextService
      */
     private function detectWorkerType(): WorkerType
     {
-        if (! config('queue-monitor.worker_detection.horizon_detection', true)) {
+        if (! config('queue-monitor.horizon_detection', true)) {
             return WorkerType::QUEUE_WORK;
         }
 

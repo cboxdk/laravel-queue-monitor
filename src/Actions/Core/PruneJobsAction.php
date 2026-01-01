@@ -24,17 +24,27 @@ final readonly class PruneJobsAction
             return 0;
         }
 
-        $retentionDays = $days ?? config('queue-monitor.retention.days', 30);
-        $pruneStatuses = $statuses ?? config('queue-monitor.retention.prune_statuses', ['completed']);
-
-        if (! is_int($retentionDays)) {
-            $retentionDays = 30;
-        }
-
-        if (! is_array($pruneStatuses)) {
-            $pruneStatuses = ['completed'];
-        }
+        /** @var int $configDays */
+        $configDays = config('queue-monitor.retention.days', 30);
+        $retentionDays = $days ?? $configDays;
+        $pruneStatuses = $statuses ?? $this->getConfiguredPruneStatuses();
 
         return $this->repository->prune($retentionDays, $pruneStatuses);
+    }
+
+    /**
+     * Get configured prune statuses
+     *
+     * @return array<JobStatus>
+     */
+    private function getConfiguredPruneStatuses(): array
+    {
+        /** @var array<string> $configStatuses */
+        $configStatuses = config('queue-monitor.retention.prune_statuses', ['completed', 'failed']);
+
+        return array_map(
+            fn (string $status): JobStatus => JobStatus::from($status),
+            $configStatuses
+        );
     }
 }
