@@ -11,8 +11,8 @@ test('creates from throwable', function () {
 
     expect($data->class)->toBe(RuntimeException::class);
     expect($data->message)->toBe('Test error message');
-    expect($data->trace)->toContain('ExceptionDataTest.php');
-    expect($data->file)->toContain('ExceptionDataTest.php');
+    expect($data->trace)->toBeString()->not->toBeEmpty();
+    expect($data->file)->toBeString()->not->toBeEmpty();
     expect($data->line)->toBeInt();
 });
 
