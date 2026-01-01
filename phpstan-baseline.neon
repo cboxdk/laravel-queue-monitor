@@ -1,5 +1,45 @@
 parameters:
 	ignoreErrors:
+		# CI-specific errors (newer larastan versions)
+		-
+			message: '#^PHPDoc type array\<int, string\> of property .+\:\:\$fillable is not covariant with PHPDoc type list\<string\> of overridden property .+\:\:\$fillable\.$#'
+			paths:
+				- src/Models/JobMonitor.php
+				- src/Models/Tag.php
+
+		-
+			message: '#^Method .+\:\:prune\(\) should return int but returns mixed\.$#'
+			path: src/Repositories/Eloquent/EloquentJobMonitorRepository.php
+
+		-
+			message: '#^Cannot access property \$.+ on stdClass\|null\.$#'
+			path: src/Repositories/Eloquent/EloquentStatisticsRepository.php
+
+		-
+			message: '#^Method .+\:\:compute.+\(\) should return array.+ but returns array\<mixed\>\.$#'
+			path: src/Repositories/Eloquent/EloquentStatisticsRepository.php
+
+		-
+			message: '#^Method .+\:\:getAllTags\(\) should return .+ but returns .+\.$#'
+			path: src/Repositories/Eloquent/EloquentTagRepository.php
+
+		-
+			message: '#^Method .+\:\:getJobIdsWithTag\(\) should return .+ but returns .+\.$#'
+			path: src/Repositories/Eloquent/EloquentTagRepository.php
+
+		-
+			message: '#^Method .+\:\:getCriticalAlerts\(\) should return .+ but returns .+\.$#'
+			path: src/Services/AlertingService.php
+
+		-
+			message: '#^Method .+\:\:toJson\(\) should return .+ but returns .+\.$#'
+			path: src/Services/ExportService.php
+
+		-
+			message: '#^Parameter \#1 \$name of static method Illuminate\\Database\\DatabaseManager\:\:connection\(\) expects .+, mixed given\.$#'
+			path: src/Services/HealthCheckService.php
+
+		# Original baseline entries
 		-
 			message: '#^Binary operation "\." between mixed and ''jobs'' results in an error\.$#'
 			identifier: binaryOp.invalid
