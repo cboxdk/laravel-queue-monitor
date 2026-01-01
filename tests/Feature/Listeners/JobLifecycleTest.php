@@ -6,19 +6,19 @@ use Illuminate\Queue\Events\JobFailed;
 use Illuminate\Queue\Events\JobProcessed;
 use Illuminate\Queue\Events\JobProcessing;
 use Illuminate\Queue\Events\JobQueued;
+use PHPeek\LaravelQueueMonitor\Actions\Core\RecordJobQueuedAction;
+use PHPeek\LaravelQueueMonitor\Actions\Core\RecordJobStartedAction;
 use PHPeek\LaravelQueueMonitor\Enums\JobStatus;
-use PHPeek\LaravelQueueMonitor\Listeners\JobProcessingListener;
-use PHPeek\LaravelQueueMonitor\Listeners\JobQueuedListener;
 use PHPeek\LaravelQueueMonitor\Models\JobMonitor;
 use PHPeek\LaravelQueueMonitor\Tests\Support\ExampleJob;
 
 test('job queued event creates monitor record', function () {
     $job = new ExampleJob;
 
-    // Directly invoke the listener to avoid event dispatch timing issues in CI
+    // Directly invoke the action to avoid silent failures in listener try/catch
     $event = new JobQueued('redis', 'default', '12345', $job, '{}', null);
-    $listener = app(JobQueuedListener::class);
-    $listener->handle($event);
+    $action = app(RecordJobQueuedAction::class);
+    $action->execute($event);
 
     expect(JobMonitor::count())->toBe(1);
 
@@ -37,10 +37,10 @@ test('job processing event updates status', function () {
     $mockJob->shouldReceive('attempts')->andReturn(1);
     $mockJob->shouldReceive('payload')->andReturn([]);
 
-    // Directly invoke the listener to avoid event dispatch timing issues in CI
+    // Directly invoke the action to avoid silent failures in listener try/catch
     $event = new JobProcessing('redis', $mockJob);
-    $listener = app(JobProcessingListener::class);
-    $listener->handle($event);
+    $action = app(RecordJobStartedAction::class);
+    $action->execute($event);
 
     $monitor->refresh();
     expect($monitor->status)->toBe(JobStatus::PROCESSING);
@@ -56,10 +56,10 @@ test('job processed event marks completion', function () {
     $mockJob = Mockery::mock(\Illuminate\Contracts\Queue\Job::class);
     $mockJob->shouldReceive('getJobId')->andReturn('12345');
 
-    // Directly invoke the listener to avoid event dispatch timing issues in CI
+    // Directly invoke the action to avoid silent failures in listener try/catch
     $event = new JobProcessed('redis', $mockJob);
-    $listener = app(\PHPeek\LaravelQueueMonitor\Listeners\JobProcessedListener::class);
-    $listener->handle($event);
+    $action = app(\PHPeek\LaravelQueueMonitor\Actions\Core\RecordJobCompletedAction::class);
+    $action->execute($event);
 
     $monitor->refresh();
     expect($monitor->status)->toBe(JobStatus::COMPLETED);
@@ -77,10 +77,10 @@ test('job failed event captures exception', function () {
 
     $exception = new \RuntimeException('Test failure');
 
-    // Directly invoke the listener to avoid event dispatch timing issues in CI
+    // Directly invoke the action to avoid silent failures in listener try/catch
     $event = new JobFailed('redis', $mockJob, $exception);
-    $listener = app(\PHPeek\LaravelQueueMonitor\Listeners\JobFailedListener::class);
-    $listener->handle($event);
+    $action = app(\PHPeek\LaravelQueueMonitor\Actions\Core\RecordJobFailedAction::class);
+    $action->execute($event);
 
     $monitor->refresh();
     expect($monitor->status)->toBe(JobStatus::FAILED);
@@ -103,15 +103,15 @@ test('complete job lifecycle is tracked', function () {
     $mockJob->shouldReceive('attempts')->andReturn(1);
     $mockJob->shouldReceive('payload')->andReturn([]);
 
-    // Directly invoke listeners to avoid event dispatch timing issues in CI
+    // Directly invoke actions to avoid silent failures in listener try/catch
     $processingEvent = new JobProcessing('redis', $mockJob);
-    app(JobProcessingListener::class)->handle($processingEvent);
+    app(RecordJobStartedAction::class)->execute($processingEvent);
     $monitor->refresh();
     expect($monitor->status)->toBe(JobStatus::PROCESSING);
 
     // 3. Completed
     $processedEvent = new JobProcessed('redis', $mockJob);
-    app(\PHPeek\LaravelQueueMonitor\Listeners\JobProcessedListener::class)->handle($processedEvent);
+    app(\PHPeek\LaravelQueueMonitor\Actions\Core\RecordJobCompletedAction::class)->execute($processedEvent);
     $monitor->refresh();
     expect($monitor->status)->toBe(JobStatus::COMPLETED);
     expect($monitor->isFinished())->toBeTrue();
