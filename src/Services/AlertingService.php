@@ -80,9 +80,12 @@ final class AlertingService
      */
     public function getCriticalAlerts(): array
     {
-        return collect($this->checkAlertConditions())
+        /** @var array<string, array{severity: string, message: string, count: int}> $alerts */
+        $alerts = collect($this->checkAlertConditions())
             ->filter(fn ($alert) => $alert['severity'] === 'critical')
-            ->toArray();
+            ->all();
+
+        return $alerts;
     }
 
     /**

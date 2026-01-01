@@ -31,10 +31,13 @@ final readonly class EloquentTagRepository implements TagRepositoryContract
 
     public function getAllTags(): Collection
     {
-        return Tag::distinct()
+        /** @var \Illuminate\Support\Collection<int, string> $tags */
+        $tags = Tag::distinct()
             ->pluck('tag')
             ->sort()
             ->values();
+
+        return $tags;
     }
 
     public function getTagStatistics(): Collection
@@ -64,7 +67,10 @@ final readonly class EloquentTagRepository implements TagRepositoryContract
 
     public function getJobIdsWithTag(string $tag): Collection
     {
-        return Tag::where('tag', $tag)
+        /** @var \Illuminate\Support\Collection<int, int> $jobIds */
+        $jobIds = Tag::where('tag', $tag)
             ->pluck('job_id');
+
+        return $jobIds;
     }
 }

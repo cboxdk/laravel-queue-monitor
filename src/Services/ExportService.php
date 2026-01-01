@@ -84,7 +84,8 @@ final readonly class ExportService
     {
         $jobs = $this->repository->query($filters);
 
-        return $jobs->map(function ($job) {
+        /** @var array<int, array<string, mixed>> $result */
+        $result = $jobs->map(function ($job) {
             return [
                 'uuid' => $job->uuid,
                 'job_class' => $job->job_class,
@@ -114,7 +115,9 @@ final readonly class ExportService
                     'completed_at' => $job->completed_at?->toIso8601String(),
                 ],
             ];
-        })->toArray();
+        })->values()->all();
+
+        return $result;
     }
 
     /**

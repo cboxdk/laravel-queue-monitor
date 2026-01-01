@@ -128,7 +128,7 @@ final class EloquentJobMonitorRepository implements JobMonitorRepositoryContract
             $query->whereIn('status', $statusValues);
         }
 
-        return $query->delete();
+        return (int) $query->delete();
     }
 
     public function delete(string $uuid): bool

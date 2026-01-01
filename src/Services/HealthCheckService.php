@@ -44,6 +44,7 @@ final class HealthCheckService
     private function checkDatabase(): array
     {
         try {
+            /** @var string|null $connection */
             $connection = config('queue-monitor.database.connection');
             DB::connection($connection)->getPdo();
 

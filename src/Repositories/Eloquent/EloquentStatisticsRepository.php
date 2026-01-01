@@ -41,6 +41,23 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
             ])
             ->first();
 
+        /** @var object{total: int, completed: int, failed: int, timeout: int, processing: int, avg_duration_ms: float|null, max_duration_ms: int|null, avg_memory_mb: float|null, max_memory_mb: float|null}|null $stats */
+        if ($stats === null) {
+            return [
+                'total' => 0,
+                'completed' => 0,
+                'failed' => 0,
+                'timeout' => 0,
+                'processing' => 0,
+                'success_rate' => 0,
+                'failure_rate' => 0,
+                'avg_duration_ms' => null,
+                'max_duration_ms' => null,
+                'avg_memory_mb' => null,
+                'max_memory_mb' => null,
+            ];
+        }
+
         $total = (int) $stats->total;
         $completed = (int) $stats->completed;
         $failed = (int) $stats->failed + (int) $stats->timeout;
@@ -94,7 +111,8 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
             $query->where('server_name', $serverName);
         }
 
-        return $query->get()
+        /** @var array<int, array<string, mixed>> $result */
+        $result = $query->get()
             ->map(fn ($row) => [
                 'server_name' => $row->server_name,
                 'total' => (int) $row->total,
@@ -105,7 +123,10 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
                     : 0,
                 'avg_duration_ms' => $row->avg_duration_ms !== null ? round((float) $row->avg_duration_ms, 2) : null,
             ])
-            ->toArray();
+            ->values()
+            ->all();
+
+        return $result;
     }
 
     public function getQueueStatistics(?string $queue = null): array
@@ -145,7 +166,8 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
             $query->where('queue', $queue);
         }
 
-        return $query->get()
+        /** @var array<int, array<string, mixed>> $result */
+        $result = $query->get()
             ->map(fn ($row) => [
                 'queue' => $row->queue,
                 'connection' => $row->connection,
@@ -158,7 +180,10 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
                     : 0,
                 'avg_duration_ms' => $row->avg_duration_ms !== null ? round((float) $row->avg_duration_ms, 2) : null,
             ])
-            ->toArray();
+            ->values()
+            ->all();
+
+        return $result;
     }
 
     public function getJobClassStatistics(?string $jobClass = null): array
@@ -197,7 +222,8 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
             $query->where('job_class', $jobClass);
         }
 
-        return $query->get()
+        /** @var array<int, array<string, mixed>> $result */
+        $result = $query->get()
             ->map(fn ($row) => [
                 'job_class' => $row->job_class,
                 'total' => (int) $row->total,
@@ -209,7 +235,10 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
                 'avg_duration_ms' => $row->avg_duration_ms !== null ? round((float) $row->avg_duration_ms, 2) : null,
                 'max_duration_ms' => $row->max_duration_ms !== null ? (int) $row->max_duration_ms : null,
             ])
-            ->toArray();
+            ->values()
+            ->all();
+
+        return $result;
     }
 
     public function getFailurePatterns(): array
@@ -225,6 +254,7 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
         /** @var string $prefix */
         $prefix = config('queue-monitor.table_prefix', 'queue_monitor_');
 
+        /** @var array<int, array<string, mixed>> $exceptionStats */
         $exceptionStats = DB::table($prefix.'jobs')
             ->select([
                 'exception_class',
@@ -241,7 +271,8 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
                 'count' => (int) $row->count,
                 'affected_job_classes' => (int) $row->affected_job_classes,
             ])
-            ->toArray();
+            ->values()
+            ->all();
 
         return [
             'top_exceptions' => $exceptionStats,
@@ -261,6 +292,7 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
         /** @var string $prefix */
         $prefix = config('queue-monitor.table_prefix', 'queue_monitor_');
 
+        /** @var array<int, array<string, mixed>> $queueHealth */
         $queueHealth = DB::table($prefix.'jobs')
             ->select([
                 'queue',
@@ -297,7 +329,8 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
                     'status' => $health >= 95 ? 'healthy' : ($health >= 75 ? 'degraded' : 'unhealthy'),
                 ];
             })
-            ->toArray();
+            ->values()
+            ->all();
 
         return $queueHealth;
     }

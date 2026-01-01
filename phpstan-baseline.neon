@@ -1,45 +1,5 @@
 parameters:
 	ignoreErrors:
-		# CI-specific errors (newer larastan versions)
-		-
-			message: '#^PHPDoc type array\<int, string\> of property .+\:\:\$fillable is not covariant with PHPDoc type list\<string\> of overridden property .+\:\:\$fillable\.$#'
-			paths:
-				- src/Models/JobMonitor.php
-				- src/Models/Tag.php
-
-		-
-			message: '#^Method .+\:\:prune\(\) should return int but returns mixed\.$#'
-			path: src/Repositories/Eloquent/EloquentJobMonitorRepository.php
-
-		-
-			message: '#^Cannot access property \$.+ on stdClass\|null\.$#'
-			path: src/Repositories/Eloquent/EloquentStatisticsRepository.php
-
-		-
-			message: '#^Method .+\:\:compute.+\(\) should return array.+ but returns array\<mixed\>\.$#'
-			path: src/Repositories/Eloquent/EloquentStatisticsRepository.php
-
-		-
-			message: '#^Method .+\:\:getAllTags\(\) should return .+ but returns .+\.$#'
-			path: src/Repositories/Eloquent/EloquentTagRepository.php
-
-		-
-			message: '#^Method .+\:\:getJobIdsWithTag\(\) should return .+ but returns .+\.$#'
-			path: src/Repositories/Eloquent/EloquentTagRepository.php
-
-		-
-			message: '#^Method .+\:\:getCriticalAlerts\(\) should return .+ but returns .+\.$#'
-			path: src/Services/AlertingService.php
-
-		-
-			message: '#^Method .+\:\:toJson\(\) should return .+ but returns .+\.$#'
-			path: src/Services/ExportService.php
-
-		-
-			message: '#^Parameter \#1 \$name of static method Illuminate\\Database\\DatabaseManager\:\:connection\(\) expects .+, mixed given\.$#'
-			path: src/Services/HealthCheckService.php
-
-		# Original baseline entries
 		-
 			message: '#^Binary operation "\." between mixed and ''jobs'' results in an error\.$#'
 			identifier: binaryOp.invalid
@@ -605,92 +565,8 @@ parameters:
 			path: src/Repositories/Eloquent/EloquentJobMonitorRepository.php
 
 		-
-			message: '#^Cannot access property \$avg_duration_ms on object\|null\.$#'
-			identifier: property.nonObject
-			count: 2
-			path: src/Repositories/Eloquent/EloquentStatisticsRepository.php
-
-		-
-			message: '#^Cannot access property \$avg_memory_mb on object\|null\.$#'
-			identifier: property.nonObject
-			count: 2
-			path: src/Repositories/Eloquent/EloquentStatisticsRepository.php
-
-		-
-			message: '#^Cannot access property \$completed on object\|null\.$#'
-			identifier: property.nonObject
-			count: 1
-			path: src/Repositories/Eloquent/EloquentStatisticsRepository.php
-
-		-
-			message: '#^Cannot access property \$failed on object\|null\.$#'
-			identifier: property.nonObject
-			count: 1
-			path: src/Repositories/Eloquent/EloquentStatisticsRepository.php
-
-		-
-			message: '#^Cannot access property \$max_duration_ms on object\|null\.$#'
-			identifier: property.nonObject
-			count: 2
-			path: src/Repositories/Eloquent/EloquentStatisticsRepository.php
-
-		-
-			message: '#^Cannot access property \$max_memory_mb on object\|null\.$#'
-			identifier: property.nonObject
-			count: 2
-			path: src/Repositories/Eloquent/EloquentStatisticsRepository.php
-
-		-
-			message: '#^Cannot access property \$processing on object\|null\.$#'
-			identifier: property.nonObject
-			count: 1
-			path: src/Repositories/Eloquent/EloquentStatisticsRepository.php
-
-		-
-			message: '#^Cannot access property \$timeout on object\|null\.$#'
-			identifier: property.nonObject
-			count: 2
-			path: src/Repositories/Eloquent/EloquentStatisticsRepository.php
-
-		-
-			message: '#^Cannot access property \$total on object\|null\.$#'
-			identifier: property.nonObject
-			count: 1
-			path: src/Repositories/Eloquent/EloquentStatisticsRepository.php
-
-		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Repositories\\Eloquent\\EloquentStatisticsRepository\:\:computeFailurePatterns\(\) should return array\{top_exceptions\: array\<int, array\<string, mixed\>\>\} but returns array\{top_exceptions\: array\<int, mixed\>\}\.$#'
-			identifier: return.type
-			count: 1
-			path: src/Repositories/Eloquent/EloquentStatisticsRepository.php
-
-		-
 			message: '#^Method PHPeek\\LaravelQueueMonitor\\Repositories\\Eloquent\\EloquentStatisticsRepository\:\:computeGlobalStatistics\(\) return type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
-			count: 1
-			path: src/Repositories/Eloquent/EloquentStatisticsRepository.php
-
-		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Repositories\\Eloquent\\EloquentStatisticsRepository\:\:computeJobClassStatistics\(\) should return array\<int, array\<string, mixed\>\> but returns array\<int, mixed\>\.$#'
-			identifier: return.type
-			count: 1
-			path: src/Repositories/Eloquent/EloquentStatisticsRepository.php
-
-		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Repositories\\Eloquent\\EloquentStatisticsRepository\:\:computeQueueHealth\(\) should return array\<int, array\<string, mixed\>\> but returns array\<int, mixed\>\.$#'
-			identifier: return.type
-			count: 1
-			path: src/Repositories/Eloquent/EloquentStatisticsRepository.php
-
-		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Repositories\\Eloquent\\EloquentStatisticsRepository\:\:computeQueueStatistics\(\) should return array\<int, array\<string, mixed\>\> but returns array\<int, mixed\>\.$#'
-			identifier: return.type
-			count: 1
-			path: src/Repositories/Eloquent/EloquentStatisticsRepository.php
-
-		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Repositories\\Eloquent\\EloquentStatisticsRepository\:\:computeServerStatistics\(\) should return array\<int, array\<string, mixed\>\> but returns array\<int, mixed\>\.$#'
-			identifier: return.type
 			count: 1
 			path: src/Repositories/Eloquent/EloquentStatisticsRepository.php
 
@@ -755,18 +631,6 @@ parameters:
 			path: src/Services/AlertingService.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Services\\AlertingService\:\:getCriticalAlerts\(\) should return array\<string, array\{severity\: string, message\: string, count\: int\}\> but returns array\<string, mixed\>\.$#'
-			identifier: return.type
-			count: 1
-			path: src/Services/AlertingService.php
-
-		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Services\\ExportService\:\:toJson\(\) should return array\<int, array\<string, mixed\>\> but returns array\<int, mixed\>\.$#'
-			identifier: return.type
-			count: 1
-			path: src/Services/ExportService.php
-
-		-
 			message: '#^Binary operation "\." between mixed and ''jobs'' results in an error\.$#'
 			identifier: binaryOp.invalid
 			count: 1
@@ -786,12 +650,6 @@ parameters:
 
 		-
 			message: '#^Parameter \#1 \$callback of method Illuminate\\Support\\Collection\<string,array\<string, mixed\>\>\:\:filter\(\) expects \(callable\(array\<string, mixed\>, string\)\: bool\)\|null, Closure\(mixed\)\: mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Services/HealthCheckService.php
-
-		-
-			message: '#^Parameter \#1 \$name of static method Illuminate\\Support\\Facades\\DB\:\:connection\(\) expects string\|UnitEnum\|null, mixed given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/Services/HealthCheckService.php
