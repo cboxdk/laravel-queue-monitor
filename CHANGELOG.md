@@ -2,6 +2,24 @@
 
 All notable changes to `laravel-queue-monitor` will be documented in this file.
 
+## v1.1.0 - PHP 8.4 & 8.5 Support - 2026-01-03
+
+### What's Changed
+
+#### Features
+
+- Add PHP 8.4 and 8.5 support
+
+#### Dependencies
+
+- Updated all 58 dependencies to latest versions
+- `laravel/framework` v12.39.0 → v12.44.0
+- `pestphp/pest` v4.1.4 → v4.3.0
+- `phpstan/phpstan` 2.1.32 → 2.1.33
+- Symfony components updated to v7.4.x/v8.x
+
+**Full Changelog**: https://github.com/gophpeek/laravel-queue-monitor/compare/v1.0.0...v1.1.0
+
 ## v1.0.0 - Initial Release - 2026-01-01
 
 ### Laravel Queue Monitor v1.0.0
@@ -31,6 +49,7 @@ First stable release of Laravel Queue Monitor - a comprehensive job monitoring s
 
 ```bash
 composer require gophpeek/laravel-queue-monitor
+
 
 ```
 #### Documentation
