@@ -28,6 +28,7 @@ class TestCase extends Orchestra
 
     protected function getEnvironmentSetUp($app): void
     {
+        config()->set('app.key', 'base64:6Cu761yZbWosSbaS7vB1/9/3+79Y35kO2P0V+A4F4A4=');
         config()->set('database.default', 'testing');
         config()->set('database.connections.testing', [
             'driver' => 'sqlite',

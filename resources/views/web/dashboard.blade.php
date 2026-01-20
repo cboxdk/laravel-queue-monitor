@@ -359,7 +359,7 @@
                     this.jobException = null;
                     
                     try {
-                        const response = await fetch(`{{ route('queue-monitor.job.payload', '') }}/${uuid}`);
+                        const response = await fetch('{{ route('queue-monitor.job.payload', ['uuid' => '_UUID_']) }}'.replace('_UUID_', uuid));
                         const data = await response.json();
                         this.jobPayload = data.payload;
                         this.jobException = data.exception;

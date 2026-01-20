@@ -19,7 +19,7 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
     private function computeGlobalStatistics(): array
     {
         /** @var string $prefix */
-        $prefix = config('queue-monitor.table_prefix', 'queue_monitor_');
+        $prefix = config('queue-monitor.database.table_prefix', 'queue_monitor_');
 
         $stats = DB::table($prefix.'jobs')
             ->select([
@@ -45,10 +45,15 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
         if ($stats === null) {
             return [
                 'total' => 0,
+                'total_jobs' => 0,
                 'completed' => 0,
+                'completed_jobs' => 0,
                 'failed' => 0,
+                'failed_jobs' => 0,
                 'timeout' => 0,
+                'timeout_jobs' => 0,
                 'processing' => 0,
+                'processing_jobs' => 0,
                 'success_rate' => 0,
                 'failure_rate' => 0,
                 'avg_duration_ms' => null,
@@ -64,10 +69,15 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
 
         return [
             'total' => $total,
+            'total_jobs' => $total,
             'completed' => $completed,
+            'completed_jobs' => $completed,
             'failed' => $failed,
+            'failed_jobs' => $failed,
             'timeout' => (int) $stats->timeout,
+            'timeout_jobs' => (int) $stats->timeout,
             'processing' => (int) $stats->processing,
+            'processing_jobs' => (int) $stats->processing,
             'success_rate' => $total > 0 ? round(($completed / $total) * 100, 2) : 0,
             'failure_rate' => $total > 0 ? round(($failed / $total) * 100, 2) : 0,
             'avg_duration_ms' => $stats->avg_duration_ms !== null ? round((float) $stats->avg_duration_ms, 2) : null,
@@ -90,7 +100,7 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
     private function computeServerStatistics(?string $serverName = null): array
     {
         /** @var string $prefix */
-        $prefix = config('queue-monitor.table_prefix', 'queue_monitor_');
+        $prefix = config('queue-monitor.database.table_prefix', 'queue_monitor_');
 
         $query = DB::table($prefix.'jobs')
             ->select([
@@ -115,7 +125,7 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
         $result = $query->get()
             ->map(fn ($row) => [
                 'server_name' => $row->server_name,
-                'total' => (int) $row->total,
+                'total_jobs' => (int) $row->total,
                 'completed' => (int) $row->completed,
                 'failed' => (int) $row->failed,
                 'success_rate' => (int) $row->total > 0
@@ -142,7 +152,7 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
     private function computeQueueStatistics(?string $queue = null): array
     {
         /** @var string $prefix */
-        $prefix = config('queue-monitor.table_prefix', 'queue_monitor_');
+        $prefix = config('queue-monitor.database.table_prefix', 'queue_monitor_');
 
         $query = DB::table($prefix.'jobs')
             ->select([
@@ -171,7 +181,7 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
             ->map(fn ($row) => [
                 'queue' => $row->queue,
                 'connection' => $row->connection,
-                'total' => (int) $row->total,
+                'total_jobs' => (int) $row->total,
                 'completed' => (int) $row->completed,
                 'failed' => (int) $row->failed,
                 'processing' => (int) $row->processing,
@@ -199,7 +209,7 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
     private function computeJobClassStatistics(?string $jobClass = null): array
     {
         /** @var string $prefix */
-        $prefix = config('queue-monitor.table_prefix', 'queue_monitor_');
+        $prefix = config('queue-monitor.database.table_prefix', 'queue_monitor_');
 
         $query = DB::table($prefix.'jobs')
             ->select([
@@ -226,7 +236,7 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
         $result = $query->get()
             ->map(fn ($row) => [
                 'job_class' => $row->job_class,
-                'total' => (int) $row->total,
+                'total_jobs' => (int) $row->total,
                 'completed' => (int) $row->completed,
                 'failed' => (int) $row->failed,
                 'success_rate' => (int) $row->total > 0
@@ -252,7 +262,7 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
     private function computeFailurePatterns(): array
     {
         /** @var string $prefix */
-        $prefix = config('queue-monitor.table_prefix', 'queue_monitor_');
+        $prefix = config('queue-monitor.database.table_prefix', 'queue_monitor_');
 
         /** @var array<int, array<string, mixed>> $exceptionStats */
         $exceptionStats = DB::table($prefix.'jobs')
@@ -290,7 +300,7 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
     private function computeQueueHealth(): array
     {
         /** @var string $prefix */
-        $prefix = config('queue-monitor.table_prefix', 'queue_monitor_');
+        $prefix = config('queue-monitor.database.table_prefix', 'queue_monitor_');
 
         /** @var array<int, array<string, mixed>> $queueHealth */
         $queueHealth = DB::table($prefix.'jobs')
