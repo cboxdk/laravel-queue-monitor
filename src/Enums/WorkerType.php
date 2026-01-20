@@ -8,6 +8,7 @@ enum WorkerType: string
 {
     case QUEUE_WORK = 'queue_work';
     case HORIZON = 'horizon';
+    case AUTOSCALE = 'autoscale';
 
     /**
      * Get all worker type values as an array
@@ -36,6 +37,14 @@ enum WorkerType: string
     }
 
     /**
+     * Check if this is an Autoscale worker
+     */
+    public function isAutoscale(): bool
+    {
+        return $this === self::AUTOSCALE;
+    }
+
+    /**
      * Get human-readable label for the worker type
      */
     public function label(): string
@@ -43,6 +52,7 @@ enum WorkerType: string
         return match ($this) {
             self::QUEUE_WORK => 'Queue Worker',
             self::HORIZON => 'Horizon',
+            self::AUTOSCALE => 'Autoscale',
         };
     }
 
@@ -54,6 +64,7 @@ enum WorkerType: string
         return match ($this) {
             self::QUEUE_WORK => 'terminal',
             self::HORIZON => 'dashboard',
+            self::AUTOSCALE => 'chip',
         };
     }
 }

@@ -65,7 +65,23 @@ final readonly class WorkerContextService
      */
     private function detectWorkerType(): WorkerType
     {
-        return $this->isHorizon() ? WorkerType::HORIZON : WorkerType::QUEUE_WORK;
+        if ($this->isHorizon()) {
+            return WorkerType::HORIZON;
+        }
+
+        if ($this->isAutoscale()) {
+            return WorkerType::AUTOSCALE;
+        }
+
+        return WorkerType::QUEUE_WORK;
+    }
+
+    /**
+     * Check if running under Autoscale
+     */
+    private function isAutoscale(): bool
+    {
+        return env('LARAVEL_AUTOSCALE_WORKER', false) !== false;
     }
 
     /**
