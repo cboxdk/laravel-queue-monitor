@@ -326,6 +326,16 @@ class JobMonitor extends Model
     }
 
     /**
+     * Get short job class name
+     */
+    public function getShortJobClass(): string
+    {
+        $parts = explode('\\', $this->job_class);
+
+        return end($parts);
+    }
+
+    /**
      * Get short exception class name
      */
     public function getShortExceptionClass(): ?string

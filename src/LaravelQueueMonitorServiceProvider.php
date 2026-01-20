@@ -23,6 +23,8 @@ use Illuminate\Support\Facades\Event;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 
+use Cbox\LaravelQueueMonitor\Commands\QueueMonitorDashboardCommand;
+
 class LaravelQueueMonitorServiceProvider extends PackageServiceProvider
 {
     public function configurePackage(Package $package): void
@@ -31,11 +33,13 @@ class LaravelQueueMonitorServiceProvider extends PackageServiceProvider
             ->name('laravel-queue-monitor')
             ->hasConfigFile('queue-monitor')
             ->hasMigration('create_queue_monitor_jobs_table')
+            ->hasViews()
             ->hasCommands([
                 LaravelQueueMonitorCommand::class,
                 PruneJobsCommand::class,
                 ReplayJobCommand::class,
                 HealthCheckCommand::class,
+                QueueMonitorDashboardCommand::class,
             ]);
     }
 

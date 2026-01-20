@@ -18,11 +18,10 @@ class PruneJobsCommand extends Command
     public function handle(PruneJobsAction $action): int
     {
         $days = $this->option('days') !== null ? (int) $this->option('days') : null;
+        /** @var array<string> $statuses */
         $statuses = $this->option('statuses');
 
-        if (! empty($statuses)) {
-            $statuses = is_array($statuses) ? $statuses : [$statuses];
-        } else {
+        if (empty($statuses)) {
             $statuses = null;
         }
 

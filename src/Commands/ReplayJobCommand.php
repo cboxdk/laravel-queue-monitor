@@ -15,13 +15,8 @@ class ReplayJobCommand extends Command
 
     public function handle(LaravelQueueMonitor $monitor): int
     {
+        /** @var string $uuid */
         $uuid = $this->argument('uuid');
-
-        if (! is_string($uuid)) {
-            $this->error('Invalid UUID provided');
-
-            return self::FAILURE;
-        }
 
         $this->info("Replaying job {$uuid}...");
 
