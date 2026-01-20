@@ -60,7 +60,16 @@
                     <span class="w-20 font-bold" style="color: {{ $job->status->color() }}">
                         {{ $job->status->label() }}
                     </span>
-                    <span class="w-40 truncate">{{ $job->getShortJobClass() }}</span>
+                    <span class="w-40 truncate">
+                        @if($job->worker_type->isHorizon())
+                            <span class="text-purple-500">[H]</span>
+                        @elseif($job->worker_type->isAutoscale())
+                            <span class="text-cyan-500">[A]</span>
+                        @else
+                            <span class="text-gray-500">[W]</span>
+                        @endif
+                        {{ $job->getShortJobClass() }}
+                    </span>
                     <span class="flex-1 text-gray-500">{{ $job->queue }}</span>
                     <span class="w-20 text-right">{{ number_format($job->duration_ms ?? 0) }}ms</span>
                     <span class="w-20 text-right text-gray-500">

@@ -57,7 +57,25 @@ final readonly class WorkerContextService
             return $this->getHorizonWorkerId();
         }
 
+        if ($this->isAutoscale()) {
+            return $this->getAutoscaleWorkerId();
+        }
+
         return $this->getQueueWorkWorkerId();
+    }
+
+    /**
+     * Get Autoscale worker ID
+     */
+    private function getAutoscaleWorkerId(): string
+    {
+        $managerId = isset($_SERVER['AUTOSCALE_MANAGER_ID']) ? (string) $_SERVER['AUTOSCALE_MANAGER_ID'] : '';
+
+        if ($managerId !== '') {
+            return 'autoscale-' . $managerId . '-' . getmypid();
+        }
+
+        return 'autoscale-' . getmypid();
     }
 
     /**
@@ -81,7 +99,7 @@ final readonly class WorkerContextService
      */
     private function isAutoscale(): bool
     {
-        return env('LARAVEL_AUTOSCALE_WORKER', false) !== false;
+        return isset($_SERVER['LARAVEL_AUTOSCALE_WORKER']) && $_SERVER['LARAVEL_AUTOSCALE_WORKER'] !== 'false';
     }
 
     /**
