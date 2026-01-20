@@ -8,6 +8,10 @@ class PayloadRedactor
 {
     /**
      * Mask sensitive values in the payload array
+     *
+     * @param  array<mixed, mixed>  $payload
+     * @param  array<string>  $sensitiveKeys
+     * @return array<mixed, mixed>
      */
     public static function redact(array $payload, array $sensitiveKeys): array
     {
@@ -32,6 +36,8 @@ class PayloadRedactor
 
     /**
      * Check if a key is considered sensitive
+     *
+     * @param  array<string>  $sensitiveKeys
      */
     private static function isSensitive(string $key, array $sensitiveKeys): bool
     {

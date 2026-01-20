@@ -129,6 +129,7 @@ final class EloquentJobMonitorRepository implements JobMonitorRepositoryContract
         }
 
         $totalDeleted = 0;
+        /** @var int $chunkSize */
         $chunkSize = config('queue-monitor.batch.chunk_size', 1000);
 
         // Delete in chunks to avoid table locking
@@ -142,6 +143,7 @@ final class EloquentJobMonitorRepository implements JobMonitorRepositoryContract
                 break;
             }
 
+            /** @var int $deleted */
             $deleted = JobMonitor::whereIn('id', $ids)->delete();
             $totalDeleted += $deleted;
 

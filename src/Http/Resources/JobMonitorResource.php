@@ -20,6 +20,9 @@ class JobMonitorResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        /** @var array<string> $sensitiveKeys */
+        $sensitiveKeys = config('queue-monitor.api.sensitive_keys', []);
+
         return [
             'id' => $this->id,
             'uuid' => $this->uuid,
@@ -30,7 +33,7 @@ class JobMonitorResource extends JsonResource
             'queue' => $this->queue,
             'payload' => $this->payload ? PayloadRedactor::redact(
                 $this->payload,
-                config('queue-monitor.api.sensitive_keys', [])
+                $sensitiveKeys
             ) : null,
             'status' => [
                 'value' => $this->status->value,
@@ -60,7 +63,7 @@ class JobMonitorResource extends JsonResource
             ] : null,
             'tags' => $this->tags ? PayloadRedactor::redact(
                 $this->tags,
-                config('queue-monitor.api.sensitive_keys', [])
+                $sensitiveKeys
             ) : null,
             'timestamps' => [
                 'queued_at' => $this->queued_at?->toIso8601String(),
