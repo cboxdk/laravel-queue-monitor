@@ -47,7 +47,7 @@ class QueueMonitorDashboardCommand extends Command
         // Clear screen logic (ANSI)
         $this->output->write("\033[2J\033[;H");
 
-        render(view('queue-monitor::dashboard', [
+        render(view('queue-monitor::tui.dashboard', [
             'stats' => $globalStats,
             'queues' => $queueHealth,
             'recentJobs' => $recentJobs,

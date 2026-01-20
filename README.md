@@ -44,6 +44,18 @@ php artisan vendor:publish --tag="queue-monitor-config"
 php artisan migrate
 ```
 
+### Dashboard Customization
+
+To customize the UI (Web or Terminal), publish the views:
+
+```bash
+php artisan vendor:publish --tag="queue-monitor-views"
+```
+
+This will create `resources/views/vendor/queue-monitor/`, where you can modify:
+- `web/dashboard.blade.php` - The Web Dashboard
+- `tui/dashboard.blade.php` - The Terminal Dashboard
+
 That's it! The package automatically starts monitoring all queue jobs.
 
 ## Quick Start
