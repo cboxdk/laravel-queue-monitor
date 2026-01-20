@@ -33,10 +33,10 @@ class DashboardController extends Controller
     {
         // Global Stats
         $globalStats = $this->statsRepository->getGlobalStatistics();
-        
+
         // Queue Health
         $queueHealth = $this->statsRepository->getQueueHealth();
-        
+
         // Recent Jobs Table
         $recentJobs = $this->jobRepository->getRecentJobs((int) config('queue-monitor.ui.per_page', 35))
             ->map(function ($job) {

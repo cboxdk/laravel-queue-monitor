@@ -1,7 +1,7 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
 use Cbox\LaravelQueueMonitor\Http\Controllers\DashboardController;
+use Illuminate\Support\Facades\Route;
 
 Route::prefix(config('queue-monitor.ui.route_prefix'))
     ->middleware(config('queue-monitor.ui.middleware'))
