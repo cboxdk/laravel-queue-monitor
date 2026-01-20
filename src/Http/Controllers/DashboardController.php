@@ -49,6 +49,12 @@ class DashboardController extends Controller
                         'label' => $job->status->label(),
                         'color' => $job->status->color(),
                     ],
+                    'worker_type' => [
+                        'value' => $job->worker_type->value,
+                        'label' => $job->worker_type->label(),
+                        'icon' => $job->worker_type->icon(), // Assumes we have an icon() method on Enum
+                    ],
+                    'server' => $job->server_name,
                     'duration' => $job->duration_ms ? number_format($job->duration_ms).'ms' : '-',
                     'queued_at' => $job->queued_at->diffForHumans(),
                     'error' => $job->exception_message,

@@ -143,6 +143,7 @@
                                     <thead class="bg-gray-50">
                                         <tr>
                                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Worker</th>
                                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Job</th>
                                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Queue</th>
                                             <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Duration</th>
@@ -162,6 +163,29 @@
                                                           }"
                                                           x-text="job.status.label">
                                                     </span>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <div class="flex items-center" :title="job.server">
+                                                        <!-- Horizon Icon -->
+                                                        <template x-if="job.worker_type.value === 'horizon'">
+                                                            <span class="inline-flex items-center rounded-md bg-purple-50 px-2 py-1 text-xs font-medium text-purple-700 ring-1 ring-inset ring-purple-700/10">
+                                                                <svg class="mr-1.5 h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
+                                                                    <path d="M10 2a.75.75 0 01.75.75v1.5h1.5a.75.75 0 010 1.5h-1.5v2h1.5a.75.75 0 010 1.5h-1.5v2h1.5a.75.75 0 010 1.5h-1.5v1.5a.75.75 0 01-1.5 0v-1.5h-2v1.5a.75.75 0 01-1.5 0v-1.5h-1.5a.75.75 0 010-1.5h1.5v-2h-1.5a.75.75 0 010-1.5h1.5v-2h-1.5a.75.75 0 010-1.5h1.5v-1.5A.75.75 0 0110 2zM8.5 6.5h-2v2h2v-2zm0 3.5h-2v2h2v-2zm3.5-3.5h-2v2h2v-2zm0 3.5h-2v2h2v-2z" />
+                                                                </svg>
+                                                                Horizon
+                                                            </span>
+                                                        </template>
+                                                        <!-- Standard Icon -->
+                                                        <template x-if="job.worker_type.value !== 'horizon'">
+                                                            <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
+                                                                <svg class="mr-1.5 h-3 w-3" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 7.5l3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0021 18V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v12a2.25 2.25 0 002.25 2.25z" />
+                                                                </svg>
+                                                                Worker
+                                                            </span>
+                                                        </template>
+                                                    </div>
+                                                    <div class="text-[10px] text-gray-400 mt-1 truncate max-w-[100px]" x-text="job.server"></div>
                                                 </td>
                                                 <td class="px-6 py-4 whitespace-nowrap">
                                                     <div class="text-sm font-medium text-gray-900" x-text="job.job_class"></div>
