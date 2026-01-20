@@ -18,6 +18,7 @@ class PayloadRedactor
         foreach ($payload as $key => $value) {
             if (is_array($value)) {
                 $payload[$key] = self::redact($value, $sensitiveKeys);
+
                 continue;
             }
 

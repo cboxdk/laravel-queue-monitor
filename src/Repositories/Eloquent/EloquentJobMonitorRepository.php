@@ -144,7 +144,7 @@ final class EloquentJobMonitorRepository implements JobMonitorRepositoryContract
 
             $deleted = JobMonitor::whereIn('id', $ids)->delete();
             $totalDeleted += $deleted;
-            
+
             // Short sleep to allow other transactions to slip in if needed
             if ($deleted >= $chunkSize) {
                 usleep(10000); // 10ms
