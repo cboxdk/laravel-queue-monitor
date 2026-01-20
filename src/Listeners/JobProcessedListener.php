@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Cbox\LaravelQueueMonitor\Listeners;
 
-use Illuminate\Queue\Events\JobProcessed;
 use Cbox\LaravelQueueMonitor\Actions\Core\RecordJobCompletedAction;
+use Illuminate\Queue\Events\JobProcessed;
 
 final readonly class JobProcessedListener
 {

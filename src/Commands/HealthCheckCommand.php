@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Cbox\LaravelQueueMonitor\Commands;
 
-use Illuminate\Console\Command;
 use Cbox\LaravelQueueMonitor\Services\AlertingService;
 use Cbox\LaravelQueueMonitor\Services\HealthCheckService;
+use Illuminate\Console\Command;
 
 class HealthCheckCommand extends Command
 {

@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Cbox\LaravelQueueMonitor\Http\Controllers;
 
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
-use Illuminate\Routing\Controller;
 use Cbox\LaravelQueueMonitor\DataTransferObjects\JobFilterData;
 use Cbox\LaravelQueueMonitor\Http\Resources\JobMonitorCollection;
 use Cbox\LaravelQueueMonitor\Http\Resources\JobMonitorResource;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\JobMonitorRepositoryContract;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
 
 class JobMonitorController extends Controller
 {

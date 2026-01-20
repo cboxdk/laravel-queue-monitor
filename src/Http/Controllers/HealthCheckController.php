@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Cbox\LaravelQueueMonitor\Http\Controllers;
 
-use Illuminate\Http\JsonResponse;
-use Illuminate\Routing\Controller;
 use Cbox\LaravelQueueMonitor\Services\AlertingService;
 use Cbox\LaravelQueueMonitor\Services\HealthCheckService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Routing\Controller;
 
 class HealthCheckController extends Controller
 {

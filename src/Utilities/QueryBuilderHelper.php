@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace Cbox\LaravelQueueMonitor\Utilities;
 
 use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Builder;
 use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\Enums\WorkerType;
 use Cbox\LaravelQueueMonitor\Models\JobMonitor;
+use Illuminate\Database\Eloquent\Builder;
 
 final class QueryBuilderHelper
 {

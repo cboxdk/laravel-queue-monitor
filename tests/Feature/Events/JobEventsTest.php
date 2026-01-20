@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-use Illuminate\Support\Facades\Event;
-use Illuminate\Support\Facades\Queue;
 use Cbox\LaravelQueueMonitor\Events\JobCancelled;
 use Cbox\LaravelQueueMonitor\Events\JobReplayRequested;
 use Cbox\LaravelQueueMonitor\Facades\LaravelQueueMonitor as QueueMonitor;
 use Cbox\LaravelQueueMonitor\Models\JobMonitor;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Queue;
 
 test('cancel job fires JobCancelled event', function () {
     Event::fake([JobCancelled::class]);

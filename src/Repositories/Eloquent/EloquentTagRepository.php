@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Cbox\LaravelQueueMonitor\Repositories\Eloquent;
 
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\Models\Tag;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\TagRepositoryContract;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 final readonly class EloquentTagRepository implements TagRepositoryContract
 {

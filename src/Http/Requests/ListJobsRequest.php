@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Cbox\LaravelQueueMonitor\Http\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
 use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\Enums\WorkerType;
+use Illuminate\Foundation\Http\FormRequest;
 
 class ListJobsRequest extends FormRequest
 {

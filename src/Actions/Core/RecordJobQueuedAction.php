@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Cbox\LaravelQueueMonitor\Actions\Core;
 
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Cbox\LaravelQueueMonitor\DataTransferObjects\JobMonitorData;
 use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\Models\JobMonitor;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\JobMonitorRepositoryContract;
 use Cbox\LaravelQueueMonitor\Services\WorkerContextService;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 final readonly class RecordJobQueuedAction
 {

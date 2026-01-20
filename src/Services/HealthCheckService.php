@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Cbox\LaravelQueueMonitor\Services;
 
-use Illuminate\Support\Facades\DB;
 use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\Models\JobMonitor;
 use Cbox\LaravelQueueMonitor\Utilities\QueryBuilderHelper;
+use Illuminate\Support\Facades\DB;
 
 final class HealthCheckService
 {

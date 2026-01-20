@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-use Illuminate\Support\Facades\Queue;
 use Cbox\LaravelQueueMonitor\Actions\Batch\BatchDeleteAction;
 use Cbox\LaravelQueueMonitor\Actions\Batch\BatchReplayAction;
 use Cbox\LaravelQueueMonitor\DataTransferObjects\JobFilterData;
 use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\Models\JobMonitor;
+use Illuminate\Support\Facades\Queue;
 
 test('batch replay processes multiple jobs', function () {
     Queue::fake();

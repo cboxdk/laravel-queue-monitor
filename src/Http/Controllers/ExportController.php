@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Cbox\LaravelQueueMonitor\Http\Controllers;
 
+use Cbox\LaravelQueueMonitor\DataTransferObjects\JobFilterData;
+use Cbox\LaravelQueueMonitor\Services\ExportService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Routing\Controller;
-use Cbox\LaravelQueueMonitor\DataTransferObjects\JobFilterData;
-use Cbox\LaravelQueueMonitor\Services\ExportService;
 
 class ExportController extends Controller
 {

@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-use Illuminate\Support\Str;
 use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\Enums\WorkerType;
 use Cbox\LaravelQueueMonitor\Models\JobMonitor;
+use Illuminate\Support\Str;
 
 test('stats command displays statistics', function () {
     JobMonitor::create([

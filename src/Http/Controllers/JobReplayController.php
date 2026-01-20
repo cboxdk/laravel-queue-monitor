@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Cbox\LaravelQueueMonitor\Http\Controllers;
 
-use Illuminate\Http\JsonResponse;
-use Illuminate\Routing\Controller;
 use Cbox\LaravelQueueMonitor\Actions\Replay\ReplayJobAction;
 use Cbox\LaravelQueueMonitor\Events\JobReplayRequested;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\JobMonitorRepositoryContract;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Routing\Controller;
 
 class JobReplayController extends Controller
 {

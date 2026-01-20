@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use Illuminate\Support\Facades\Route;
 use Cbox\LaravelQueueMonitor\Http\Controllers\BatchOperationsController;
 use Cbox\LaravelQueueMonitor\Http\Controllers\ExportController;
 use Cbox\LaravelQueueMonitor\Http\Controllers\HealthCheckController;
@@ -11,6 +10,7 @@ use Cbox\LaravelQueueMonitor\Http\Controllers\JobReplayController;
 use Cbox\LaravelQueueMonitor\Http\Controllers\PruneController;
 use Cbox\LaravelQueueMonitor\Http\Controllers\StatisticsController;
 use Cbox\LaravelQueueMonitor\Http\Middleware\EnsureQueueMonitorEnabled;
+use Illuminate\Support\Facades\Route;
 
 if (! config('queue-monitor.api.enabled', true)) {
     return;

@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Cbox\LaravelQueueMonitor\Repositories\Contracts;
 
-use Illuminate\Support\Collection;
 use Cbox\LaravelQueueMonitor\DataTransferObjects\JobFilterData;
 use Cbox\LaravelQueueMonitor\DataTransferObjects\JobMonitorData;
 use Cbox\LaravelQueueMonitor\Models\JobMonitor;
+use Illuminate\Support\Collection;
 
 interface JobMonitorRepositoryContract
 {

@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Cbox\LaravelQueueMonitor\Http\Controllers;
 
+use Cbox\LaravelQueueMonitor\Actions\Core\PruneJobsAction;
+use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Cbox\LaravelQueueMonitor\Actions\Core\PruneJobsAction;
-use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 
 class PruneController extends Controller
 {

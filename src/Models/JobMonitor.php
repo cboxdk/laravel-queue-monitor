@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace Cbox\LaravelQueueMonitor\Models;
 
 use Carbon\Carbon;
+use Cbox\LaravelQueueMonitor\Enums\JobStatus;
+use Cbox\LaravelQueueMonitor\Enums\WorkerType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Cbox\LaravelQueueMonitor\Enums\JobStatus;
-use Cbox\LaravelQueueMonitor\Enums\WorkerType;
 
 /**
  * @property int $id

@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Cbox\LaravelQueueMonitor\Tests;
 
+use Cbox\LaravelQueueMonitor\LaravelQueueMonitorServiceProvider;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Orchestra\Testbench\TestCase as Orchestra;
-use Cbox\LaravelQueueMonitor\LaravelQueueMonitorServiceProvider;
 
 class TestCase extends Orchestra
 {

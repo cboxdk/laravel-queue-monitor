@@ -3,8 +3,8 @@
 declare(strict_types=1);
 
 use Carbon\Carbon;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Cbox\LaravelQueueMonitor\Tests\TestCase;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(TestCase::class, RefreshDatabase::class)->in(__DIR__);
 

@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Cbox\LaravelQueueMonitor\Http\Controllers;
 
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
-use Illuminate\Routing\Controller;
 use Cbox\LaravelQueueMonitor\Actions\Batch\BatchDeleteAction;
 use Cbox\LaravelQueueMonitor\Actions\Batch\BatchReplayAction;
 use Cbox\LaravelQueueMonitor\DataTransferObjects\JobFilterData;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
 
 class BatchOperationsController extends Controller
 {

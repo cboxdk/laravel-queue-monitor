@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Cbox\LaravelQueueMonitor;
 
-use Illuminate\Support\Collection;
 use Cbox\LaravelQueueMonitor\Actions\Analytics\CalculateJobStatisticsAction;
 use Cbox\LaravelQueueMonitor\Actions\Analytics\CalculateQueueHealthAction;
 use Cbox\LaravelQueueMonitor\Actions\Analytics\CalculateServerStatisticsAction;
@@ -15,6 +14,7 @@ use Cbox\LaravelQueueMonitor\DataTransferObjects\JobFilterData;
 use Cbox\LaravelQueueMonitor\DataTransferObjects\JobReplayData;
 use Cbox\LaravelQueueMonitor\Models\JobMonitor;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\JobMonitorRepositoryContract;
+use Illuminate\Support\Collection;
 
 final class LaravelQueueMonitor
 {

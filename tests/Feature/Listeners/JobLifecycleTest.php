@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-use Illuminate\Queue\Events\JobFailed;
-use Illuminate\Queue\Events\JobProcessed;
-use Illuminate\Queue\Events\JobProcessing;
-use Illuminate\Queue\Events\JobQueued;
 use Cbox\LaravelQueueMonitor\Actions\Core\RecordJobQueuedAction;
 use Cbox\LaravelQueueMonitor\Actions\Core\RecordJobStartedAction;
 use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\Models\JobMonitor;
 use Cbox\LaravelQueueMonitor\Tests\Support\ExampleJob;
+use Illuminate\Queue\Events\JobFailed;
+use Illuminate\Queue\Events\JobProcessed;
+use Illuminate\Queue\Events\JobProcessing;
+use Illuminate\Queue\Events\JobQueued;
 
 test('job queued event creates monitor record', function () {
     $job = new ExampleJob;

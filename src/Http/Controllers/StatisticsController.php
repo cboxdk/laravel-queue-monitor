@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Cbox\LaravelQueueMonitor\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Routing\Controller;
 use Cbox\LaravelQueueMonitor\Actions\Analytics\CalculateJobStatisticsAction;
 use Cbox\LaravelQueueMonitor\Actions\Analytics\CalculateQueueHealthAction;
 use Cbox\LaravelQueueMonitor\Actions\Analytics\CalculateServerStatisticsAction;
 use Cbox\LaravelQueueMonitor\Http\Resources\StatisticsResource;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\StatisticsRepositoryContract;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\TagRepositoryContract;
+use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
 
 class StatisticsController extends Controller
 {

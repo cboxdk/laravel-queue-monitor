@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Cbox\LaravelQueueMonitor\Events;
 
-use Illuminate\Foundation\Events\Dispatchable;
-use Illuminate\Queue\SerializesModels;
 use Cbox\LaravelQueueMonitor\DataTransferObjects\JobReplayData;
 use Cbox\LaravelQueueMonitor\Models\JobMonitor;
+use Illuminate\Foundation\Events\Dispatchable;
+use Illuminate\Queue\SerializesModels;
 
 final class JobReplayRequested
 {

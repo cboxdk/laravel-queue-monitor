@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-use Illuminate\Support\Facades\Queue;
 use Cbox\LaravelQueueMonitor\DataTransferObjects\JobFilterData;
 use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\Facades\LaravelQueueMonitor as QueueMonitor;
 use Cbox\LaravelQueueMonitor\Models\JobMonitor;
+use Illuminate\Support\Facades\Queue;
 
 test('facade can get job by uuid', function () {
     $job = JobMonitor::factory()->create();

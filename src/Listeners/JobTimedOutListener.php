@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Cbox\LaravelQueueMonitor\Listeners;
 
-use Illuminate\Queue\Events\JobTimedOut;
 use Cbox\LaravelQueueMonitor\Actions\Core\RecordJobTimeoutAction;
+use Illuminate\Queue\Events\JobTimedOut;
 
 final readonly class JobTimedOutListener
 {

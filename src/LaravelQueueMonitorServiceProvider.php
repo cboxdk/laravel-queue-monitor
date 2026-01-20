@@ -4,12 +4,6 @@ declare(strict_types=1);
 
 namespace Cbox\LaravelQueueMonitor;
 
-use Illuminate\Queue\Events\JobFailed;
-use Illuminate\Queue\Events\JobProcessed;
-use Illuminate\Queue\Events\JobProcessing;
-use Illuminate\Queue\Events\JobQueued;
-use Illuminate\Queue\Events\JobTimedOut;
-use Illuminate\Support\Facades\Event;
 use Cbox\LaravelQueueMonitor\Commands\HealthCheckCommand;
 use Cbox\LaravelQueueMonitor\Commands\LaravelQueueMonitorCommand;
 use Cbox\LaravelQueueMonitor\Commands\PruneJobsCommand;
@@ -20,6 +14,12 @@ use Cbox\LaravelQueueMonitor\Listeners\JobProcessingListener;
 use Cbox\LaravelQueueMonitor\Listeners\JobQueuedListener;
 use Cbox\LaravelQueueMonitor\Listeners\JobTimedOutListener;
 use Cbox\LaravelQueueMonitor\Listeners\QueueMetricsSubscriber;
+use Illuminate\Queue\Events\JobFailed;
+use Illuminate\Queue\Events\JobProcessed;
+use Illuminate\Queue\Events\JobProcessing;
+use Illuminate\Queue\Events\JobQueued;
+use Illuminate\Queue\Events\JobTimedOut;
+use Illuminate\Support\Facades\Event;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 

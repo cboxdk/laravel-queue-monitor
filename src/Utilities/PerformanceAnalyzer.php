@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Cbox\LaravelQueueMonitor\Utilities;
 
+use Cbox\LaravelQueueMonitor\Models\JobMonitor;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Cbox\LaravelQueueMonitor\Models\JobMonitor;
 
 final class PerformanceAnalyzer
 {

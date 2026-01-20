@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-use Illuminate\Support\Facades\Queue;
 use Cbox\LaravelQueueMonitor\Actions\Replay\ReplayJobAction;
 use Cbox\LaravelQueueMonitor\Models\JobMonitor;
+use Illuminate\Support\Facades\Queue;
 
 beforeEach(function () {
     $this->action = app(ReplayJobAction::class);

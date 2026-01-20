@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace Cbox\LaravelQueueMonitor\Repositories\Eloquent;
 
 use Carbon\Carbon;
-use Illuminate\Support\Collection;
 use Cbox\LaravelQueueMonitor\DataTransferObjects\JobFilterData;
 use Cbox\LaravelQueueMonitor\DataTransferObjects\JobMonitorData;
 use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\Models\JobMonitor;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\JobMonitorRepositoryContract;
+use Illuminate\Support\Collection;
 
 final class EloquentJobMonitorRepository implements JobMonitorRepositoryContract
 {

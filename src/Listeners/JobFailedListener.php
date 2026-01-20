@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Cbox\LaravelQueueMonitor\Listeners;
 
-use Illuminate\Queue\Events\JobFailed;
 use Cbox\LaravelQueueMonitor\Actions\Core\RecordJobFailedAction;
+use Illuminate\Queue\Events\JobFailed;
 
 final readonly class JobFailedListener
 {

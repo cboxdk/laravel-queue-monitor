@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Cbox\LaravelQueueMonitor\Commands;
 
-use Illuminate\Console\Command;
 use Cbox\LaravelQueueMonitor\LaravelQueueMonitor;
+use Illuminate\Console\Command;
 
 class LaravelQueueMonitorCommand extends Command
 {

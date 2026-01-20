@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Cbox\LaravelQueueMonitor\Repositories\Eloquent;
 
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
 use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\StatisticsRepositoryContract;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 final readonly class EloquentStatisticsRepository implements StatisticsRepositoryContract
 {
