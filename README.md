@@ -262,7 +262,21 @@ QUEUE_MONITOR_API_ENABLED=false
 - [Facade Usage](docs/facade-usage.md)
 - [Job Replay](docs/job-replay.md)
 
-## Integration with Queue-Metrics
+## Security & Redaction
+
+### Payload Redaction
+To protect sensitive data, the API automatically masks keys defined in the `api.sensitive_keys` config option (e.g. `password`, `token`). 
+
+```php
+// config/queue-monitor.php
+'sensitive_keys' => ['password', 'secret', 'key'],
+```
+
+Note: The database stores the **raw** payload to ensure job replay functionality works correctly. Only the API response is redacted.
+
+### API Authentication
+
+**The REST API exposes sensitive queue data including job payloads and exception traces.** You should always add authentication middleware in production.
 
 This package is built on top of [laravel-queue-metrics](https://github.com/cboxdk/laravel-queue-metrics) and automatically:
 

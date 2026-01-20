@@ -142,6 +142,10 @@ return [
         'prefix' => 'api/queue-monitor',
         'middleware' => ['api'],
         'rate_limit' => '60,1', // 60 requests per minute
+
+        // Keys to mask in the payload response (e.g. password, token, secret)
+        // Set to empty array to disable redaction
+        'sensitive_keys' => ['password', 'token', 'secret', 'key', 'authorization'],
     ],
 
     /*

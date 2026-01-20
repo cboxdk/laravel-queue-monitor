@@ -7,6 +7,8 @@ namespace Cbox\LaravelQueueMonitor\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+use Cbox\LaravelQueueMonitor\Utilities\PayloadRedactor;
+
 /**
  * @mixin \Cbox\LaravelQueueMonitor\Models\JobMonitor
  */
@@ -27,6 +29,10 @@ class JobMonitorResource extends JsonResource
             'display_name' => $this->display_name,
             'connection' => $this->connection,
             'queue' => $this->queue,
+            'payload' => $this->payload ? PayloadRedactor::redact(
+                $this->payload,
+                config('queue-monitor.api.sensitive_keys', [])
+            ) : null,
             'status' => [
                 'value' => $this->status->value,
                 'label' => $this->status->label(),
@@ -53,7 +59,10 @@ class JobMonitorResource extends JsonResource
                 'short_class' => $this->getShortExceptionClass(),
                 'message' => $this->exception_message,
             ] : null,
-            'tags' => $this->tags,
+            'tags' => $this->tags ? PayloadRedactor::redact(
+                $this->tags,
+                config('queue-monitor.api.sensitive_keys', [])
+            ) : null,
             'timestamps' => [
                 'queued_at' => $this->queued_at?->toIso8601String(),
                 'started_at' => $this->started_at?->toIso8601String(),

@@ -128,7 +128,30 @@ final class EloquentJobMonitorRepository implements JobMonitorRepositoryContract
             $query->whereIn('status', $statusValues);
         }
 
-        return (int) $query->delete();
+        $totalDeleted = 0;
+        $chunkSize = config('queue-monitor.batch.chunk_size', 1000);
+
+        // Delete in chunks to avoid table locking
+        do {
+            // Get IDs first to avoid long running select locks
+            $ids = $query->clone()
+                ->limit($chunkSize)
+                ->pluck('id');
+
+            if ($ids->isEmpty()) {
+                break;
+            }
+
+            $deleted = JobMonitor::whereIn('id', $ids)->delete();
+            $totalDeleted += $deleted;
+            
+            // Short sleep to allow other transactions to slip in if needed
+            if ($deleted >= $chunkSize) {
+                usleep(10000); // 10ms
+            }
+        } while ($ids->count() >= $chunkSize);
+
+        return $totalDeleted;
     }
 
     public function delete(string $uuid): bool
