@@ -72,10 +72,10 @@ final readonly class WorkerContextService
         $managerId = isset($_SERVER['AUTOSCALE_MANAGER_ID']) ? (string) $_SERVER['AUTOSCALE_MANAGER_ID'] : '';
 
         if ($managerId !== '') {
-            return 'autoscale-' . $managerId . '-' . getmypid();
+            return 'autoscale-'.$managerId.'-'.getmypid();
         }
 
-        return 'autoscale-' . getmypid();
+        return 'autoscale-'.getmypid();
     }
 
     /**
