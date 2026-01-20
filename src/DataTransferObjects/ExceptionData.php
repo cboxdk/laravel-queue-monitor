@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace PHPeek\LaravelQueueMonitor\DataTransferObjects;
+namespace Cbox\LaravelQueueMonitor\DataTransferObjects;
 
 use Throwable;
 

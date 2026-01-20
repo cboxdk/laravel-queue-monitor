@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-use PHPeek\LaravelQueueMonitor\Models\JobMonitor;
-use PHPeek\LaravelQueueMonitor\Utilities\PerformanceAnalyzer;
+use Cbox\LaravelQueueMonitor\Models\JobMonitor;
+use Cbox\LaravelQueueMonitor\Utilities\PerformanceAnalyzer;
 
 test('calculates duration percentiles correctly', function () {
     // Create jobs with known durations

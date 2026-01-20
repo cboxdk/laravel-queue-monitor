@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace PHPeek\LaravelQueueMonitor\Http\Controllers;
+namespace Cbox\LaravelQueueMonitor\Http\Controllers;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use PHPeek\LaravelQueueMonitor\DataTransferObjects\JobFilterData;
-use PHPeek\LaravelQueueMonitor\Http\Resources\JobMonitorCollection;
-use PHPeek\LaravelQueueMonitor\Http\Resources\JobMonitorResource;
-use PHPeek\LaravelQueueMonitor\Repositories\Contracts\JobMonitorRepositoryContract;
+use Cbox\LaravelQueueMonitor\DataTransferObjects\JobFilterData;
+use Cbox\LaravelQueueMonitor\Http\Resources\JobMonitorCollection;
+use Cbox\LaravelQueueMonitor\Http\Resources\JobMonitorResource;
+use Cbox\LaravelQueueMonitor\Repositories\Contracts\JobMonitorRepositoryContract;
 
 class JobMonitorController extends Controller
 {

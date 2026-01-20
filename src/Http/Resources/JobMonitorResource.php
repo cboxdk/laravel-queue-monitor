@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace PHPeek\LaravelQueueMonitor\Http\Resources;
+namespace Cbox\LaravelQueueMonitor\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * @mixin \PHPeek\LaravelQueueMonitor\Models\JobMonitor
+ * @mixin \Cbox\LaravelQueueMonitor\Models\JobMonitor
  */
 class JobMonitorResource extends JsonResource
 {

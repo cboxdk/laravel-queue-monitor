@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace PHPeek\LaravelQueueMonitor\Events;
+namespace Cbox\LaravelQueueMonitor\Events;
 
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
-use PHPeek\LaravelQueueMonitor\DataTransferObjects\JobReplayData;
-use PHPeek\LaravelQueueMonitor\Models\JobMonitor;
+use Cbox\LaravelQueueMonitor\DataTransferObjects\JobReplayData;
+use Cbox\LaravelQueueMonitor\Models\JobMonitor;
 
 final class JobReplayRequested
 {

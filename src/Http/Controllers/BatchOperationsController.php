@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace PHPeek\LaravelQueueMonitor\Http\Controllers;
+namespace Cbox\LaravelQueueMonitor\Http\Controllers;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use PHPeek\LaravelQueueMonitor\Actions\Batch\BatchDeleteAction;
-use PHPeek\LaravelQueueMonitor\Actions\Batch\BatchReplayAction;
-use PHPeek\LaravelQueueMonitor\DataTransferObjects\JobFilterData;
+use Cbox\LaravelQueueMonitor\Actions\Batch\BatchDeleteAction;
+use Cbox\LaravelQueueMonitor\Actions\Batch\BatchReplayAction;
+use Cbox\LaravelQueueMonitor\DataTransferObjects\JobFilterData;
 
 class BatchOperationsController extends Controller
 {

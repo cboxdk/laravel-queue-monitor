@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace PHPeek\LaravelQueueMonitor\Utilities;
+namespace Cbox\LaravelQueueMonitor\Utilities;
 
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use PHPeek\LaravelQueueMonitor\Models\JobMonitor;
+use Cbox\LaravelQueueMonitor\Models\JobMonitor;
 
 final class PerformanceAnalyzer
 {

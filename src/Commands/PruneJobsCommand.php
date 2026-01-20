@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace PHPeek\LaravelQueueMonitor\Commands;
+namespace Cbox\LaravelQueueMonitor\Commands;
 
 use Illuminate\Console\Command;
-use PHPeek\LaravelQueueMonitor\Actions\Core\PruneJobsAction;
+use Cbox\LaravelQueueMonitor\Actions\Core\PruneJobsAction;
 
 class PruneJobsCommand extends Command
 {

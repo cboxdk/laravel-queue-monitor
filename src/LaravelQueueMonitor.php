@@ -2,19 +2,19 @@
 
 declare(strict_types=1);
 
-namespace PHPeek\LaravelQueueMonitor;
+namespace Cbox\LaravelQueueMonitor;
 
 use Illuminate\Support\Collection;
-use PHPeek\LaravelQueueMonitor\Actions\Analytics\CalculateJobStatisticsAction;
-use PHPeek\LaravelQueueMonitor\Actions\Analytics\CalculateQueueHealthAction;
-use PHPeek\LaravelQueueMonitor\Actions\Analytics\CalculateServerStatisticsAction;
-use PHPeek\LaravelQueueMonitor\Actions\Core\CancelJobAction;
-use PHPeek\LaravelQueueMonitor\Actions\Core\PruneJobsAction;
-use PHPeek\LaravelQueueMonitor\Actions\Replay\ReplayJobAction;
-use PHPeek\LaravelQueueMonitor\DataTransferObjects\JobFilterData;
-use PHPeek\LaravelQueueMonitor\DataTransferObjects\JobReplayData;
-use PHPeek\LaravelQueueMonitor\Models\JobMonitor;
-use PHPeek\LaravelQueueMonitor\Repositories\Contracts\JobMonitorRepositoryContract;
+use Cbox\LaravelQueueMonitor\Actions\Analytics\CalculateJobStatisticsAction;
+use Cbox\LaravelQueueMonitor\Actions\Analytics\CalculateQueueHealthAction;
+use Cbox\LaravelQueueMonitor\Actions\Analytics\CalculateServerStatisticsAction;
+use Cbox\LaravelQueueMonitor\Actions\Core\CancelJobAction;
+use Cbox\LaravelQueueMonitor\Actions\Core\PruneJobsAction;
+use Cbox\LaravelQueueMonitor\Actions\Replay\ReplayJobAction;
+use Cbox\LaravelQueueMonitor\DataTransferObjects\JobFilterData;
+use Cbox\LaravelQueueMonitor\DataTransferObjects\JobReplayData;
+use Cbox\LaravelQueueMonitor\Models\JobMonitor;
+use Cbox\LaravelQueueMonitor\Repositories\Contracts\JobMonitorRepositoryContract;
 
 final class LaravelQueueMonitor
 {

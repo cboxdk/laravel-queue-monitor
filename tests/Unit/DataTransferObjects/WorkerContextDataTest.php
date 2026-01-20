@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-use PHPeek\LaravelQueueMonitor\DataTransferObjects\WorkerContextData;
-use PHPeek\LaravelQueueMonitor\Enums\WorkerType;
+use Cbox\LaravelQueueMonitor\DataTransferObjects\WorkerContextData;
+use Cbox\LaravelQueueMonitor\Enums\WorkerType;
 
 test('creates worker context data from constructor', function () {
     $data = new WorkerContextData(

@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace PHPeek\LaravelQueueMonitor\Actions\Core;
+namespace Cbox\LaravelQueueMonitor\Actions\Core;
 
 use Carbon\Carbon;
-use PHPeek\LaravelQueueMonitor\Enums\JobStatus;
-use PHPeek\LaravelQueueMonitor\Repositories\Contracts\JobMonitorRepositoryContract;
+use Cbox\LaravelQueueMonitor\Enums\JobStatus;
+use Cbox\LaravelQueueMonitor\Repositories\Contracts\JobMonitorRepositoryContract;
 
 final readonly class RecordJobTimeoutAction
 {

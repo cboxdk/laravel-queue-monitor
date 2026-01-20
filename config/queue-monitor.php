@@ -2,26 +2,26 @@
 
 declare(strict_types=1);
 
-use PHPeek\LaravelQueueMonitor\Actions\Analytics\CalculateJobStatisticsAction;
-use PHPeek\LaravelQueueMonitor\Actions\Analytics\CalculateQueueHealthAction;
-use PHPeek\LaravelQueueMonitor\Actions\Analytics\CalculateServerStatisticsAction;
-use PHPeek\LaravelQueueMonitor\Actions\Batch\BatchDeleteAction;
-use PHPeek\LaravelQueueMonitor\Actions\Batch\BatchReplayAction;
-use PHPeek\LaravelQueueMonitor\Actions\Core\CancelJobAction;
-use PHPeek\LaravelQueueMonitor\Actions\Core\PruneJobsAction;
-use PHPeek\LaravelQueueMonitor\Actions\Core\RecordJobCompletedAction;
-use PHPeek\LaravelQueueMonitor\Actions\Core\RecordJobFailedAction;
-use PHPeek\LaravelQueueMonitor\Actions\Core\RecordJobQueuedAction;
-use PHPeek\LaravelQueueMonitor\Actions\Core\RecordJobStartedAction;
-use PHPeek\LaravelQueueMonitor\Actions\Core\RecordJobTimeoutAction;
-use PHPeek\LaravelQueueMonitor\Actions\Core\UpdateJobMetricsAction;
-use PHPeek\LaravelQueueMonitor\Actions\Replay\ReplayJobAction;
-use PHPeek\LaravelQueueMonitor\Repositories\Contracts\JobMonitorRepositoryContract;
-use PHPeek\LaravelQueueMonitor\Repositories\Contracts\StatisticsRepositoryContract;
-use PHPeek\LaravelQueueMonitor\Repositories\Contracts\TagRepositoryContract;
-use PHPeek\LaravelQueueMonitor\Repositories\Eloquent\EloquentJobMonitorRepository;
-use PHPeek\LaravelQueueMonitor\Repositories\Eloquent\EloquentStatisticsRepository;
-use PHPeek\LaravelQueueMonitor\Repositories\Eloquent\EloquentTagRepository;
+use Cbox\LaravelQueueMonitor\Actions\Analytics\CalculateJobStatisticsAction;
+use Cbox\LaravelQueueMonitor\Actions\Analytics\CalculateQueueHealthAction;
+use Cbox\LaravelQueueMonitor\Actions\Analytics\CalculateServerStatisticsAction;
+use Cbox\LaravelQueueMonitor\Actions\Batch\BatchDeleteAction;
+use Cbox\LaravelQueueMonitor\Actions\Batch\BatchReplayAction;
+use Cbox\LaravelQueueMonitor\Actions\Core\CancelJobAction;
+use Cbox\LaravelQueueMonitor\Actions\Core\PruneJobsAction;
+use Cbox\LaravelQueueMonitor\Actions\Core\RecordJobCompletedAction;
+use Cbox\LaravelQueueMonitor\Actions\Core\RecordJobFailedAction;
+use Cbox\LaravelQueueMonitor\Actions\Core\RecordJobQueuedAction;
+use Cbox\LaravelQueueMonitor\Actions\Core\RecordJobStartedAction;
+use Cbox\LaravelQueueMonitor\Actions\Core\RecordJobTimeoutAction;
+use Cbox\LaravelQueueMonitor\Actions\Core\UpdateJobMetricsAction;
+use Cbox\LaravelQueueMonitor\Actions\Replay\ReplayJobAction;
+use Cbox\LaravelQueueMonitor\Repositories\Contracts\JobMonitorRepositoryContract;
+use Cbox\LaravelQueueMonitor\Repositories\Contracts\StatisticsRepositoryContract;
+use Cbox\LaravelQueueMonitor\Repositories\Contracts\TagRepositoryContract;
+use Cbox\LaravelQueueMonitor\Repositories\Eloquent\EloquentJobMonitorRepository;
+use Cbox\LaravelQueueMonitor\Repositories\Eloquent\EloquentStatisticsRepository;
+use Cbox\LaravelQueueMonitor\Repositories\Eloquent\EloquentTagRepository;
 
 return [
     /*

@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace PHPeek\LaravelQueueMonitor\Repositories\Eloquent;
+namespace Cbox\LaravelQueueMonitor\Repositories\Eloquent;
 
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use PHPeek\LaravelQueueMonitor\Enums\JobStatus;
-use PHPeek\LaravelQueueMonitor\Models\Tag;
-use PHPeek\LaravelQueueMonitor\Repositories\Contracts\TagRepositoryContract;
+use Cbox\LaravelQueueMonitor\Enums\JobStatus;
+use Cbox\LaravelQueueMonitor\Models\Tag;
+use Cbox\LaravelQueueMonitor\Repositories\Contracts\TagRepositoryContract;
 
 final readonly class EloquentTagRepository implements TagRepositoryContract
 {

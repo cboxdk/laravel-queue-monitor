@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPeek\LaravelQueueMonitor\Database\Factories;
+namespace Cbox\LaravelQueueMonitor\Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
 

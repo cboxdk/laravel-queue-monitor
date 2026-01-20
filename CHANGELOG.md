@@ -18,7 +18,7 @@ All notable changes to `laravel-queue-monitor` will be documented in this file.
 - `phpstan/phpstan` 2.1.32 → 2.1.33
 - Symfony components updated to v7.4.x/v8.x
 
-**Full Changelog**: https://github.com/gophpeek/laravel-queue-monitor/compare/v1.0.0...v1.1.0
+**Full Changelog**: https://github.com/cboxdk/laravel-queue-monitor/compare/v1.0.0...v1.1.0
 
 ## v1.0.0 - Initial Release - 2026-01-01
 
@@ -48,13 +48,13 @@ First stable release of Laravel Queue Monitor - a comprehensive job monitoring s
 #### Installation
 
 ```bash
-composer require gophpeek/laravel-queue-monitor
+composer require cboxdk/laravel-queue-monitor
 
 
 ```
 #### Documentation
 
-See the [README](https://github.com/gophpeek/laravel-queue-monitor#readme) for full documentation.
+See the [README](https://github.com/cboxdk/laravel-queue-monitor#readme) for full documentation.
 
 ## 1.0.0 - 2025-01-21
 
@@ -114,4 +114,4 @@ See the [README](https://github.com/gophpeek/laravel-queue-monitor#readme) for f
 
 - PHP ^8.3
 - Laravel ^10.0 || ^11.0 || ^12.0
-- gophpeek/laravel-queue-metrics ^1.0 (hard dependency)
+- cboxdk/laravel-queue-metrics ^1.0 (hard dependency)

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace PHPeek\LaravelQueueMonitor\Utilities;
+namespace Cbox\LaravelQueueMonitor\Utilities;
 
 final class JobPayloadSerializer
 {

@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace PHPeek\LaravelQueueMonitor\Jobs;
+namespace Cbox\LaravelQueueMonitor\Jobs;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use PHPeek\LaravelQueueMonitor\Repositories\Contracts\TagRepositoryContract;
+use Cbox\LaravelQueueMonitor\Repositories\Contracts\TagRepositoryContract;
 
 /**
  * Deferred job for storing normalized tags.

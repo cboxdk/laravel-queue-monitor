@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace PHPeek\LaravelQueueMonitor\Tests;
+namespace Cbox\LaravelQueueMonitor\Tests;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Orchestra\Testbench\TestCase as Orchestra;
-use PHPeek\LaravelQueueMonitor\LaravelQueueMonitorServiceProvider;
+use Cbox\LaravelQueueMonitor\LaravelQueueMonitorServiceProvider;
 
 class TestCase extends Orchestra
 {
@@ -15,7 +15,7 @@ class TestCase extends Orchestra
         parent::setUp();
 
         Factory::guessFactoryNamesUsing(
-            fn (string $modelName) => 'PHPeek\\LaravelQueueMonitor\\Database\\Factories\\'.class_basename($modelName).'Factory'
+            fn (string $modelName) => 'Cbox\\LaravelQueueMonitor\\Database\\Factories\\'.class_basename($modelName).'Factory'
         );
     }
 

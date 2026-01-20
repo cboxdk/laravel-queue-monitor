@@ -3,14 +3,14 @@
 declare(strict_types=1);
 
 use Illuminate\Support\Facades\Route;
-use PHPeek\LaravelQueueMonitor\Http\Controllers\BatchOperationsController;
-use PHPeek\LaravelQueueMonitor\Http\Controllers\ExportController;
-use PHPeek\LaravelQueueMonitor\Http\Controllers\HealthCheckController;
-use PHPeek\LaravelQueueMonitor\Http\Controllers\JobMonitorController;
-use PHPeek\LaravelQueueMonitor\Http\Controllers\JobReplayController;
-use PHPeek\LaravelQueueMonitor\Http\Controllers\PruneController;
-use PHPeek\LaravelQueueMonitor\Http\Controllers\StatisticsController;
-use PHPeek\LaravelQueueMonitor\Http\Middleware\EnsureQueueMonitorEnabled;
+use Cbox\LaravelQueueMonitor\Http\Controllers\BatchOperationsController;
+use Cbox\LaravelQueueMonitor\Http\Controllers\ExportController;
+use Cbox\LaravelQueueMonitor\Http\Controllers\HealthCheckController;
+use Cbox\LaravelQueueMonitor\Http\Controllers\JobMonitorController;
+use Cbox\LaravelQueueMonitor\Http\Controllers\JobReplayController;
+use Cbox\LaravelQueueMonitor\Http\Controllers\PruneController;
+use Cbox\LaravelQueueMonitor\Http\Controllers\StatisticsController;
+use Cbox\LaravelQueueMonitor\Http\Middleware\EnsureQueueMonitorEnabled;
 
 if (! config('queue-monitor.api.enabled', true)) {
     return;

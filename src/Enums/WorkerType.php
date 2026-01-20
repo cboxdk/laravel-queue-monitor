@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace PHPeek\LaravelQueueMonitor\Enums;
+namespace Cbox\LaravelQueueMonitor\Enums;
 
 enum WorkerType: string
 {

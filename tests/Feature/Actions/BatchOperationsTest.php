@@ -3,11 +3,11 @@
 declare(strict_types=1);
 
 use Illuminate\Support\Facades\Queue;
-use PHPeek\LaravelQueueMonitor\Actions\Batch\BatchDeleteAction;
-use PHPeek\LaravelQueueMonitor\Actions\Batch\BatchReplayAction;
-use PHPeek\LaravelQueueMonitor\DataTransferObjects\JobFilterData;
-use PHPeek\LaravelQueueMonitor\Enums\JobStatus;
-use PHPeek\LaravelQueueMonitor\Models\JobMonitor;
+use Cbox\LaravelQueueMonitor\Actions\Batch\BatchDeleteAction;
+use Cbox\LaravelQueueMonitor\Actions\Batch\BatchReplayAction;
+use Cbox\LaravelQueueMonitor\DataTransferObjects\JobFilterData;
+use Cbox\LaravelQueueMonitor\Enums\JobStatus;
+use Cbox\LaravelQueueMonitor\Models\JobMonitor;
 
 test('batch replay processes multiple jobs', function () {
     Queue::fake();

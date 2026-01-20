@@ -2,17 +2,17 @@
 
 declare(strict_types=1);
 
-namespace PHPeek\LaravelQueueMonitor\Facades;
+namespace Cbox\LaravelQueueMonitor\Facades;
 
 use Illuminate\Support\Facades\Facade;
 
 /**
- * @see \PHPeek\LaravelQueueMonitor\LaravelQueueMonitor
+ * @see \Cbox\LaravelQueueMonitor\LaravelQueueMonitor
  */
 class LaravelQueueMonitor extends Facade
 {
     protected static function getFacadeAccessor(): string
     {
-        return \PHPeek\LaravelQueueMonitor\LaravelQueueMonitor::class;
+        return \Cbox\LaravelQueueMonitor\LaravelQueueMonitor::class;
     }
 }

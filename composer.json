@@ -1,12 +1,12 @@
 {
-    "name": "gophpeek/laravel-queue-monitor",
+    "name": "cboxdk/laravel-queue-monitor",
     "description": "This is my package laravel-queue-monitor",
     "keywords": [
-        "PHPeek",
+        "Cbox",
         "laravel",
         "laravel-queue-monitor"
     ],
-    "homepage": "https://github.com/gophpeek/laravel-queue-monitor",
+    "homepage": "https://github.com/cboxdk/laravel-queue-monitor",
     "license": "MIT",
     "authors": [
         {
@@ -17,7 +17,7 @@
     ],
     "require": {
         "php": "^8.3 || ^8.4 || ^8.5",
-        "gophpeek/laravel-queue-metrics": "^1.0",
+        "cboxdk/laravel-queue-metrics": "^2.0",
         "spatie/laravel-package-tools": "^1.16",
         "illuminate/contracts": "^11.0||^12.0"
     },
@@ -35,13 +35,13 @@
     },
     "autoload": {
         "psr-4": {
-            "PHPeek\\LaravelQueueMonitor\\": "src/",
-            "PHPeek\\LaravelQueueMonitor\\Database\\Factories\\": "database/factories/"
+            "Cbox\\LaravelQueueMonitor\\": "src/",
+            "Cbox\\LaravelQueueMonitor\\Database\\Factories\\": "database/factories/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "PHPeek\\LaravelQueueMonitor\\Tests\\": "tests/",
+            "Cbox\\LaravelQueueMonitor\\Tests\\": "tests/",
             "Workbench\\App\\": "workbench/app/"
         }
     },
@@ -63,10 +63,10 @@
     "extra": {
         "laravel": {
             "providers": [
-                "PHPeek\\LaravelQueueMonitor\\LaravelQueueMonitorServiceProvider"
+                "Cbox\\LaravelQueueMonitor\\LaravelQueueMonitorServiceProvider"
             ],
             "aliases": {
-                "LaravelQueueMonitor": "PHPeek\\LaravelQueueMonitor\\Facades\\LaravelQueueMonitor"
+                "LaravelQueueMonitor": "Cbox\\LaravelQueueMonitor\\Facades\\LaravelQueueMonitor"
             }
         }
     },

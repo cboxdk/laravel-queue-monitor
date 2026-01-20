@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace PHPeek\LaravelQueueMonitor\Repositories\Eloquent;
+namespace Cbox\LaravelQueueMonitor\Repositories\Eloquent;
 
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
-use PHPeek\LaravelQueueMonitor\DataTransferObjects\JobFilterData;
-use PHPeek\LaravelQueueMonitor\DataTransferObjects\JobMonitorData;
-use PHPeek\LaravelQueueMonitor\Enums\JobStatus;
-use PHPeek\LaravelQueueMonitor\Models\JobMonitor;
-use PHPeek\LaravelQueueMonitor\Repositories\Contracts\JobMonitorRepositoryContract;
+use Cbox\LaravelQueueMonitor\DataTransferObjects\JobFilterData;
+use Cbox\LaravelQueueMonitor\DataTransferObjects\JobMonitorData;
+use Cbox\LaravelQueueMonitor\Enums\JobStatus;
+use Cbox\LaravelQueueMonitor\Models\JobMonitor;
+use Cbox\LaravelQueueMonitor\Repositories\Contracts\JobMonitorRepositoryContract;
 
 final class EloquentJobMonitorRepository implements JobMonitorRepositoryContract
 {

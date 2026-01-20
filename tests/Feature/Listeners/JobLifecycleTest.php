@@ -6,11 +6,11 @@ use Illuminate\Queue\Events\JobFailed;
 use Illuminate\Queue\Events\JobProcessed;
 use Illuminate\Queue\Events\JobProcessing;
 use Illuminate\Queue\Events\JobQueued;
-use PHPeek\LaravelQueueMonitor\Actions\Core\RecordJobQueuedAction;
-use PHPeek\LaravelQueueMonitor\Actions\Core\RecordJobStartedAction;
-use PHPeek\LaravelQueueMonitor\Enums\JobStatus;
-use PHPeek\LaravelQueueMonitor\Models\JobMonitor;
-use PHPeek\LaravelQueueMonitor\Tests\Support\ExampleJob;
+use Cbox\LaravelQueueMonitor\Actions\Core\RecordJobQueuedAction;
+use Cbox\LaravelQueueMonitor\Actions\Core\RecordJobStartedAction;
+use Cbox\LaravelQueueMonitor\Enums\JobStatus;
+use Cbox\LaravelQueueMonitor\Models\JobMonitor;
+use Cbox\LaravelQueueMonitor\Tests\Support\ExampleJob;
 
 test('job queued event creates monitor record', function () {
     $job = new ExampleJob;
@@ -58,7 +58,7 @@ test('job processed event marks completion', function () {
 
     // Directly invoke the action to avoid silent failures in listener try/catch
     $event = new JobProcessed('redis', $mockJob);
-    $action = app(\PHPeek\LaravelQueueMonitor\Actions\Core\RecordJobCompletedAction::class);
+    $action = app(\Cbox\LaravelQueueMonitor\Actions\Core\RecordJobCompletedAction::class);
     $action->execute($event);
 
     $monitor->refresh();
@@ -79,7 +79,7 @@ test('job failed event captures exception', function () {
 
     // Directly invoke the action to avoid silent failures in listener try/catch
     $event = new JobFailed('redis', $mockJob, $exception);
-    $action = app(\PHPeek\LaravelQueueMonitor\Actions\Core\RecordJobFailedAction::class);
+    $action = app(\Cbox\LaravelQueueMonitor\Actions\Core\RecordJobFailedAction::class);
     $action->execute($event);
 
     $monitor->refresh();
@@ -111,7 +111,7 @@ test('complete job lifecycle is tracked', function () {
 
     // 3. Completed
     $processedEvent = new JobProcessed('redis', $mockJob);
-    app(\PHPeek\LaravelQueueMonitor\Actions\Core\RecordJobCompletedAction::class)->execute($processedEvent);
+    app(\Cbox\LaravelQueueMonitor\Actions\Core\RecordJobCompletedAction::class)->execute($processedEvent);
     $monitor->refresh();
     expect($monitor->status)->toBe(JobStatus::COMPLETED);
     expect($monitor->isFinished())->toBeTrue();

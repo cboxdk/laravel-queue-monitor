@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace PHPeek\LaravelQueueMonitor\Models;
+namespace Cbox\LaravelQueueMonitor\Models;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;

@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-use PHPeek\LaravelQueueMonitor\DataTransferObjects\JobFilterData;
-use PHPeek\LaravelQueueMonitor\Enums\JobStatus;
-use PHPeek\LaravelQueueMonitor\Models\JobMonitor;
-use PHPeek\LaravelQueueMonitor\Repositories\Contracts\JobMonitorRepositoryContract;
+use Cbox\LaravelQueueMonitor\DataTransferObjects\JobFilterData;
+use Cbox\LaravelQueueMonitor\Enums\JobStatus;
+use Cbox\LaravelQueueMonitor\Models\JobMonitor;
+use Cbox\LaravelQueueMonitor\Repositories\Contracts\JobMonitorRepositoryContract;
 
 beforeEach(function () {
     $this->repository = app(JobMonitorRepositoryContract::class);

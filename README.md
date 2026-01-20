@@ -1,11 +1,11 @@
 # Laravel Queue Monitor
 
-[![Latest Version on Packagist](https://img.shields.io/packagist/v/gophpeek/laravel-queue-monitor.svg?style=flat-square)](https://packagist.org/packages/gophpeek/laravel-queue-monitor)
-[![Total Downloads](https://img.shields.io/packagist/dt/gophpeek/laravel-queue-monitor.svg?style=flat-square)](https://packagist.org/packages/gophpeek/laravel-queue-monitor)
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/cboxdk/laravel-queue-monitor.svg?style=flat-square)](https://packagist.org/packages/cboxdk/laravel-queue-monitor)
+[![Total Downloads](https://img.shields.io/packagist/dt/cboxdk/laravel-queue-monitor.svg?style=flat-square)](https://packagist.org/packages/cboxdk/laravel-queue-monitor)
 
 **Production-ready Laravel queue monitoring with individual job tracking, payload storage, and comprehensive analytics.**
 
-Track every queue job with detailed metrics, replay failed jobs from stored payloads, and gain deep insights into your queue performance. Built on top of [laravel-queue-metrics](https://github.com/gophpeek/laravel-queue-metrics) for enhanced resource tracking.
+Track every queue job with detailed metrics, replay failed jobs from stored payloads, and gain deep insights into your queue performance. Built on top of [laravel-queue-metrics](https://github.com/cboxdk/laravel-queue-metrics) for enhanced resource tracking.
 
 ## Features
 
@@ -27,14 +27,14 @@ Track every queue job with detailed metrics, replay failed jobs from stored payl
 
 - PHP 8.3+
 - Laravel 10+
-- **gophpeek/laravel-queue-metrics** ^1.0 (hard dependency)
+- **cboxdk/laravel-queue-metrics** ^1.0 (hard dependency)
 
 ## Installation
 
 Install via Composer:
 
 ```bash
-composer require gophpeek/laravel-queue-monitor
+composer require cboxdk/laravel-queue-monitor
 ```
 
 Publish configuration and run migrations:
@@ -51,7 +51,7 @@ That's it! The package automatically starts monitoring all queue jobs.
 ### Facade Usage
 
 ```php
-use PHPeek\LaravelQueueMonitor\Facades\LaravelQueueMonitor as QueueMonitor;
+use Cbox\LaravelQueueMonitor\Facades\LaravelQueueMonitor as QueueMonitor;
 
 // Get job details
 $job = QueueMonitor::getJob($uuid);
@@ -264,7 +264,7 @@ QUEUE_MONITOR_API_ENABLED=false
 
 ## Integration with Queue-Metrics
 
-This package is built on top of [laravel-queue-metrics](https://github.com/gophpeek/laravel-queue-metrics) and automatically:
+This package is built on top of [laravel-queue-metrics](https://github.com/cboxdk/laravel-queue-metrics) and automatically:
 
 - Captures CPU time, memory usage, and file descriptors
 - Subscribes to `MetricsRecorded` events
@@ -281,7 +281,7 @@ composer format   # Laravel Pint
 
 ## Credits
 
-- [Sylvester Damgaard](https://github.com/PHPeek)
+- [Sylvester Damgaard](https://github.com/Cbox)
 - Built with [laravel-package-tools](https://github.com/spatie/laravel-package-tools)
 
 ## License

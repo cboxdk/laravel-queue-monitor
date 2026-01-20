@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace PHPeek\LaravelQueueMonitor\Listeners;
+namespace Cbox\LaravelQueueMonitor\Listeners;
 
 use Illuminate\Queue\Events\JobQueued;
-use PHPeek\LaravelQueueMonitor\Actions\Core\RecordJobQueuedAction;
+use Cbox\LaravelQueueMonitor\Actions\Core\RecordJobQueuedAction;
 
 final readonly class JobQueuedListener
 {

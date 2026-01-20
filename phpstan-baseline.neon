@@ -94,22 +94,22 @@ parameters:
 			path: src/DataTransferObjects/JobFilterData.php
 
 		-
-			message: '#^Parameter \$jobClasses of class PHPeek\\LaravelQueueMonitor\\DataTransferObjects\\JobFilterData constructor expects array\<string\>\|null, array\<mixed, mixed\>\|null given\.$#'
+			message: '#^Parameter \$jobClasses of class Cbox\\LaravelQueueMonitor\\DataTransferObjects\\JobFilterData constructor expects array\<string\>\|null, array\<mixed, mixed\>\|null given\.$#'
 			identifier: argument.type
 			path: src/DataTransferObjects/JobFilterData.php
 
 		-
-			message: '#^Parameter \$queues of class PHPeek\\LaravelQueueMonitor\\DataTransferObjects\\JobFilterData constructor expects array\<string\>\|null, array\<mixed, mixed\>\|null given\.$#'
+			message: '#^Parameter \$queues of class Cbox\\LaravelQueueMonitor\\DataTransferObjects\\JobFilterData constructor expects array\<string\>\|null, array\<mixed, mixed\>\|null given\.$#'
 			identifier: argument.type
 			path: src/DataTransferObjects/JobFilterData.php
 
 		-
-			message: '#^Parameter \$serverNames of class PHPeek\\LaravelQueueMonitor\\DataTransferObjects\\JobFilterData constructor expects array\<string\>\|null, array\<mixed, mixed\>\|null given\.$#'
+			message: '#^Parameter \$serverNames of class Cbox\\LaravelQueueMonitor\\DataTransferObjects\\JobFilterData constructor expects array\<string\>\|null, array\<mixed, mixed\>\|null given\.$#'
 			identifier: argument.type
 			path: src/DataTransferObjects/JobFilterData.php
 
 		-
-			message: '#^Parameter \$tags of class PHPeek\\LaravelQueueMonitor\\DataTransferObjects\\JobFilterData constructor expects array\<string\>\|null, array\<mixed, mixed\>\|null given\.$#'
+			message: '#^Parameter \$tags of class Cbox\\LaravelQueueMonitor\\DataTransferObjects\\JobFilterData constructor expects array\<string\>\|null, array\<mixed, mixed\>\|null given\.$#'
 			identifier: argument.type
 			path: src/DataTransferObjects/JobFilterData.php
 
@@ -129,7 +129,7 @@ parameters:
 			path: src/DataTransferObjects/JobMonitorData.php
 
 		-
-			message: '#^Parameter \#1 \$data of static method PHPeek\\LaravelQueueMonitor\\DataTransferObjects\\ExceptionData\:\:fromArray\(\) expects array\<string, mixed\>, array\<mixed, mixed\> given\.$#'
+			message: '#^Parameter \#1 \$data of static method Cbox\\LaravelQueueMonitor\\DataTransferObjects\\ExceptionData\:\:fromArray\(\) expects array\<string, mixed\>, array\<mixed, mixed\> given\.$#'
 			identifier: argument.type
 			path: src/DataTransferObjects/JobMonitorData.php
 
@@ -139,17 +139,17 @@ parameters:
 			path: src/DataTransferObjects/JobMonitorData.php
 
 		-
-			message: '#^Parameter \#1 \$value of static method PHPeek\\LaravelQueueMonitor\\Enums\\JobStatus\:\:from\(\) expects int\|string, mixed given\.$#'
+			message: '#^Parameter \#1 \$value of static method Cbox\\LaravelQueueMonitor\\Enums\\JobStatus\:\:from\(\) expects int\|string, mixed given\.$#'
 			identifier: argument.type
 			path: src/DataTransferObjects/JobMonitorData.php
 
 		-
-			message: '#^Parameter \$payload of class PHPeek\\LaravelQueueMonitor\\DataTransferObjects\\JobMonitorData constructor expects array\<string, mixed\>\|null, array\<mixed, mixed\>\|null given\.$#'
+			message: '#^Parameter \$payload of class Cbox\\LaravelQueueMonitor\\DataTransferObjects\\JobMonitorData constructor expects array\<string, mixed\>\|null, array\<mixed, mixed\>\|null given\.$#'
 			identifier: argument.type
 			path: src/DataTransferObjects/JobMonitorData.php
 
 		-
-			message: '#^Parameter \$tags of class PHPeek\\LaravelQueueMonitor\\DataTransferObjects\\JobMonitorData constructor expects array\<string\>\|null, array\<mixed, mixed\>\|null given\.$#'
+			message: '#^Parameter \$tags of class Cbox\\LaravelQueueMonitor\\DataTransferObjects\\JobMonitorData constructor expects array\<string\>\|null, array\<mixed, mixed\>\|null given\.$#'
 			identifier: argument.type
 			path: src/DataTransferObjects/JobMonitorData.php
 
@@ -174,12 +174,12 @@ parameters:
 			path: src/Http/Controllers/PruneController.php
 
 		-
-			message: '#^Parameter \#1 \$jobClass of method PHPeek\\LaravelQueueMonitor\\Repositories\\Contracts\\StatisticsRepositoryContract\:\:getJobClassStatistics\(\) expects string\|null, mixed given\.$#'
+			message: '#^Parameter \#1 \$jobClass of method Cbox\\LaravelQueueMonitor\\Repositories\\Contracts\\StatisticsRepositoryContract\:\:getJobClassStatistics\(\) expects string\|null, mixed given\.$#'
 			identifier: argument.type
 			path: src/Http/Controllers/StatisticsController.php
 
 		-
-			message: '#^Parameter \#1 \$queue of method PHPeek\\LaravelQueueMonitor\\Repositories\\Contracts\\StatisticsRepositoryContract\:\:getQueueStatistics\(\) expects string\|null, mixed given\.$#'
+			message: '#^Parameter \#1 \$queue of method Cbox\\LaravelQueueMonitor\\Repositories\\Contracts\\StatisticsRepositoryContract\:\:getQueueStatistics\(\) expects string\|null, mixed given\.$#'
 			identifier: argument.type
 			path: src/Http/Controllers/StatisticsController.php
 
@@ -194,7 +194,7 @@ parameters:
 			path: src/Http/Resources/JobMonitorResource.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Http\\Resources\\StatisticsResource\:\:toArray\(\) should return array\<string, mixed\> but returns mixed\.$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Http\\Resources\\StatisticsResource\:\:toArray\(\) should return array\<string, mixed\> but returns mixed\.$#'
 			identifier: return.type
 			path: src/Http/Resources/StatisticsResource.php
 
@@ -219,7 +219,7 @@ parameters:
 			path: src/LaravelQueueMonitorServiceProvider.php
 
 		-
-			message: '#^Property PHPeek\\LaravelQueueMonitor\\Listeners\\QueueMetricsSubscriber\:\:\$action is never read, only written\.$#'
+			message: '#^Property Cbox\\LaravelQueueMonitor\\Listeners\\QueueMetricsSubscriber\:\:\$action is never read, only written\.$#'
 			identifier: property.onlyWritten
 			path: src/Listeners/QueueMetricsSubscriber.php
 
@@ -229,182 +229,182 @@ parameters:
 			path: src/Models/JobMonitor.php
 
 		-
-			message: '#^Class PHPeek\\LaravelQueueMonitor\\Models\\JobMonitor has PHPDoc tag @property for property \$payload with no value type specified in iterable type array\.$#'
+			message: '#^Class Cbox\\LaravelQueueMonitor\\Models\\JobMonitor has PHPDoc tag @property for property \$payload with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			path: src/Models/JobMonitor.php
 
 		-
-			message: '#^Class PHPeek\\LaravelQueueMonitor\\Models\\JobMonitor has PHPDoc tag @property for property \$tags with no value type specified in iterable type array\.$#'
+			message: '#^Class Cbox\\LaravelQueueMonitor\\Models\\JobMonitor has PHPDoc tag @property for property \$tags with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			path: src/Models/JobMonitor.php
 
 		-
-			message: '#^Class PHPeek\\LaravelQueueMonitor\\Models\\JobMonitor uses generic trait Illuminate\\Database\\Eloquent\\Factories\\HasFactory but does not specify its types\: TFactory$#'
+			message: '#^Class Cbox\\LaravelQueueMonitor\\Models\\JobMonitor uses generic trait Illuminate\\Database\\Eloquent\\Factories\\HasFactory but does not specify its types\: TFactory$#'
 			identifier: missingType.generics
 			path: src/Models/JobMonitor.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Models\\JobMonitor\:\:getConnectionName\(\) should return string\|null but returns mixed\.$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Models\\JobMonitor\:\:getConnectionName\(\) should return string\|null but returns mixed\.$#'
 			identifier: return.type
 			path: src/Models/JobMonitor.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Models\\JobMonitor\:\:retriedFrom\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Models\\JobMonitor\:\:retriedFrom\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
 			identifier: missingType.generics
 			path: src/Models/JobMonitor.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Models\\JobMonitor\:\:retries\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\HasMany does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Models\\JobMonitor\:\:retries\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\HasMany does not specify its types\: TRelatedModel, TDeclaringModel$#'
 			identifier: missingType.generics
 			path: src/Models/JobMonitor.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Models\\JobMonitor\:\:scopeByWorkerType\(\) has no return type specified\.$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Models\\JobMonitor\:\:scopeByWorkerType\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			path: src/Models/JobMonitor.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Models\\JobMonitor\:\:scopeByWorkerType\(\) has parameter \$query with no type specified\.$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Models\\JobMonitor\:\:scopeByWorkerType\(\) has parameter \$query with no type specified\.$#'
 			identifier: missingType.parameter
 			path: src/Models/JobMonitor.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Models\\JobMonitor\:\:scopeFailed\(\) has no return type specified\.$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Models\\JobMonitor\:\:scopeFailed\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			path: src/Models/JobMonitor.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Models\\JobMonitor\:\:scopeFailed\(\) has parameter \$query with no type specified\.$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Models\\JobMonitor\:\:scopeFailed\(\) has parameter \$query with no type specified\.$#'
 			identifier: missingType.parameter
 			path: src/Models/JobMonitor.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Models\\JobMonitor\:\:scopeFinished\(\) has no return type specified\.$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Models\\JobMonitor\:\:scopeFinished\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			path: src/Models/JobMonitor.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Models\\JobMonitor\:\:scopeFinished\(\) has parameter \$query with no type specified\.$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Models\\JobMonitor\:\:scopeFinished\(\) has parameter \$query with no type specified\.$#'
 			identifier: missingType.parameter
 			path: src/Models/JobMonitor.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Models\\JobMonitor\:\:scopeForJobClass\(\) has no return type specified\.$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Models\\JobMonitor\:\:scopeForJobClass\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			path: src/Models/JobMonitor.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Models\\JobMonitor\:\:scopeForJobClass\(\) has parameter \$jobClass with no value type specified in iterable type array\.$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Models\\JobMonitor\:\:scopeForJobClass\(\) has parameter \$jobClass with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			path: src/Models/JobMonitor.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Models\\JobMonitor\:\:scopeForJobClass\(\) has parameter \$query with no type specified\.$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Models\\JobMonitor\:\:scopeForJobClass\(\) has parameter \$query with no type specified\.$#'
 			identifier: missingType.parameter
 			path: src/Models/JobMonitor.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Models\\JobMonitor\:\:scopeOnConnection\(\) has no return type specified\.$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Models\\JobMonitor\:\:scopeOnConnection\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			path: src/Models/JobMonitor.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Models\\JobMonitor\:\:scopeOnConnection\(\) has parameter \$query with no type specified\.$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Models\\JobMonitor\:\:scopeOnConnection\(\) has parameter \$query with no type specified\.$#'
 			identifier: missingType.parameter
 			path: src/Models/JobMonitor.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Models\\JobMonitor\:\:scopeOnQueue\(\) has no return type specified\.$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Models\\JobMonitor\:\:scopeOnQueue\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			path: src/Models/JobMonitor.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Models\\JobMonitor\:\:scopeOnQueue\(\) has parameter \$query with no type specified\.$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Models\\JobMonitor\:\:scopeOnQueue\(\) has parameter \$query with no type specified\.$#'
 			identifier: missingType.parameter
 			path: src/Models/JobMonitor.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Models\\JobMonitor\:\:scopeOnQueue\(\) has parameter \$queue with no value type specified in iterable type array\.$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Models\\JobMonitor\:\:scopeOnQueue\(\) has parameter \$queue with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			path: src/Models/JobMonitor.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Models\\JobMonitor\:\:scopeOnServer\(\) has no return type specified\.$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Models\\JobMonitor\:\:scopeOnServer\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			path: src/Models/JobMonitor.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Models\\JobMonitor\:\:scopeOnServer\(\) has parameter \$query with no type specified\.$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Models\\JobMonitor\:\:scopeOnServer\(\) has parameter \$query with no type specified\.$#'
 			identifier: missingType.parameter
 			path: src/Models/JobMonitor.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Models\\JobMonitor\:\:scopeOnServer\(\) has parameter \$serverName with no value type specified in iterable type array\.$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Models\\JobMonitor\:\:scopeOnServer\(\) has parameter \$serverName with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			path: src/Models/JobMonitor.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Models\\JobMonitor\:\:scopeQueuedBetween\(\) has no return type specified\.$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Models\\JobMonitor\:\:scopeQueuedBetween\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			path: src/Models/JobMonitor.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Models\\JobMonitor\:\:scopeQueuedBetween\(\) has parameter \$query with no type specified\.$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Models\\JobMonitor\:\:scopeQueuedBetween\(\) has parameter \$query with no type specified\.$#'
 			identifier: missingType.parameter
 			path: src/Models/JobMonitor.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Models\\JobMonitor\:\:scopeSlowJobs\(\) has no return type specified\.$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Models\\JobMonitor\:\:scopeSlowJobs\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			path: src/Models/JobMonitor.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Models\\JobMonitor\:\:scopeSlowJobs\(\) has parameter \$query with no type specified\.$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Models\\JobMonitor\:\:scopeSlowJobs\(\) has parameter \$query with no type specified\.$#'
 			identifier: missingType.parameter
 			path: src/Models/JobMonitor.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Models\\JobMonitor\:\:scopeSuccessful\(\) has no return type specified\.$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Models\\JobMonitor\:\:scopeSuccessful\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			path: src/Models/JobMonitor.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Models\\JobMonitor\:\:scopeSuccessful\(\) has parameter \$query with no type specified\.$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Models\\JobMonitor\:\:scopeSuccessful\(\) has parameter \$query with no type specified\.$#'
 			identifier: missingType.parameter
 			path: src/Models/JobMonitor.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Models\\JobMonitor\:\:scopeWithStatus\(\) has no return type specified\.$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Models\\JobMonitor\:\:scopeWithStatus\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			path: src/Models/JobMonitor.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Models\\JobMonitor\:\:scopeWithStatus\(\) has parameter \$query with no type specified\.$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Models\\JobMonitor\:\:scopeWithStatus\(\) has parameter \$query with no type specified\.$#'
 			identifier: missingType.parameter
 			path: src/Models/JobMonitor.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Models\\JobMonitor\:\:scopeWithStatus\(\) has parameter \$status with no value type specified in iterable type array\.$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Models\\JobMonitor\:\:scopeWithStatus\(\) has parameter \$status with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			path: src/Models/JobMonitor.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Models\\JobMonitor\:\:scopeWithTag\(\) has no return type specified\.$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Models\\JobMonitor\:\:scopeWithTag\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			path: src/Models/JobMonitor.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Models\\JobMonitor\:\:scopeWithTag\(\) has parameter \$query with no type specified\.$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Models\\JobMonitor\:\:scopeWithTag\(\) has parameter \$query with no type specified\.$#'
 			identifier: missingType.parameter
 			path: src/Models/JobMonitor.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Models\\JobMonitor\:\:scopeWithTag\(\) has parameter \$tag with no value type specified in iterable type array\.$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Models\\JobMonitor\:\:scopeWithTag\(\) has parameter \$tag with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			path: src/Models/JobMonitor.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Models\\JobMonitor\:\:tagRecords\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\HasMany does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Models\\JobMonitor\:\:tagRecords\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\HasMany does not specify its types\: TRelatedModel, TDeclaringModel$#'
 			identifier: missingType.generics
 			path: src/Models/JobMonitor.php
 
@@ -414,117 +414,117 @@ parameters:
 			path: src/Models/Tag.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Models\\Tag\:\:getConnectionName\(\) should return string but returns mixed\.$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Models\\Tag\:\:getConnectionName\(\) should return string but returns mixed\.$#'
 			identifier: return.type
 			path: src/Models/Tag.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Models\\Tag\:\:job\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Models\\Tag\:\:job\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
 			identifier: missingType.generics
 			path: src/Models/Tag.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Models\\Tag\:\:scopeForTag\(\) has no return type specified\.$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Models\\Tag\:\:scopeForTag\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			path: src/Models/Tag.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Models\\Tag\:\:scopeForTag\(\) has parameter \$query with no type specified\.$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Models\\Tag\:\:scopeForTag\(\) has parameter \$query with no type specified\.$#'
 			identifier: missingType.parameter
 			path: src/Models/Tag.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Repositories\\Contracts\\JobMonitorRepositoryContract\:\:prune\(\) has parameter \$statuses with no value type specified in iterable type array\.$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Repositories\\Contracts\\JobMonitorRepositoryContract\:\:prune\(\) has parameter \$statuses with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			path: src/Repositories/Contracts/JobMonitorRepositoryContract.php
 
 		-
-			message: '#^Call to an undefined static method PHPeek\\LaravelQueueMonitor\\Models\\JobMonitor\:\:create\(\)\.$#'
+			message: '#^Call to an undefined static method Cbox\\LaravelQueueMonitor\\Models\\JobMonitor\:\:create\(\)\.$#'
 			identifier: staticMethod.notFound
 			path: src/Repositories/Eloquent/EloquentJobMonitorRepository.php
 
 		-
-			message: '#^Call to an undefined static method PHPeek\\LaravelQueueMonitor\\Models\\JobMonitor\:\:find\(\)\.$#'
+			message: '#^Call to an undefined static method Cbox\\LaravelQueueMonitor\\Models\\JobMonitor\:\:find\(\)\.$#'
 			identifier: staticMethod.notFound
 			path: src/Repositories/Eloquent/EloquentJobMonitorRepository.php
 
 		-
-			message: '#^Call to an undefined static method PHPeek\\LaravelQueueMonitor\\Models\\JobMonitor\:\:orderByDesc\(\)\.$#'
+			message: '#^Call to an undefined static method Cbox\\LaravelQueueMonitor\\Models\\JobMonitor\:\:orderByDesc\(\)\.$#'
 			identifier: staticMethod.notFound
 			path: src/Repositories/Eloquent/EloquentJobMonitorRepository.php
 
 		-
-			message: '#^Call to an undefined static method PHPeek\\LaravelQueueMonitor\\Models\\JobMonitor\:\:where\(\)\.$#'
+			message: '#^Call to an undefined static method Cbox\\LaravelQueueMonitor\\Models\\JobMonitor\:\:where\(\)\.$#'
 			identifier: staticMethod.notFound
 			path: src/Repositories/Eloquent/EloquentJobMonitorRepository.php
 
 		-
-			message: '#^Call to an undefined static method PHPeek\\LaravelQueueMonitor\\Models\\JobMonitor\:\:whereIn\(\)\.$#'
+			message: '#^Call to an undefined static method Cbox\\LaravelQueueMonitor\\Models\\JobMonitor\:\:whereIn\(\)\.$#'
 			identifier: staticMethod.notFound
 			path: src/Repositories/Eloquent/EloquentJobMonitorRepository.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Repositories\\Eloquent\\EloquentJobMonitorRepository\:\:applyFilters\(\) has parameter \$query with no type specified\.$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Repositories\\Eloquent\\EloquentJobMonitorRepository\:\:applyFilters\(\) has parameter \$query with no type specified\.$#'
 			identifier: missingType.parameter
 			path: src/Repositories/Eloquent/EloquentJobMonitorRepository.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Repositories\\Eloquent\\EloquentJobMonitorRepository\:\:prune\(\) has parameter \$statuses with no value type specified in iterable type array\.$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Repositories\\Eloquent\\EloquentJobMonitorRepository\:\:prune\(\) has parameter \$statuses with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			path: src/Repositories/Eloquent/EloquentJobMonitorRepository.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Repositories\\Eloquent\\EloquentJobMonitorRepository\:\:query\(\) should return Illuminate\\Support\\Collection\<int, PHPeek\\LaravelQueueMonitor\\Models\\JobMonitor\> but returns Illuminate\\Support\\Collection\<int, stdClass\>\.$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Repositories\\Eloquent\\EloquentJobMonitorRepository\:\:query\(\) should return Illuminate\\Support\\Collection\<int, Cbox\\LaravelQueueMonitor\\Models\\JobMonitor\> but returns Illuminate\\Support\\Collection\<int, stdClass\>\.$#'
 			identifier: return.type
 			path: src/Repositories/Eloquent/EloquentJobMonitorRepository.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Repositories\\Eloquent\\EloquentJobMonitorRepository\:\:update\(\) should return PHPeek\\LaravelQueueMonitor\\Models\\JobMonitor but returns PHPeek\\LaravelQueueMonitor\\Models\\JobMonitor\|null\.$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Repositories\\Eloquent\\EloquentJobMonitorRepository\:\:update\(\) should return Cbox\\LaravelQueueMonitor\\Models\\JobMonitor but returns Cbox\\LaravelQueueMonitor\\Models\\JobMonitor\|null\.$#'
 			identifier: return.type
 			path: src/Repositories/Eloquent/EloquentJobMonitorRepository.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Repositories\\Eloquent\\EloquentStatisticsRepository\:\:computeGlobalStatistics\(\) return type has no value type specified in iterable type array\.$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Repositories\\Eloquent\\EloquentStatisticsRepository\:\:computeGlobalStatistics\(\) return type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			path: src/Repositories/Eloquent/EloquentStatisticsRepository.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Repositories\\Eloquent\\EloquentStatisticsRepository\:\:getJobClassStatistics\(\) should return array\<string, mixed\> but returns array\<int, array\<string, mixed\>\>\.$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Repositories\\Eloquent\\EloquentStatisticsRepository\:\:getJobClassStatistics\(\) should return array\<string, mixed\> but returns array\<int, array\<string, mixed\>\>\.$#'
 			identifier: return.type
 			path: src/Repositories/Eloquent/EloquentStatisticsRepository.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Repositories\\Eloquent\\EloquentStatisticsRepository\:\:getQueueHealth\(\) should return array\<string, mixed\> but returns array\<int, array\<string, mixed\>\>\.$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Repositories\\Eloquent\\EloquentStatisticsRepository\:\:getQueueHealth\(\) should return array\<string, mixed\> but returns array\<int, array\<string, mixed\>\>\.$#'
 			identifier: return.type
 			path: src/Repositories/Eloquent/EloquentStatisticsRepository.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Repositories\\Eloquent\\EloquentStatisticsRepository\:\:getQueueStatistics\(\) should return array\<string, mixed\> but returns array\<int, array\<string, mixed\>\>\.$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Repositories\\Eloquent\\EloquentStatisticsRepository\:\:getQueueStatistics\(\) should return array\<string, mixed\> but returns array\<int, array\<string, mixed\>\>\.$#'
 			identifier: return.type
 			path: src/Repositories/Eloquent/EloquentStatisticsRepository.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Repositories\\Eloquent\\EloquentStatisticsRepository\:\:getServerStatistics\(\) should return array\<string, mixed\> but returns array\<int, array\<string, mixed\>\>\.$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Repositories\\Eloquent\\EloquentStatisticsRepository\:\:getServerStatistics\(\) should return array\<string, mixed\> but returns array\<int, array\<string, mixed\>\>\.$#'
 			identifier: return.type
 			path: src/Repositories/Eloquent/EloquentStatisticsRepository.php
 
 		-
-			message: '#^Call to an undefined static method PHPeek\\LaravelQueueMonitor\\Models\\Tag\:\:distinct\(\)\.$#'
+			message: '#^Call to an undefined static method Cbox\\LaravelQueueMonitor\\Models\\Tag\:\:distinct\(\)\.$#'
 			identifier: staticMethod.notFound
 			path: src/Repositories/Eloquent/EloquentTagRepository.php
 
 		-
-			message: '#^Call to an undefined static method PHPeek\\LaravelQueueMonitor\\Models\\Tag\:\:insert\(\)\.$#'
+			message: '#^Call to an undefined static method Cbox\\LaravelQueueMonitor\\Models\\Tag\:\:insert\(\)\.$#'
 			identifier: staticMethod.notFound
 			path: src/Repositories/Eloquent/EloquentTagRepository.php
 
 		-
-			message: '#^Call to an undefined static method PHPeek\\LaravelQueueMonitor\\Models\\Tag\:\:where\(\)\.$#'
+			message: '#^Call to an undefined static method Cbox\\LaravelQueueMonitor\\Models\\Tag\:\:where\(\)\.$#'
 			identifier: staticMethod.notFound
 			path: src/Repositories/Eloquent/EloquentTagRepository.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Repositories\\Eloquent\\EloquentTagRepository\:\:getTagStatistics\(\) should return Illuminate\\Support\\Collection\<int, array\{tag\: string, count\: int, success_rate\: float\}\> but returns Illuminate\\Support\\Collection\<int, array\{tag\: mixed, count\: int, successful_count\: int, success_rate\: float\}\>\.$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Repositories\\Eloquent\\EloquentTagRepository\:\:getTagStatistics\(\) should return Illuminate\\Support\\Collection\<int, array\{tag\: string, count\: int, success_rate\: float\}\> but returns Illuminate\\Support\\Collection\<int, array\{tag\: mixed, count\: int, successful_count\: int, success_rate\: float\}\>\.$#'
 			identifier: return.type
 			path: src/Repositories/Eloquent/EloquentTagRepository.php
 
@@ -534,7 +534,7 @@ parameters:
 			path: src/Services/AlertingService.php
 
 		-
-			message: '#^Call to an undefined static method PHPeek\\LaravelQueueMonitor\\Models\\JobMonitor\:\:where\(\)\.$#'
+			message: '#^Call to an undefined static method Cbox\\LaravelQueueMonitor\\Models\\JobMonitor\:\:where\(\)\.$#'
 			identifier: staticMethod.notFound
 			path: src/Services/AlertingService.php
 
@@ -544,12 +544,12 @@ parameters:
 			path: src/Services/HealthCheckService.php
 
 		-
-			message: '#^Call to an undefined static method PHPeek\\LaravelQueueMonitor\\Models\\JobMonitor\:\:count\(\)\.$#'
+			message: '#^Call to an undefined static method Cbox\\LaravelQueueMonitor\\Models\\JobMonitor\:\:count\(\)\.$#'
 			identifier: staticMethod.notFound
 			path: src/Services/HealthCheckService.php
 
 		-
-			message: '#^Call to an undefined static method PHPeek\\LaravelQueueMonitor\\Models\\JobMonitor\:\:where\(\)\.$#'
+			message: '#^Call to an undefined static method Cbox\\LaravelQueueMonitor\\Models\\JobMonitor\:\:where\(\)\.$#'
 			identifier: staticMethod.notFound
 			path: src/Services/HealthCheckService.php
 
@@ -559,12 +559,12 @@ parameters:
 			path: src/Services/HealthCheckService.php
 
 		-
-			message: '#^Call to an undefined method PHPeek\\LaravelQueueMetrics\\Utilities\\HorizonDetector\:\:getSupervisorName\(\)\.$#'
+			message: '#^Call to an undefined method Cbox\\LaravelQueueMetrics\\Utilities\\HorizonDetector\:\:getSupervisorName\(\)\.$#'
 			identifier: method.notFound
 			path: src/Services/WorkerContextService.php
 
 		-
-			message: '#^Call to an undefined method PHPeek\\LaravelQueueMetrics\\Utilities\\HorizonDetector\:\:isHorizon\(\)\.$#'
+			message: '#^Call to an undefined method Cbox\\LaravelQueueMetrics\\Utilities\\HorizonDetector\:\:isHorizon\(\)\.$#'
 			identifier: method.notFound
 			path: src/Services/WorkerContextService.php
 
@@ -574,7 +574,7 @@ parameters:
 			path: src/Services/WorkerContextService.php
 
 		-
-			message: '#^Trait PHPeek\\LaravelQueueMonitor\\Traits\\MonitorsJobs is used zero times and is not analysed\.$#'
+			message: '#^Trait Cbox\\LaravelQueueMonitor\\Traits\\MonitorsJobs is used zero times and is not analysed\.$#'
 			identifier: trait.unused
 			path: src/Traits/MonitorsJobs.php
 
@@ -584,12 +584,12 @@ parameters:
 			path: src/Utilities/JobPayloadSerializer.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Utilities\\JobPayloadSerializer\:\:deserialize\(\) has parameter \$payload with no value type specified in iterable type array\.$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Utilities\\JobPayloadSerializer\:\:deserialize\(\) has parameter \$payload with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			path: src/Utilities/JobPayloadSerializer.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Utilities\\JobPayloadSerializer\:\:exceedsSizeLimit\(\) has parameter \$payload with no value type specified in iterable type array\.$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Utilities\\JobPayloadSerializer\:\:exceedsSizeLimit\(\) has parameter \$payload with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			path: src/Utilities/JobPayloadSerializer.php
 
@@ -599,7 +599,7 @@ parameters:
 			path: src/Utilities/PerformanceAnalyzer.php
 
 		-
-			message: '#^Call to an undefined static method PHPeek\\LaravelQueueMonitor\\Models\\JobMonitor\:\:where\(\)\.$#'
+			message: '#^Call to an undefined static method Cbox\\LaravelQueueMonitor\\Models\\JobMonitor\:\:where\(\)\.$#'
 			identifier: staticMethod.notFound
 			path: src/Utilities/PerformanceAnalyzer.php
 
@@ -609,126 +609,126 @@ parameters:
 			path: src/Utilities/PerformanceAnalyzer.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Utilities\\PerformanceAnalyzer\:\:detectRegression\(\) return type has no value type specified in iterable type array\.$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Utilities\\PerformanceAnalyzer\:\:detectRegression\(\) return type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			path: src/Utilities/PerformanceAnalyzer.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Utilities\\QueryBuilderHelper\:\:between\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Utilities\\QueryBuilderHelper\:\:between\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
 			identifier: missingType.generics
 			path: src/Utilities/QueryBuilderHelper.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Utilities\\QueryBuilderHelper\:\:between\(\) should return Illuminate\\Database\\Eloquent\\Builder but returns Illuminate\\Database\\Query\\Builder\.$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Utilities\\QueryBuilderHelper\:\:between\(\) should return Illuminate\\Database\\Eloquent\\Builder but returns Illuminate\\Database\\Query\\Builder\.$#'
 			identifier: return.type
 			path: src/Utilities/QueryBuilderHelper.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Utilities\\QueryBuilderHelper\:\:byServer\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Utilities\\QueryBuilderHelper\:\:byServer\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
 			identifier: missingType.generics
 			path: src/Utilities/QueryBuilderHelper.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Utilities\\QueryBuilderHelper\:\:failedWith\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Utilities\\QueryBuilderHelper\:\:failedWith\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
 			identifier: missingType.generics
 			path: src/Utilities/QueryBuilderHelper.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Utilities\\QueryBuilderHelper\:\:horizonOnly\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Utilities\\QueryBuilderHelper\:\:horizonOnly\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
 			identifier: missingType.generics
 			path: src/Utilities/QueryBuilderHelper.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Utilities\\QueryBuilderHelper\:\:lastHours\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Utilities\\QueryBuilderHelper\:\:lastHours\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
 			identifier: missingType.generics
 			path: src/Utilities/QueryBuilderHelper.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Utilities\\QueryBuilderHelper\:\:longRunning\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Utilities\\QueryBuilderHelper\:\:longRunning\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
 			identifier: missingType.generics
 			path: src/Utilities/QueryBuilderHelper.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Utilities\\QueryBuilderHelper\:\:memoryIntensive\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Utilities\\QueryBuilderHelper\:\:memoryIntensive\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
 			identifier: missingType.generics
 			path: src/Utilities/QueryBuilderHelper.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Utilities\\QueryBuilderHelper\:\:memoryIntensive\(\) should return Illuminate\\Database\\Eloquent\\Builder but returns Illuminate\\Database\\Query\\Builder\.$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Utilities\\QueryBuilderHelper\:\:memoryIntensive\(\) should return Illuminate\\Database\\Eloquent\\Builder but returns Illuminate\\Database\\Query\\Builder\.$#'
 			identifier: return.type
 			path: src/Utilities/QueryBuilderHelper.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Utilities\\QueryBuilderHelper\:\:queueWorkOnly\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Utilities\\QueryBuilderHelper\:\:queueWorkOnly\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
 			identifier: missingType.generics
 			path: src/Utilities/QueryBuilderHelper.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Utilities\\QueryBuilderHelper\:\:recentlyCompleted\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Utilities\\QueryBuilderHelper\:\:recentlyCompleted\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
 			identifier: missingType.generics
 			path: src/Utilities/QueryBuilderHelper.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Utilities\\QueryBuilderHelper\:\:recentlyCompleted\(\) should return Illuminate\\Database\\Eloquent\\Builder but returns Illuminate\\Database\\Query\\Builder\.$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Utilities\\QueryBuilderHelper\:\:recentlyCompleted\(\) should return Illuminate\\Database\\Eloquent\\Builder but returns Illuminate\\Database\\Query\\Builder\.$#'
 			identifier: return.type
 			path: src/Utilities/QueryBuilderHelper.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Utilities\\QueryBuilderHelper\:\:retried\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Utilities\\QueryBuilderHelper\:\:retried\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
 			identifier: missingType.generics
 			path: src/Utilities/QueryBuilderHelper.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Utilities\\QueryBuilderHelper\:\:retried\(\) should return Illuminate\\Database\\Eloquent\\Builder but returns Illuminate\\Database\\Query\\Builder\.$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Utilities\\QueryBuilderHelper\:\:retried\(\) should return Illuminate\\Database\\Eloquent\\Builder but returns Illuminate\\Database\\Query\\Builder\.$#'
 			identifier: return.type
 			path: src/Utilities/QueryBuilderHelper.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Utilities\\QueryBuilderHelper\:\:slow\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Utilities\\QueryBuilderHelper\:\:slow\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
 			identifier: missingType.generics
 			path: src/Utilities/QueryBuilderHelper.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Utilities\\QueryBuilderHelper\:\:slow\(\) should return Illuminate\\Database\\Eloquent\\Builder but returns Illuminate\\Database\\Query\\Builder\.$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Utilities\\QueryBuilderHelper\:\:slow\(\) should return Illuminate\\Database\\Eloquent\\Builder but returns Illuminate\\Database\\Query\\Builder\.$#'
 			identifier: return.type
 			path: src/Utilities/QueryBuilderHelper.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Utilities\\QueryBuilderHelper\:\:stuck\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Utilities\\QueryBuilderHelper\:\:stuck\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
 			identifier: missingType.generics
 			path: src/Utilities/QueryBuilderHelper.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Utilities\\QueryBuilderHelper\:\:today\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Utilities\\QueryBuilderHelper\:\:today\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
 			identifier: missingType.generics
 			path: src/Utilities/QueryBuilderHelper.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Utilities\\QueryBuilderHelper\:\:today\(\) should return Illuminate\\Database\\Eloquent\\Builder but returns Illuminate\\Database\\Query\\Builder\.$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Utilities\\QueryBuilderHelper\:\:today\(\) should return Illuminate\\Database\\Eloquent\\Builder but returns Illuminate\\Database\\Query\\Builder\.$#'
 			identifier: return.type
 			path: src/Utilities/QueryBuilderHelper.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Utilities\\QueryBuilderHelper\:\:withAllTags\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Utilities\\QueryBuilderHelper\:\:withAllTags\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
 			identifier: missingType.generics
 			path: src/Utilities/QueryBuilderHelper.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Utilities\\QueryBuilderHelper\:\:withAnyTag\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Utilities\\QueryBuilderHelper\:\:withAnyTag\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
 			identifier: missingType.generics
 			path: src/Utilities/QueryBuilderHelper.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Utilities\\QueryBuilderHelper\:\:withRetries\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Utilities\\QueryBuilderHelper\:\:withRetries\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
 			identifier: missingType.generics
 			path: src/Utilities/QueryBuilderHelper.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Utilities\\QueryBuilderHelper\:\:withTag\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Utilities\\QueryBuilderHelper\:\:withTag\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
 			identifier: missingType.generics
 			path: src/Utilities/QueryBuilderHelper.php
 
 		-
-			message: '#^Method PHPeek\\LaravelQueueMonitor\\Utilities\\QueryBuilderHelper\:\:withTag\(\) should return Illuminate\\Database\\Eloquent\\Builder but returns Illuminate\\Database\\Query\\Builder\.$#'
+			message: '#^Method Cbox\\LaravelQueueMonitor\\Utilities\\QueryBuilderHelper\:\:withTag\(\) should return Illuminate\\Database\\Eloquent\\Builder but returns Illuminate\\Database\\Query\\Builder\.$#'
 			identifier: return.type
 			path: src/Utilities/QueryBuilderHelper.php

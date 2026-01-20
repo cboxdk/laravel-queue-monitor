@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace PHPeek\LaravelQueueMonitor\Repositories\Eloquent;
+namespace Cbox\LaravelQueueMonitor\Repositories\Eloquent;
 
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
-use PHPeek\LaravelQueueMonitor\Enums\JobStatus;
-use PHPeek\LaravelQueueMonitor\Repositories\Contracts\StatisticsRepositoryContract;
+use Cbox\LaravelQueueMonitor\Enums\JobStatus;
+use Cbox\LaravelQueueMonitor\Repositories\Contracts\StatisticsRepositoryContract;
 
 final readonly class EloquentStatisticsRepository implements StatisticsRepositoryContract
 {

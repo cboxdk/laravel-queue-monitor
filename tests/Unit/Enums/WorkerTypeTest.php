@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use PHPeek\LaravelQueueMonitor\Enums\WorkerType;
+use Cbox\LaravelQueueMonitor\Enums\WorkerType;
 
 test('worker type has all expected cases', function () {
     expect(WorkerType::cases())->toHaveCount(2);

@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace PHPeek\LaravelQueueMonitor\Listeners;
+namespace Cbox\LaravelQueueMonitor\Listeners;
 
 use Illuminate\Queue\Events\JobTimedOut;
-use PHPeek\LaravelQueueMonitor\Actions\Core\RecordJobTimeoutAction;
+use Cbox\LaravelQueueMonitor\Actions\Core\RecordJobTimeoutAction;
 
 final readonly class JobTimedOutListener
 {

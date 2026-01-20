@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace PHPeek\LaravelQueueMonitor\Commands;
+namespace Cbox\LaravelQueueMonitor\Commands;
 
 use Illuminate\Console\Command;
-use PHPeek\LaravelQueueMonitor\Services\AlertingService;
-use PHPeek\LaravelQueueMonitor\Services\HealthCheckService;
+use Cbox\LaravelQueueMonitor\Services\AlertingService;
+use Cbox\LaravelQueueMonitor\Services\HealthCheckService;
 
 class HealthCheckCommand extends Command
 {

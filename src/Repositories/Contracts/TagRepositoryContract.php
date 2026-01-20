@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace PHPeek\LaravelQueueMonitor\Repositories\Contracts;
+namespace Cbox\LaravelQueueMonitor\Repositories\Contracts;
 
 use Illuminate\Support\Collection;
 

@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace PHPeek\LaravelQueueMonitor\Services;
+namespace Cbox\LaravelQueueMonitor\Services;
 
-use PHPeek\LaravelQueueMonitor\DataTransferObjects\JobFilterData;
-use PHPeek\LaravelQueueMonitor\Repositories\Contracts\JobMonitorRepositoryContract;
+use Cbox\LaravelQueueMonitor\DataTransferObjects\JobFilterData;
+use Cbox\LaravelQueueMonitor\Repositories\Contracts\JobMonitorRepositoryContract;
 
 final readonly class ExportService
 {
@@ -127,13 +127,13 @@ final readonly class ExportService
      */
     public function statisticsReport(): array
     {
-        $stats = app(\PHPeek\LaravelQueueMonitor\Actions\Analytics\CalculateJobStatisticsAction::class)
+        $stats = app(\Cbox\LaravelQueueMonitor\Actions\Analytics\CalculateJobStatisticsAction::class)
             ->execute();
 
-        $serverStats = app(\PHPeek\LaravelQueueMonitor\Actions\Analytics\CalculateServerStatisticsAction::class)
+        $serverStats = app(\Cbox\LaravelQueueMonitor\Actions\Analytics\CalculateServerStatisticsAction::class)
             ->execute();
 
-        $queueHealth = app(\PHPeek\LaravelQueueMonitor\Actions\Analytics\CalculateQueueHealthAction::class)
+        $queueHealth = app(\Cbox\LaravelQueueMonitor\Actions\Analytics\CalculateQueueHealthAction::class)
             ->execute();
 
         return [

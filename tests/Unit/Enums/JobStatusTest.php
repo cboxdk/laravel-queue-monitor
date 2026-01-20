@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use PHPeek\LaravelQueueMonitor\Enums\JobStatus;
+use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 
 test('job status has all expected cases', function () {
     $cases = JobStatus::cases();

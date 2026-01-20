@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-use PHPeek\LaravelQueueMonitor\Actions\Core\PruneJobsAction;
-use PHPeek\LaravelQueueMonitor\Enums\JobStatus;
-use PHPeek\LaravelQueueMonitor\Models\JobMonitor;
+use Cbox\LaravelQueueMonitor\Actions\Core\PruneJobsAction;
+use Cbox\LaravelQueueMonitor\Enums\JobStatus;
+use Cbox\LaravelQueueMonitor\Models\JobMonitor;
 
 test('prune action removes jobs older than specified days', function () {
     JobMonitor::factory()->create(['created_at' => now()->subDays(40)]);

@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace PHPeek\LaravelQueueMonitor\DataTransferObjects;
+namespace Cbox\LaravelQueueMonitor\DataTransferObjects;
 
 use Carbon\Carbon;
-use PHPeek\LaravelQueueMonitor\Enums\JobStatus;
+use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 
 final readonly class JobMonitorData
 {

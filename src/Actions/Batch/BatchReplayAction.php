@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace PHPeek\LaravelQueueMonitor\Actions\Batch;
+namespace Cbox\LaravelQueueMonitor\Actions\Batch;
 
-use PHPeek\LaravelQueueMonitor\Actions\Replay\ReplayJobAction;
-use PHPeek\LaravelQueueMonitor\DataTransferObjects\JobFilterData;
-use PHPeek\LaravelQueueMonitor\Repositories\Contracts\JobMonitorRepositoryContract;
+use Cbox\LaravelQueueMonitor\Actions\Replay\ReplayJobAction;
+use Cbox\LaravelQueueMonitor\DataTransferObjects\JobFilterData;
+use Cbox\LaravelQueueMonitor\Repositories\Contracts\JobMonitorRepositoryContract;
 
 final readonly class BatchReplayAction
 {

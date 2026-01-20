@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace PHPeek\LaravelQueueMonitor\Traits;
+namespace Cbox\LaravelQueueMonitor\Traits;
 
 /**
  * Trait for jobs that want custom monitoring behavior

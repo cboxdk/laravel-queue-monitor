@@ -11,7 +11,7 @@ A production-ready Laravel package for monitoring individual queue jobs with pay
 
 - **62 PHP Files** (5,099 lines of production code)
 - **28 Test Files** (comprehensive Pest 4 suite with 60+ tests)
-- **17 Documentation Files** (PHPeek-compliant with frontmatter)
+- **17 Documentation Files** (Cbox-compliant with frontmatter)
 - **PHPStan Level 9** ✅ (165-error baseline, 28 errors fixed)
 - **Laravel Pint** ✅ (all code formatted)
 - **PHP 8.3+** (modern features throughout)
@@ -131,7 +131,7 @@ A production-ready Laravel package for monitoring individual queue jobs with pay
 95  contributing.md        Development (hidden)
 ```
 
-All docs follow PHPeek guidelines:
+All docs follow Cbox guidelines:
 - ✅ YAML frontmatter
 - ✅ Title + description
 - ✅ Proper weight ordering
@@ -199,7 +199,7 @@ All docs follow PHPeek guidelines:
 
 ### Documentation ✅
 - [x] 17 markdown files
-- [x] PHPeek-compliant frontmatter
+- [x] Cbox-compliant frontmatter
 - [x] Complete API reference
 - [x] Troubleshooting guide
 - [x] Usage examples
@@ -234,14 +234,14 @@ git tag v1.0.0
 git push origin main --tags
 ```
 
-### PHPeek Documentation
+### Cbox Documentation
 ```bash
-php artisan docs:import gophpeek laravel-queue-monitor
+php artisan docs:import cboxdk laravel-queue-monitor
 ```
 
 ### Installation (End Users)
 ```bash
-composer require gophpeek/laravel-queue-monitor
+composer require cboxdk/laravel-queue-monitor
 php artisan migrate
 ```
 
@@ -257,7 +257,7 @@ php artisan migrate
 6. **Extensible** - Every component replaceable via config
 7. **Event-Driven** - Loosely coupled integration
 8. **Comprehensive API** - 17 endpoints for dashboards
-9. **Professional Docs** - PHPeek-ready with proper frontmatter
+9. **Professional Docs** - Cbox-ready with proper frontmatter
 10. **Production Ready** - Battle-tested patterns and architecture
 
 ---
@@ -266,7 +266,7 @@ php artisan migrate
 
 ### Installation
 ```bash
-composer require gophpeek/laravel-queue-monitor
+composer require cboxdk/laravel-queue-monitor
 php artisan migrate
 ```
 

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace PHPeek\LaravelQueueMonitor;
+namespace Cbox\LaravelQueueMonitor;
 
 use Illuminate\Queue\Events\JobFailed;
 use Illuminate\Queue\Events\JobProcessed;
@@ -10,16 +10,16 @@ use Illuminate\Queue\Events\JobProcessing;
 use Illuminate\Queue\Events\JobQueued;
 use Illuminate\Queue\Events\JobTimedOut;
 use Illuminate\Support\Facades\Event;
-use PHPeek\LaravelQueueMonitor\Commands\HealthCheckCommand;
-use PHPeek\LaravelQueueMonitor\Commands\LaravelQueueMonitorCommand;
-use PHPeek\LaravelQueueMonitor\Commands\PruneJobsCommand;
-use PHPeek\LaravelQueueMonitor\Commands\ReplayJobCommand;
-use PHPeek\LaravelQueueMonitor\Listeners\JobFailedListener;
-use PHPeek\LaravelQueueMonitor\Listeners\JobProcessedListener;
-use PHPeek\LaravelQueueMonitor\Listeners\JobProcessingListener;
-use PHPeek\LaravelQueueMonitor\Listeners\JobQueuedListener;
-use PHPeek\LaravelQueueMonitor\Listeners\JobTimedOutListener;
-use PHPeek\LaravelQueueMonitor\Listeners\QueueMetricsSubscriber;
+use Cbox\LaravelQueueMonitor\Commands\HealthCheckCommand;
+use Cbox\LaravelQueueMonitor\Commands\LaravelQueueMonitorCommand;
+use Cbox\LaravelQueueMonitor\Commands\PruneJobsCommand;
+use Cbox\LaravelQueueMonitor\Commands\ReplayJobCommand;
+use Cbox\LaravelQueueMonitor\Listeners\JobFailedListener;
+use Cbox\LaravelQueueMonitor\Listeners\JobProcessedListener;
+use Cbox\LaravelQueueMonitor\Listeners\JobProcessingListener;
+use Cbox\LaravelQueueMonitor\Listeners\JobQueuedListener;
+use Cbox\LaravelQueueMonitor\Listeners\JobTimedOutListener;
+use Cbox\LaravelQueueMonitor\Listeners\QueueMetricsSubscriber;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 

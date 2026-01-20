@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace PHPeek\LaravelQueueMonitor\Services;
+namespace Cbox\LaravelQueueMonitor\Services;
 
 use Illuminate\Support\Facades\DB;
-use PHPeek\LaravelQueueMonitor\Enums\JobStatus;
-use PHPeek\LaravelQueueMonitor\Models\JobMonitor;
-use PHPeek\LaravelQueueMonitor\Utilities\QueryBuilderHelper;
+use Cbox\LaravelQueueMonitor\Enums\JobStatus;
+use Cbox\LaravelQueueMonitor\Models\JobMonitor;
+use Cbox\LaravelQueueMonitor\Utilities\QueryBuilderHelper;
 
 final class HealthCheckService
 {

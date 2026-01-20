@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace PHPeek\LaravelQueueMonitor\Listeners;
+namespace Cbox\LaravelQueueMonitor\Listeners;
 
 use Illuminate\Events\Dispatcher;
-use PHPeek\LaravelQueueMetrics\Events\MetricsRecorded;
-use PHPeek\LaravelQueueMonitor\Actions\Core\UpdateJobMetricsAction;
+use Cbox\LaravelQueueMetrics\Events\MetricsRecorded;
+use Cbox\LaravelQueueMonitor\Actions\Core\UpdateJobMetricsAction;
 
 final readonly class QueueMetricsSubscriber
 {

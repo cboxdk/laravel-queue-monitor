@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace PHPeek\LaravelQueueMonitor\Repositories\Contracts;
+namespace Cbox\LaravelQueueMonitor\Repositories\Contracts;
 
 use Illuminate\Support\Collection;
-use PHPeek\LaravelQueueMonitor\DataTransferObjects\JobFilterData;
-use PHPeek\LaravelQueueMonitor\DataTransferObjects\JobMonitorData;
-use PHPeek\LaravelQueueMonitor\Models\JobMonitor;
+use Cbox\LaravelQueueMonitor\DataTransferObjects\JobFilterData;
+use Cbox\LaravelQueueMonitor\DataTransferObjects\JobMonitorData;
+use Cbox\LaravelQueueMonitor\Models\JobMonitor;
 
 interface JobMonitorRepositoryContract
 {

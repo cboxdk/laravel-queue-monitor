@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace PHPeek\LaravelQueueMonitor\Listeners;
+namespace Cbox\LaravelQueueMonitor\Listeners;
 
 use Illuminate\Queue\Events\JobFailed;
-use PHPeek\LaravelQueueMonitor\Actions\Core\RecordJobFailedAction;
+use Cbox\LaravelQueueMonitor\Actions\Core\RecordJobFailedAction;
 
 final readonly class JobFailedListener
 {

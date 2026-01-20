@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use PHPeek\LaravelQueueMonitor\Tests\TestCase;
+use Cbox\LaravelQueueMonitor\Tests\TestCase;
 
 uses(TestCase::class, RefreshDatabase::class)->in(__DIR__);
 

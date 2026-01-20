@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use PHPeek\LaravelQueueMonitor\DataTransferObjects\ExceptionData;
+use Cbox\LaravelQueueMonitor\DataTransferObjects\ExceptionData;
 
 test('creates from throwable', function () {
     $exception = new RuntimeException('Test error message', 500);

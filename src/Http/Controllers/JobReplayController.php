@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace PHPeek\LaravelQueueMonitor\Http\Controllers;
+namespace Cbox\LaravelQueueMonitor\Http\Controllers;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller;
-use PHPeek\LaravelQueueMonitor\Actions\Replay\ReplayJobAction;
-use PHPeek\LaravelQueueMonitor\Events\JobReplayRequested;
-use PHPeek\LaravelQueueMonitor\Repositories\Contracts\JobMonitorRepositoryContract;
+use Cbox\LaravelQueueMonitor\Actions\Replay\ReplayJobAction;
+use Cbox\LaravelQueueMonitor\Events\JobReplayRequested;
+use Cbox\LaravelQueueMonitor\Repositories\Contracts\JobMonitorRepositoryContract;
 
 class JobReplayController extends Controller
 {

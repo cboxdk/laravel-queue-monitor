@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace PHPeek\LaravelQueueMonitor\DataTransferObjects;
+namespace Cbox\LaravelQueueMonitor\DataTransferObjects;
 
-use PHPeek\LaravelQueueMonitor\Enums\WorkerType;
+use Cbox\LaravelQueueMonitor\Enums\WorkerType;
 
 final readonly class WorkerContextData
 {

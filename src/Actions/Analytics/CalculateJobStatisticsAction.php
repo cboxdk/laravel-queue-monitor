@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace PHPeek\LaravelQueueMonitor\Actions\Analytics;
+namespace Cbox\LaravelQueueMonitor\Actions\Analytics;
 
-use PHPeek\LaravelQueueMonitor\Repositories\Contracts\StatisticsRepositoryContract;
+use Cbox\LaravelQueueMonitor\Repositories\Contracts\StatisticsRepositoryContract;
 
 final readonly class CalculateJobStatisticsAction
 {

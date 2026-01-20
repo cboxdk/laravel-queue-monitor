@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace PHPeek\LaravelQueueMonitor\Http\Requests;
+namespace Cbox\LaravelQueueMonitor\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 

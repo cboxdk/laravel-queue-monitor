@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace PHPeek\LaravelQueueMonitor\Http\Requests;
+namespace Cbox\LaravelQueueMonitor\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
-use PHPeek\LaravelQueueMonitor\Enums\JobStatus;
-use PHPeek\LaravelQueueMonitor\Enums\WorkerType;
+use Cbox\LaravelQueueMonitor\Enums\JobStatus;
+use Cbox\LaravelQueueMonitor\Enums\WorkerType;
 
 class ListJobsRequest extends FormRequest
 {

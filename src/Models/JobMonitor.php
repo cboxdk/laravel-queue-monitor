@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace PHPeek\LaravelQueueMonitor\Models;
+namespace Cbox\LaravelQueueMonitor\Models;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use PHPeek\LaravelQueueMonitor\Enums\JobStatus;
-use PHPeek\LaravelQueueMonitor\Enums\WorkerType;
+use Cbox\LaravelQueueMonitor\Enums\JobStatus;
+use Cbox\LaravelQueueMonitor\Enums\WorkerType;
 
 /**
  * @property int $id
@@ -49,9 +49,9 @@ class JobMonitor extends Model
     /**
      * Create a new factory instance for the model.
      */
-    protected static function newFactory(): \PHPeek\LaravelQueueMonitor\Database\Factories\JobMonitorFactory
+    protected static function newFactory(): \Cbox\LaravelQueueMonitor\Database\Factories\JobMonitorFactory
     {
-        return \PHPeek\LaravelQueueMonitor\Database\Factories\JobMonitorFactory::new();
+        return \Cbox\LaravelQueueMonitor\Database\Factories\JobMonitorFactory::new();
     }
 
     /**

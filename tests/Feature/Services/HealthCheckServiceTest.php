@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-use PHPeek\LaravelQueueMonitor\Models\JobMonitor;
-use PHPeek\LaravelQueueMonitor\Services\HealthCheckService;
+use Cbox\LaravelQueueMonitor\Models\JobMonitor;
+use Cbox\LaravelQueueMonitor\Services\HealthCheckService;
 
 test('health check returns comprehensive status', function () {
     JobMonitor::factory()->count(10)->create();

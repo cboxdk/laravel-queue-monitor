@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use PHPeek\LaravelQueueMonitor\Models\JobMonitor;
+use Cbox\LaravelQueueMonitor\Models\JobMonitor;
 
 test('export csv endpoint returns CSV content', function () {
     JobMonitor::factory()->count(3)->create();

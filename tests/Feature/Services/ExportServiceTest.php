@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-use PHPeek\LaravelQueueMonitor\DataTransferObjects\JobFilterData;
-use PHPeek\LaravelQueueMonitor\Models\JobMonitor;
-use PHPeek\LaravelQueueMonitor\Services\ExportService;
+use Cbox\LaravelQueueMonitor\DataTransferObjects\JobFilterData;
+use Cbox\LaravelQueueMonitor\Models\JobMonitor;
+use Cbox\LaravelQueueMonitor\Services\ExportService;
 
 test('exports jobs to CSV format', function () {
     JobMonitor::factory()->count(3)->create();

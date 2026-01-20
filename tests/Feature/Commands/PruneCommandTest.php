@@ -3,9 +3,9 @@
 declare(strict_types=1);
 
 use Illuminate\Support\Str;
-use PHPeek\LaravelQueueMonitor\Enums\JobStatus;
-use PHPeek\LaravelQueueMonitor\Enums\WorkerType;
-use PHPeek\LaravelQueueMonitor\Models\JobMonitor;
+use Cbox\LaravelQueueMonitor\Enums\JobStatus;
+use Cbox\LaravelQueueMonitor\Enums\WorkerType;
+use Cbox\LaravelQueueMonitor\Models\JobMonitor;
 
 test('prune command removes old jobs', function () {
     // Create old job and manually update created_at using query builder (bypasses Eloquent timestamp)

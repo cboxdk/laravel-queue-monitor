@@ -2,16 +2,16 @@
 
 declare(strict_types=1);
 
-namespace PHPeek\LaravelQueueMonitor\Http\Controllers;
+namespace Cbox\LaravelQueueMonitor\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use PHPeek\LaravelQueueMonitor\Actions\Analytics\CalculateJobStatisticsAction;
-use PHPeek\LaravelQueueMonitor\Actions\Analytics\CalculateQueueHealthAction;
-use PHPeek\LaravelQueueMonitor\Actions\Analytics\CalculateServerStatisticsAction;
-use PHPeek\LaravelQueueMonitor\Http\Resources\StatisticsResource;
-use PHPeek\LaravelQueueMonitor\Repositories\Contracts\StatisticsRepositoryContract;
-use PHPeek\LaravelQueueMonitor\Repositories\Contracts\TagRepositoryContract;
+use Cbox\LaravelQueueMonitor\Actions\Analytics\CalculateJobStatisticsAction;
+use Cbox\LaravelQueueMonitor\Actions\Analytics\CalculateQueueHealthAction;
+use Cbox\LaravelQueueMonitor\Actions\Analytics\CalculateServerStatisticsAction;
+use Cbox\LaravelQueueMonitor\Http\Resources\StatisticsResource;
+use Cbox\LaravelQueueMonitor\Repositories\Contracts\StatisticsRepositoryContract;
+use Cbox\LaravelQueueMonitor\Repositories\Contracts\TagRepositoryContract;
 
 class StatisticsController extends Controller
 {

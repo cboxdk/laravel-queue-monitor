@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace PHPeek\LaravelQueueMonitor\Utilities;
+namespace Cbox\LaravelQueueMonitor\Utilities;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
-use PHPeek\LaravelQueueMonitor\Enums\JobStatus;
-use PHPeek\LaravelQueueMonitor\Enums\WorkerType;
-use PHPeek\LaravelQueueMonitor\Models\JobMonitor;
+use Cbox\LaravelQueueMonitor\Enums\JobStatus;
+use Cbox\LaravelQueueMonitor\Enums\WorkerType;
+use Cbox\LaravelQueueMonitor\Models\JobMonitor;
 
 final class QueryBuilderHelper
 {

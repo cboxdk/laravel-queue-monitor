@@ -2,16 +2,16 @@
 
 declare(strict_types=1);
 
-namespace PHPeek\LaravelQueueMonitor\Actions\Replay;
+namespace Cbox\LaravelQueueMonitor\Actions\Replay;
 
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Str;
-use PHPeek\LaravelQueueMonitor\DataTransferObjects\JobReplayData;
-use PHPeek\LaravelQueueMonitor\Enums\JobStatus;
-use PHPeek\LaravelQueueMonitor\Exceptions\JobNotFoundException;
-use PHPeek\LaravelQueueMonitor\Exceptions\JobReplayException;
-use PHPeek\LaravelQueueMonitor\Models\JobMonitor;
-use PHPeek\LaravelQueueMonitor\Repositories\Contracts\JobMonitorRepositoryContract;
+use Cbox\LaravelQueueMonitor\DataTransferObjects\JobReplayData;
+use Cbox\LaravelQueueMonitor\Enums\JobStatus;
+use Cbox\LaravelQueueMonitor\Exceptions\JobNotFoundException;
+use Cbox\LaravelQueueMonitor\Exceptions\JobReplayException;
+use Cbox\LaravelQueueMonitor\Models\JobMonitor;
+use Cbox\LaravelQueueMonitor\Repositories\Contracts\JobMonitorRepositoryContract;
 
 final readonly class ReplayJobAction
 {

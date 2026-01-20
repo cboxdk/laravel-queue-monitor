@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-use PHPeek\LaravelQueueMonitor\Enums\WorkerType;
-use PHPeek\LaravelQueueMonitor\Models\JobMonitor;
-use PHPeek\LaravelQueueMonitor\Utilities\QueryBuilderHelper;
+use Cbox\LaravelQueueMonitor\Enums\WorkerType;
+use Cbox\LaravelQueueMonitor\Models\JobMonitor;
+use Cbox\LaravelQueueMonitor\Utilities\QueryBuilderHelper;
 
 test('lastHours returns jobs from specified time range', function () {
     JobMonitor::factory()->create(['queued_at' => now()->subHours(25)]);

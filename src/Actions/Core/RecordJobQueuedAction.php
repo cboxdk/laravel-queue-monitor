@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace PHPeek\LaravelQueueMonitor\Actions\Core;
+namespace Cbox\LaravelQueueMonitor\Actions\Core;
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use PHPeek\LaravelQueueMonitor\DataTransferObjects\JobMonitorData;
-use PHPeek\LaravelQueueMonitor\Enums\JobStatus;
-use PHPeek\LaravelQueueMonitor\Models\JobMonitor;
-use PHPeek\LaravelQueueMonitor\Repositories\Contracts\JobMonitorRepositoryContract;
-use PHPeek\LaravelQueueMonitor\Services\WorkerContextService;
+use Cbox\LaravelQueueMonitor\DataTransferObjects\JobMonitorData;
+use Cbox\LaravelQueueMonitor\Enums\JobStatus;
+use Cbox\LaravelQueueMonitor\Models\JobMonitor;
+use Cbox\LaravelQueueMonitor\Repositories\Contracts\JobMonitorRepositoryContract;
+use Cbox\LaravelQueueMonitor\Services\WorkerContextService;
 
 final readonly class RecordJobQueuedAction
 {

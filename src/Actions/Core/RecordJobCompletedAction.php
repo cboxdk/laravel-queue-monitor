@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace PHPeek\LaravelQueueMonitor\Actions\Core;
+namespace Cbox\LaravelQueueMonitor\Actions\Core;
 
 use Carbon\Carbon;
-use PHPeek\LaravelQueueMonitor\Enums\JobStatus;
-use PHPeek\LaravelQueueMonitor\Jobs\StoreJobTagsJob;
-use PHPeek\LaravelQueueMonitor\Repositories\Contracts\JobMonitorRepositoryContract;
-use PHPeek\LaravelQueueMonitor\Repositories\Contracts\TagRepositoryContract;
+use Cbox\LaravelQueueMonitor\Enums\JobStatus;
+use Cbox\LaravelQueueMonitor\Jobs\StoreJobTagsJob;
+use Cbox\LaravelQueueMonitor\Repositories\Contracts\JobMonitorRepositoryContract;
+use Cbox\LaravelQueueMonitor\Repositories\Contracts\TagRepositoryContract;
 
 final readonly class RecordJobCompletedAction
 {

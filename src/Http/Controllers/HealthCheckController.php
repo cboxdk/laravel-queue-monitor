@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace PHPeek\LaravelQueueMonitor\Http\Controllers;
+namespace Cbox\LaravelQueueMonitor\Http\Controllers;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller;
-use PHPeek\LaravelQueueMonitor\Services\AlertingService;
-use PHPeek\LaravelQueueMonitor\Services\HealthCheckService;
+use Cbox\LaravelQueueMonitor\Services\AlertingService;
+use Cbox\LaravelQueueMonitor\Services\HealthCheckService;
 
 class HealthCheckController extends Controller
 {

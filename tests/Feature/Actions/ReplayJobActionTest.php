@@ -3,8 +3,8 @@
 declare(strict_types=1);
 
 use Illuminate\Support\Facades\Queue;
-use PHPeek\LaravelQueueMonitor\Actions\Replay\ReplayJobAction;
-use PHPeek\LaravelQueueMonitor\Models\JobMonitor;
+use Cbox\LaravelQueueMonitor\Actions\Replay\ReplayJobAction;
+use Cbox\LaravelQueueMonitor\Models\JobMonitor;
 
 beforeEach(function () {
     $this->action = app(ReplayJobAction::class);

@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace PHPeek\LaravelQueueMonitor\Services;
+namespace Cbox\LaravelQueueMonitor\Services;
 
-use PHPeek\LaravelQueueMetrics\DataTransferObjects\HorizonContext;
-use PHPeek\LaravelQueueMetrics\Utilities\HorizonDetector;
-use PHPeek\LaravelQueueMonitor\DataTransferObjects\WorkerContextData;
-use PHPeek\LaravelQueueMonitor\Enums\WorkerType;
+use Cbox\LaravelQueueMetrics\DataTransferObjects\HorizonContext;
+use Cbox\LaravelQueueMetrics\Utilities\HorizonDetector;
+use Cbox\LaravelQueueMonitor\DataTransferObjects\WorkerContextData;
+use Cbox\LaravelQueueMonitor\Enums\WorkerType;
 
 final readonly class WorkerContextService
 {

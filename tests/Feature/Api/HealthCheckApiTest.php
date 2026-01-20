@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use PHPeek\LaravelQueueMonitor\Models\JobMonitor;
+use Cbox\LaravelQueueMonitor\Models\JobMonitor;
 
 test('health endpoint returns system status', function () {
     JobMonitor::factory()->count(5)->create();
