@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Cbox\LaravelQueueMonitor\Commands;
 
-use Illuminate\Console\Command;
-use Illuminate\Support\Collection;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\JobMonitorRepositoryContract;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\StatisticsRepositoryContract;
+use Illuminate\Console\Command;
+
 use function Termwind\render;
 use function Termwind\terminal;
 
@@ -23,19 +23,19 @@ class QueueMonitorDashboardCommand extends Command
         StatisticsRepositoryContract $statsRepository
     ): int {
         $interval = (int) $this->option('interval');
-        
+
         terminal()->clear();
 
         // @phpstan-ignore-next-line
         while (true) {
             $this->renderDashboard($jobRepository, $statsRepository);
-            
+
             sleep($interval);
         }
     }
 
     private function renderDashboard(
-        JobMonitorRepositoryContract $jobRepo, 
+        JobMonitorRepositoryContract $jobRepo,
         StatisticsRepositoryContract $statsRepo
     ): void {
         // Fetch Data

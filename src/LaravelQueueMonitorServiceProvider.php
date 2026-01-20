@@ -7,6 +7,7 @@ namespace Cbox\LaravelQueueMonitor;
 use Cbox\LaravelQueueMonitor\Commands\HealthCheckCommand;
 use Cbox\LaravelQueueMonitor\Commands\LaravelQueueMonitorCommand;
 use Cbox\LaravelQueueMonitor\Commands\PruneJobsCommand;
+use Cbox\LaravelQueueMonitor\Commands\QueueMonitorDashboardCommand;
 use Cbox\LaravelQueueMonitor\Commands\ReplayJobCommand;
 use Cbox\LaravelQueueMonitor\Listeners\JobFailedListener;
 use Cbox\LaravelQueueMonitor\Listeners\JobProcessedListener;
@@ -22,8 +23,6 @@ use Illuminate\Queue\Events\JobTimedOut;
 use Illuminate\Support\Facades\Event;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
-
-use Cbox\LaravelQueueMonitor\Commands\QueueMonitorDashboardCommand;
 
 class LaravelQueueMonitorServiceProvider extends PackageServiceProvider
 {
