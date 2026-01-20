@@ -55,6 +55,7 @@ class LaravelQueueMonitorServiceProvider extends PackageServiceProvider
         $this->registerActions();
         $this->registerEventListeners();
         $this->registerRoutes();
+        $this->registerUiRoutes();
     }
 
     /**
@@ -68,6 +69,20 @@ class LaravelQueueMonitorServiceProvider extends PackageServiceProvider
 
         if (file_exists(__DIR__.'/../routes/api.php')) {
             $this->loadRoutesFrom(__DIR__.'/../routes/api.php');
+        }
+    }
+
+    /**
+     * Register UI routes
+     */
+    protected function registerUiRoutes(): void
+    {
+        if (! config('queue-monitor.ui.enabled', true)) {
+            return;
+        }
+
+        if (file_exists(__DIR__.'/../routes/ui.php')) {
+            $this->loadRoutesFrom(__DIR__.'/../routes/ui.php');
         }
     }
 

@@ -150,6 +150,22 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Web Dashboard Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Configure the built-in Web Dashboard.
+    |
+    */
+    'ui' => [
+        'enabled' => env('QUEUE_MONITOR_UI_ENABLED', true),
+        'route_prefix' => 'queue-monitor',
+        'middleware' => ['web'],
+        'per_page' => 35,
+        'refresh_interval' => 3000, // ms
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Repository Bindings
     |--------------------------------------------------------------------------
     |
