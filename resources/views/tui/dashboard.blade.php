@@ -61,10 +61,10 @@
 
     <!-- FAILURES -->
     @if($failedJobs->isNotEmpty())
-        <div class="mt-1 border-t border-gray-800 pt-1">
-            <div class="text-red-500 font-bold mb-1 uppercase">● Recent Failures</div>
+        <div class="mt-1 pt-1">
+            <div class="text-red-500 font-bold mb-1 uppercase underline">Recent Failures</div>
             @foreach($failedJobs as $job)
-                <div class="flex space-x-2 text-red-400">
+                <div class="flex space-x-2 text-red-400 px-1">
                     <span class="font-bold">ERR</span>
                     <span class="truncate">{{ $job->getShortJobClass() }}: {{ Str::limit($job->exception_message, 100) }}</span>
                 </div>
