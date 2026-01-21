@@ -23,7 +23,10 @@ class DashboardController extends Controller
      */
     public function index(): View
     {
-        return view('queue-monitor::web.dashboard');
+        /** @var view-string $view */
+        $view = 'queue-monitor::web.dashboard';
+
+        return view($view);
     }
 
     /**
