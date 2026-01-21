@@ -31,7 +31,8 @@ class LaravelQueueMonitorServiceProvider extends PackageServiceProvider
         $package
             ->name('laravel-queue-monitor')
             ->hasConfigFile('queue-monitor')
-            ->hasMigration('create_queue_monitor_jobs_table')
+            ->hasMigration('2024_01_01_000000_create_queue_monitor_jobs_table')
+            ->runsMigrations()
             ->hasViews()
             ->hasCommands([
                 LaravelQueueMonitorCommand::class,
