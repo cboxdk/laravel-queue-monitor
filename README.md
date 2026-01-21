@@ -44,6 +44,14 @@ php artisan vendor:publish --tag="queue-monitor-config"
 php artisan migrate
 ```
 
+### Advanced Installation
+
+If you need to customize the migrations, you can publish them:
+
+```bash
+php artisan vendor:publish --tag="queue-monitor-migrations"
+```
+
 ### Dashboard Customization
 
 To customize the UI (Web or Terminal), publish the views:
