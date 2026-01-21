@@ -13,33 +13,34 @@ use function Termwind\terminal;
 
 class QueueMonitorDashboardCommand extends Command
 {
-        public $signature = 'queue-monitor:dashboard 
+    public $signature = 'queue-monitor:dashboard 
                             {--interval=2 : Refresh interval in seconds}
                             {--once : Run only once and exit}';
-    
-        public $description = 'Display a real-time dashboard of queue metrics';
-    
-        public function handle(
-            JobMonitorRepositoryContract $jobRepository,
-            StatisticsRepositoryContract $statsRepository
-        ): int {
-            $interval = (int) $this->option('interval');
-            $once = (bool) $this->option('once');
-            
-            terminal()->clear();
-    
-            while (true) {
-                $this->renderDashboard($jobRepository, $statsRepository);
-                
-                if ($once) {
-                    break;
-                }
-    
-                sleep($interval);
+
+    public $description = 'Display a real-time dashboard of queue metrics';
+
+    public function handle(
+        JobMonitorRepositoryContract $jobRepository,
+        StatisticsRepositoryContract $statsRepository
+    ): int {
+        $interval = (int) $this->option('interval');
+        $once = (bool) $this->option('once');
+
+        terminal()->clear();
+
+        while (true) {
+            $this->renderDashboard($jobRepository, $statsRepository);
+
+            if ($once) {
+                break;
             }
-    
-            return self::SUCCESS;
+
+            sleep($interval);
         }
+
+        return self::SUCCESS;
+    }
+
     private function renderDashboard(
         JobMonitorRepositoryContract $jobRepo,
         StatisticsRepositoryContract $statsRepo
