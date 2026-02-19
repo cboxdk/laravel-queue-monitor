@@ -6,6 +6,7 @@ namespace Cbox\LaravelQueueMonitor\Tests\Feature;
 
 use Cbox\LaravelQueueMonitor\Models\JobMonitor;
 use Illuminate\Support\Facades\Artisan;
+
 use function Termwind\render;
 
 it('renders the TUI dashboard without errors', function () {
@@ -24,11 +25,11 @@ it('renders the TUI view directly to catch style errors', function () {
         'success_rate' => 90,
         'avg_duration_ms' => 150,
     ];
-    
+
     $queues = [
-        ['queue' => 'default', 'status' => 'healthy', 'jobs_per_minute' => 5]
+        ['queue' => 'default', 'status' => 'healthy', 'jobs_per_minute' => 5],
     ];
-    
+
     $recentJobs = JobMonitor::factory()->count(2)->make();
     $failedJobs = JobMonitor::factory()->count(1)->make();
 
@@ -43,17 +44,16 @@ it('renders the TUI view directly to catch style errors', function () {
 
     // Verify it can be rendered by Termwind
     render($html);
-    
+
     expect(true)->toBeTrue();
 });
 
 it('can publish migrations and config', function () {
     // Clean up any previously published files in the test environment if necessary
-    
+
     $exitCode = Artisan::call('vendor:publish', [
         '--provider' => 'Cbox\LaravelQueueMonitor\LaravelQueueMonitorServiceProvider',
     ]);
 
     expect($exitCode)->toBe(0);
 });
-
