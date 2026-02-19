@@ -47,3 +47,13 @@ it('renders the TUI view directly to catch style errors', function () {
 
     expect(true)->toBeTrue();
 });
+
+it('can publish migrations and config', function () {
+    // Clean up any previously published files in the test environment if necessary
+
+    $exitCode = Artisan::call('vendor:publish', [
+        '--provider' => 'Cbox\LaravelQueueMonitor\LaravelQueueMonitorServiceProvider',
+    ]);
+
+    expect($exitCode)->toBe(0);
+});
