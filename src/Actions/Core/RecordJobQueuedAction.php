@@ -9,6 +9,7 @@ use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\Models\JobMonitor;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\JobMonitorRepositoryContract;
 use Cbox\LaravelQueueMonitor\Services\WorkerContextService;
+use Illuminate\Contracts\Queue\Job as QueueJob;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -79,12 +80,23 @@ final readonly class RecordJobQueuedAction
      */
     private function serializeJob(object $jobInstance): array
     {
+        // Queue job wrappers (RedisJob, DatabaseJob, etc.) already carry the payload
+        if ($jobInstance instanceof QueueJob) {
+            return $jobInstance->payload();
+        }
+
+        try {
+            $serialized = serialize($jobInstance);
+        } catch (\Throwable) {
+            $serialized = null;
+        }
+
         return [
             'displayName' => $this->getDisplayName($jobInstance),
             'job' => 'Illuminate\\Queue\\CallQueuedHandler@call',
             'data' => [
                 'commandName' => $jobInstance::class,
-                'command' => serialize($jobInstance),
+                'command' => $serialized,
             ],
         ];
     }
@@ -94,6 +106,10 @@ final readonly class RecordJobQueuedAction
      */
     private function getQueue(object $jobInstance): string
     {
+        if ($jobInstance instanceof QueueJob) {
+            return $jobInstance->getQueue();
+        }
+
         if (property_exists($jobInstance, 'queue')) {
             return $jobInstance->queue ?? 'default';
         }
@@ -106,6 +122,10 @@ final readonly class RecordJobQueuedAction
      */
     private function getMaxAttempts(object $jobInstance): int
     {
+        if ($jobInstance instanceof QueueJob) {
+            return $jobInstance->maxTries() ?? 1;
+        }
+
         if (property_exists($jobInstance, 'tries')) {
             return $jobInstance->tries ?? 1;
         }
@@ -118,6 +138,10 @@ final readonly class RecordJobQueuedAction
      */
     private function getJobClass(object $jobInstance): string
     {
+        if ($jobInstance instanceof QueueJob) {
+            return $jobInstance->resolveName();
+        }
+
         return $jobInstance::class;
     }
 
@@ -126,6 +150,10 @@ final readonly class RecordJobQueuedAction
      */
     private function getDisplayName(object $jobInstance): ?string
     {
+        if ($jobInstance instanceof QueueJob) {
+            return $jobInstance->resolveName();
+        }
+
         if (method_exists($jobInstance, 'displayName')) {
             return $jobInstance->displayName();
         }

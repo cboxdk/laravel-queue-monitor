@@ -1,108 +1,82 @@
-<div class="mx-2 my-1">
-    <!-- Header Bar -->
-    <div class="flex justify-between text-black bg-cyan-400 px-2 font-bold uppercase">
-        <span><span class="mr-1">⚡</span> Laravel Queue Monitor</span>
-        <span>{{ $timestamp }}</span>
-    </div>
-
-    <!-- Summary Row -->
-    <div class="mt-1 flex space-x-4 px-1">
-        <div>
-            <span class="text-gray-500">TOTAL:</span>
-            <span class="font-bold text-white">{{ number_format($stats['total_jobs'] ?? 0) }}</span>
+<div class="mx-2">
+    <!-- K9S STYLE HEADER -->
+    <div class="flex justify-between">
+        <div class="flex flex-col">
+            <div class="flex"><span class="text-cyan-400 font-bold w-12">Jobs:</span><span class="text-white">{{ number_format($stats['total_jobs'] ?? 0) }}</span></div>
+            <div class="flex"><span class="text-cyan-400 font-bold w-12">Rate:</span><span class="{{ ($stats['success_rate'] ?? 0) > 95 ? 'text-green-400' : 'text-red-400' }}">{{ number_format($stats['success_rate'] ?? 0, 1) }}%</span></div>
+            <div class="flex"><span class="text-cyan-400 font-bold w-12">Avg:</span><span class="text-blue-400">{{ number_format($stats['avg_duration_ms'] ?? 0, 0) }}ms</span></div>
         </div>
-        <div>
-            <span class="text-gray-500">SUCCESS:</span>
-            <span class="font-bold text-green-400">{{ number_format($stats['success_rate'] ?? 0, 1) }}%</span>
-        </div>
-        <div>
-            <span class="text-gray-500">AVG:</span>
-            <span class="font-bold text-blue-400">{{ number_format($stats['avg_duration_ms'] ?? 0, 0) }}ms</span>
+        <div class="text-right">
+            <div class="flex justify-end"><span class="text-gray-500 mr-2">Context:</span><span class="text-white">{{ config('app.env') }}</span></div>
+            <div class="flex justify-end"><span class="text-gray-500 mr-2">Server:</span><span class="text-yellow-400">{{ gethostname() }}</span></div>
+            <div class="flex justify-end"><span class="text-gray-500 mr-2">Time:</span><span class="text-white">{{ $timestamp }}</span></div>
         </div>
     </div>
 
-    <div class="mt-1 flex space-x-2">
-        <!-- Queue Status Column -->
-        <div class="flex-1">
-            <div class="text-cyan-400 font-bold mb-1 uppercase">● Queue Health</div>
-            @if(empty($queues))
-                <div class="text-gray-600 italic">No active queues</div>
-            @else
-                @foreach($queues as $queue)
-                    <div class="flex justify-between px-2 mb-1">
-                        <span class="text-gray-300">{{ $queue['queue'] }}</span>
-                        <span class="{{ $queue['status'] === 'healthy' ? 'text-green-500' : 'text-red-500' }} font-bold">
-                            {{ strtoupper($queue['status']) }}
-                        </span>
-                    </div>
-                @endforeach
-            @endif
-        </div>
-
-        <div class="flex-1"></div>
+    <!-- TABLE HEADER -->
+    <div class="mt-1 bg-gray-800 px-1 flex">
+        <span class="w-16 text-white font-bold">STATUS</span>
+        <span class="w-12 text-white font-bold">TYPE</span>
+        <span class="flex-1 text-white font-bold ml-2">JOB CLASS</span>
+        <span class="w-24 text-white font-bold">QUEUE</span>
+        <span class="w-12 text-white font-bold text-right">DUR</span>
+        <span class="w-12 text-white font-bold text-right">AGE</span>
     </div>
 
-    <!-- Recent Activity Table -->
-    <div class="mt-1">
-        <div class="text-cyan-400 font-bold mb-1 uppercase">● Recent Activity</div>
-        @if($recentJobs->isEmpty())
-            <div class="text-gray-600 italic px-1">Waiting for jobs...</div>
-        @else
-            <table class="w-full">
-                <thead>
-                    <tr class="text-gray-500 font-bold">
-                        <th class="text-left w-12">TYPE</th>
-                        <th class="text-left">JOB CLASS</th>
-                        <th class="text-left">QUEUE</th>
-                        <th class="text-right w-12">TIME</th>
-                        <th class="text-right w-12">MS</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($recentJobs as $job)
-                        <tr>
-                            <td>
-                                @if($job->worker_type->isHorizon())
-                                    <span class="text-purple-500 font-bold">HORZ</span>
-                                @elseif($job->worker_type->isAutoscale())
-                                    <span class="text-cyan-500 font-bold">AUTO</span>
-                                @else
-                                    <span class="text-gray-500">WORK</span>
-                                @endif
-                            </td>
-                            <td>
-                                <span class="{{ $job->status->isFailed() ? 'text-red-500' : 'text-white' }}">
-                                    {{ $job->getShortJobClass() }}
-                                </span>
-                            </td>
-                            <td class="text-gray-500">{{ $job->queue }}</td>
-                            <td class="text-right text-gray-400">
-                                {{ $job->updated_at ? $job->updated_at->format('H:i:s') : '--:--' }}
-                            </td>
-                            <td class="text-right {{ $job->duration_ms > 1000 ? 'text-yellow-500' : 'text-gray-500' }}">
-                                {{ number_format($job->duration_ms ?? 0) }}
-                            </td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        @endif
+    <!-- TABLE BODY -->
+    <div class="flex flex-col">
+        @foreach($recentJobs as $job)
+            <div class="px-1 flex">
+                <span class="w-16">
+                    @if($job->status->isSuccessful())
+                        <span class="text-green-500">● Done</span>
+                    @elseif($job->status->isFailed())
+                        <span class="text-red-500">● Fail</span>
+                    @elseif($job->status->value === 'processing')
+                        <span class="text-yellow-500">● Run</span>
+                    @else
+                        <span class="text-blue-500">○ Wait</span>
+                    @endif
+                </span>
+                <span class="w-12">
+                    @if($job->worker_type->isHorizon())
+                        <span class="text-purple-400">HORZ</span>
+                    @elseif($job->worker_type->isAutoscale())
+                        <span class="text-cyan-400">AUTO</span>
+                    @else
+                        <span class="text-gray-400">WORK</span>
+                    @endif
+                </span>
+                <span class="flex-1 text-white ml-2 truncate">{{ $job->getShortJobClass() }}</span>
+                <span class="w-24 text-gray-500 truncate">{{ $job->queue }}</span>
+                <span class="w-12 text-right {{ $job->duration_ms > 1000 ? 'text-yellow-400' : 'text-gray-500' }}">
+                    {{ number_format($job->duration_ms ?? 0) }}
+                </span>
+                <span class="w-12 text-right text-gray-600">
+                    {{ $job->created_at->diffForHumans(null, true, true) }}
+                </span>
+            </div>
+        @endforeach
     </div>
 
-    <!-- Failed Jobs (Compact) -->
+    <!-- FAILURES -->
     @if($failedJobs->isNotEmpty())
-        <div class="mt-1">
-            <div class="text-red-500 font-bold mb-1 uppercase">● Recent Failures</div>
+        <div class="mt-1 pt-1">
+            <div class="text-red-500 font-bold mb-1 uppercase underline">Recent Failures</div>
             @foreach($failedJobs as $job)
-                <div class="flex space-x-2 text-red-400">
-                    <span class="font-bold">[{{ $job->updated_at ? $job->updated_at->format('H:i') : '--:--' }}]</span>
-                    <span class="truncate">{{ $job->getShortJobClass() }}: {{ $job->exception_message }}</span>
+                <div class="flex space-x-2 text-red-400 px-1">
+                    <span class="font-bold">ERR</span>
+                    <span class="truncate">{{ $job->getShortJobClass() }}: {{ Str::limit($job->exception_message, 100) }}</span>
                 </div>
             @endforeach
         </div>
     @endif
 
-    <div class="mt-1 text-gray-600">
-        REFRESH: 2s | <span class="text-gray-400">Ctrl+C to exit</span>
+    <!-- K9S STYLE FOOTER -->
+    <div class="mt-1 flex space-x-4 bg-gray-800 px-2 py-0">
+        <div class="flex"><span class="text-cyan-400 font-bold mr-1">^C</span><span class="text-gray-300">Quit</span></div>
+        <div class="flex"><span class="text-cyan-400 font-bold mr-1">R</span><span class="text-gray-300">Replay</span></div>
+        <div class="flex"><span class="text-cyan-400 font-bold mr-1">D</span><span class="text-gray-300">Delete</span></div>
+        <div class="flex"><span class="text-cyan-400 font-bold mr-1">P</span><span class="text-gray-300">Prune</span></div>
     </div>
 </div>
