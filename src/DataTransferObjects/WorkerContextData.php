@@ -21,14 +21,18 @@ final readonly class WorkerContextData
      */
     public static function fromArray(array $data): self
     {
-        $serverName = $data['server_name'] ?? '';
-        $workerId = $data['worker_id'] ?? '';
-        $workerType = $data['worker_type'] ?? 'queue_work';
+        $serverNameRaw = $data['server_name'] ?? '';
+        $workerIdRaw = $data['worker_id'] ?? '';
+        $workerTypeRaw = $data['worker_type'] ?? 'queue_work';
+
+        $serverName = is_string($serverNameRaw) ? $serverNameRaw : (is_scalar($serverNameRaw) ? (string) $serverNameRaw : '');
+        $workerId = is_string($workerIdRaw) ? $workerIdRaw : (is_scalar($workerIdRaw) ? (string) $workerIdRaw : '');
+        $workerType = is_string($workerTypeRaw) ? $workerTypeRaw : (is_scalar($workerTypeRaw) ? (string) $workerTypeRaw : 'queue_work');
 
         return new self(
-            serverName: is_string($serverName) ? $serverName : (string) $serverName,
-            workerId: is_string($workerId) ? $workerId : (string) $workerId,
-            workerType: WorkerType::from(is_string($workerType) ? $workerType : (string) $workerType),
+            serverName: $serverName,
+            workerId: $workerId,
+            workerType: WorkerType::from($workerType),
         );
     }
 

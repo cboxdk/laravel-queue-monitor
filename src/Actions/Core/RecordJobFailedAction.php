@@ -34,7 +34,7 @@ final readonly class RecordJobFailedAction
         }
 
         $jobId = $job->getJobId();
-        $jobMonitor = $this->repository->findByJobId($jobId);
+        $jobMonitor = $this->repository->findLatestAttemptByJobId($jobId);
 
         if ($jobMonitor === null) {
             return;
@@ -68,7 +68,7 @@ final readonly class RecordJobFailedAction
             return;
         }
 
-        if (config('queue-monitor.deferred_tag_storage', false)) {
+        if (config('queue-monitor.storage.deferred_tags', false)) {
             StoreJobTagsJob::dispatch($jobMonitorId, $tags);
         } else {
             $this->tagRepository->storeTags($jobMonitorId, $tags);

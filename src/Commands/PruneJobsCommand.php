@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Cbox\LaravelQueueMonitor\Commands;
 
 use Cbox\LaravelQueueMonitor\Actions\Core\PruneJobsAction;
+use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Illuminate\Console\Command;
 
 class PruneJobsCommand extends Command
@@ -18,11 +19,17 @@ class PruneJobsCommand extends Command
     public function handle(PruneJobsAction $action): int
     {
         $days = $this->option('days') !== null ? (int) $this->option('days') : null;
-        /** @var array<string> $statuses */
-        $statuses = $this->option('statuses');
+        /** @var array<string> $rawStatuses */
+        $rawStatuses = $this->option('statuses');
 
-        if (empty($statuses)) {
-            $statuses = null;
+        /** @var array<JobStatus>|null $statuses */
+        $statuses = null;
+
+        if (! empty($rawStatuses)) {
+            $statuses = array_map(
+                fn (string $s): JobStatus => JobStatus::from($s),
+                $rawStatuses
+            );
         }
 
         $this->info('Pruning queue monitor jobs...');

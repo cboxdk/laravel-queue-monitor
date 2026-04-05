@@ -1,0 +1,108 @@
+- generic [ref=e2]:
+  - banner [ref=e3]:
+    - generic [ref=e5]:
+      - generic [ref=e6]:
+        - img [ref=e7]
+        - generic [ref=e9]: Queue Monitor
+        - generic [ref=e154]: Degraded
+      - button "Live" [ref=e11] [cursor=pointer]:
+        - generic [ref=e15]: Live
+  - navigation [ref=e16]:
+    - tablist [ref=e18]:
+      - tab "Overview" [ref=e19] [cursor=pointer]:
+        - img [ref=e20]
+        - generic [ref=e22]: Overview
+      - tab "Jobs" [ref=e23] [cursor=pointer]:
+        - img [ref=e24]
+        - generic [ref=e26]: Jobs
+      - tab "Analytics" [active] [selected] [ref=e27] [cursor=pointer]:
+        - img [ref=e28]
+        - generic [ref=e31]: Analytics
+      - tab "Health" [ref=e32] [cursor=pointer]:
+        - img [ref=e33]
+        - generic [ref=e35]: Health
+  - main [ref=e36]:
+    - generic [ref=e594]:
+      - generic [ref=e595]:
+        - heading "Analytics" [level=3] [ref=e596]
+        - button "Refresh" [ref=e597] [cursor=pointer]:
+          - img [ref=e598]
+          - text: Refresh
+      - generic [ref=e600]:
+        - heading "Job Class Distribution" [level=4] [ref=e603]
+        - generic [ref=e608]:
+          - heading "Per-Queue Statistics" [level=4] [ref=e610]
+          - table [ref=e612]:
+            - rowgroup [ref=e613]:
+              - row "Queue Total Completed Failed Avg ms Success %" [ref=e614]:
+                - columnheader "Queue" [ref=e615]
+                - columnheader "Total" [ref=e616]
+                - columnheader "Completed" [ref=e617]
+                - columnheader "Failed" [ref=e618]
+                - columnheader "Avg ms" [ref=e619]
+                - columnheader "Success %" [ref=e620]
+            - rowgroup [ref=e621]:
+              - row "0 0 0 6 713 0.0%" [ref=e622]:
+                - cell "0" [ref=e623]
+                - cell "0" [ref=e624]
+                - cell "0" [ref=e625]
+                - cell "6" [ref=e626]
+                - cell "713" [ref=e627]
+                - cell "0.0%" [ref=e628]
+              - row "1 0 24 0 843 100.0%" [ref=e629]:
+                - cell "1" [ref=e630]
+                - cell "0" [ref=e631]
+                - cell "24" [ref=e632]
+                - cell "0" [ref=e633]
+                - cell "843" [ref=e634]
+                - cell "100.0%" [ref=e635]
+              - row "2 0 14 0 954 100.0%" [ref=e636]:
+                - cell "2" [ref=e637]
+                - cell "0" [ref=e638]
+                - cell "14" [ref=e639]
+                - cell "0" [ref=e640]
+                - cell "954" [ref=e641]
+                - cell "100.0%" [ref=e642]
+              - row "3 0 13 0 2,035 100.0%" [ref=e643]:
+                - cell "3" [ref=e644]
+                - cell "0" [ref=e645]
+                - cell "13" [ref=e646]
+                - cell "0" [ref=e647]
+                - cell "2,035" [ref=e648]
+                - cell "100.0%" [ref=e649]
+              - row "4 0 13 0 6,545 100.0%" [ref=e650]:
+                - cell "4" [ref=e651]
+                - cell "0" [ref=e652]
+                - cell "13" [ref=e653]
+                - cell "0" [ref=e654]
+                - cell "6,545" [ref=e655]
+                - cell "100.0%" [ref=e656]
+      - generic [ref=e657]:
+        - generic [ref=e658]:
+          - heading "Per-Server Statistics" [level=4] [ref=e660]
+          - table [ref=e662]:
+            - rowgroup [ref=e663]:
+              - row "Server Jobs Avg ms Worker" [ref=e664]:
+                - columnheader "Server" [ref=e665]
+                - columnheader "Jobs" [ref=e666]
+                - columnheader "Avg ms" [ref=e667]
+                - columnheader "Worker" [ref=e668]
+            - rowgroup [ref=e669]:
+              - row "0 0 2,073 -" [ref=e670]:
+                - cell "0" [ref=e671]
+                - cell "0" [ref=e672]
+                - cell "2,073" [ref=e673]
+                - cell "-" [ref=e674]
+        - generic [ref=e675]:
+          - heading "Failure Patterns" [level=4] [ref=e677]
+          - table [ref=e679]:
+            - rowgroup [ref=e680]:
+              - row "Exception Count Affected Jobs" [ref=e681]:
+                - columnheader "Exception" [ref=e682]
+                - columnheader "Count" [ref=e683]
+                - columnheader "Affected Jobs" [ref=e684]
+            - rowgroup [ref=e685]:
+              - row "- 0" [ref=e686]:
+                - cell "-" [ref=e687]
+                - cell "0" [ref=e688]
+                - cell [ref=e689]

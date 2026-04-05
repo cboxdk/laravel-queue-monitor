@@ -1,0 +1,86 @@
+- generic [ref=e2]:
+  - banner [ref=e3]:
+    - generic [ref=e5]:
+      - generic [ref=e6]:
+        - img [ref=e7]
+        - generic [ref=e9]: Queue Monitor
+      - button "Live" [ref=e11] [cursor=pointer]:
+        - generic [ref=e15]: Live
+  - navigation [ref=e16]:
+    - tablist [ref=e18]:
+      - tab "Overview" [selected] [ref=e19] [cursor=pointer]:
+        - img [ref=e20]
+        - generic [ref=e22]: Overview
+      - tab "Jobs" [ref=e23] [cursor=pointer]:
+        - img [ref=e24]
+        - generic [ref=e26]: Jobs
+      - tab "Analytics" [ref=e27] [cursor=pointer]:
+        - img [ref=e28]
+        - generic [ref=e31]: Analytics
+      - tab "Health" [ref=e32] [cursor=pointer]:
+        - img [ref=e33]
+        - generic [ref=e35]: Health
+  - main [ref=e36]:
+    - generic [ref=e37]:
+      - generic [ref=e38]:
+        - generic [ref=e40]: Total Jobs (24h)
+        - generic [ref=e43]: Success Rate
+        - generic [ref=e46]: Failed
+        - generic [ref=e49]: Avg Duration
+        - generic [ref=e52]: Queue Backlog
+      - generic [ref=e54]:
+        - generic [ref=e56]:
+          - generic [ref=e57]:
+            - heading "Recent Jobs" [level=3] [ref=e58]
+            - button "View all →" [ref=e59] [cursor=pointer]
+          - table [ref=e61]:
+            - rowgroup [ref=e62]:
+              - row "Status Job Queue Duration Time" [ref=e63]:
+                - columnheader "Status" [ref=e64]
+                - columnheader "Job" [ref=e65]
+                - columnheader "Queue" [ref=e66]
+                - columnheader "Duration" [ref=e67]
+                - columnheader "Time" [ref=e68]
+                - columnheader [ref=e69]
+            - rowgroup [ref=e70]:
+              - row [ref=e71]:
+                - cell [ref=e72]
+                - cell [ref=e74]
+                - cell [ref=e76]
+                - cell [ref=e78]
+                - cell [ref=e80]
+                - cell [ref=e82]
+              - row [ref=e83]:
+                - cell [ref=e84]
+                - cell [ref=e86]
+                - cell [ref=e88]
+                - cell [ref=e90]
+                - cell [ref=e92]
+                - cell [ref=e94]
+              - row [ref=e95]:
+                - cell [ref=e96]
+                - cell [ref=e98]
+                - cell [ref=e100]
+                - cell [ref=e102]
+                - cell [ref=e104]
+                - cell [ref=e106]
+              - row [ref=e107]:
+                - cell [ref=e108]
+                - cell [ref=e110]
+                - cell [ref=e112]
+                - cell [ref=e114]
+                - cell [ref=e116]
+                - cell [ref=e118]
+              - row [ref=e119]:
+                - cell [ref=e120]
+                - cell [ref=e122]
+                - cell [ref=e124]
+                - cell [ref=e126]
+                - cell [ref=e128]
+                - cell [ref=e130]
+        - generic [ref=e131]:
+          - heading "Queue Health" [level=3] [ref=e134]
+          - generic [ref=e145]:
+            - heading "Active Alerts" [level=3] [ref=e147]
+            - generic [ref=e148]: No active alerts
+          - heading "Throughput (1h)" [level=3] [ref=e151]

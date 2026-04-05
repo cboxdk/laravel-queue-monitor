@@ -58,19 +58,22 @@ final class PerformanceAnalyzer
         $index = (int) ceil(($percentile / 100) * $count) - 1;
         $index = max(0, min($index, $count - 1));
 
-        return (float) $values->get($index, 0.0);
+        $value = $values->get($index, 0.0);
+
+        return is_numeric($value) ? (float) $value : 0.0;
     }
 
     /**
      * Identify performance regressions
      *
-     * @return array{baseline: array, current: array, regression: bool, change_percent: float}
+     * @return array{baseline: array<string, float>, current: array<string, float>, regression: bool, change_percent: float}
      */
     public static function detectRegression(
         string $jobClass,
         int $baselineDays = 30,
         int $comparisonDays = 7
     ): array {
+        /** @var string $prefix */
         $prefix = config('queue-monitor.database.table_prefix', 'queue_monitor_');
 
         $baseline = DB::table($prefix.'jobs')
@@ -165,6 +168,7 @@ final class PerformanceAnalyzer
      */
     public static function getErrorRateTrend(int $days = 7): array
     {
+        /** @var string $prefix */
         $prefix = config('queue-monitor.database.table_prefix', 'queue_monitor_');
         $trend = [];
 

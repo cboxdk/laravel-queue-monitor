@@ -75,13 +75,11 @@ final class HealthCheckService
     {
         $recentJobs = QueryBuilderHelper::lastHours(1)->count();
 
-        $healthy = $recentJobs > 0;
-
         return [
-            'healthy' => $healthy,
-            'message' => $healthy
+            'healthy' => true, // No activity is not unhealthy — idle queues are fine
+            'message' => $recentJobs > 0
                 ? "Jobs processed in last hour: {$recentJobs}"
-                : 'No jobs processed in last hour',
+                : 'No jobs processed in last hour (idle)',
             'details' => [
                 'jobs_last_hour' => $recentJobs,
             ],
@@ -95,18 +93,30 @@ final class HealthCheckService
      */
     private function checkStuckJobs(): array
     {
-        $stuck = QueryBuilderHelper::stuck(30)->count();
+        $stuckJobs = QueryBuilderHelper::stuck(30)
+            ->select(['uuid', 'job_class', 'queue', 'server_name', 'started_at', 'attempt'])
+            ->limit(10)
+            ->get();
 
+        $stuck = $stuckJobs->count();
         $healthy = $stuck === 0;
 
         return [
             'healthy' => $healthy,
             'message' => $stuck > 0
-                ? "{$stuck} jobs stuck in processing"
+                ? "{$stuck} ".($stuck === 1 ? 'job' : 'jobs').' stuck in processing'
                 : 'No stuck jobs detected',
             'details' => [
                 'stuck_count' => $stuck,
                 'threshold_minutes' => 30,
+                'stuck_jobs' => $stuckJobs->map(fn ($job) => [
+                    'uuid' => $job->uuid,
+                    'job_class' => $job->job_class,
+                    'queue' => $job->queue,
+                    'server' => $job->server_name,
+                    'stuck_since' => $job->started_at,
+                    'attempt' => $job->attempt,
+                ])->all(),
             ],
         ];
     }
@@ -168,6 +178,7 @@ final class HealthCheckService
      */
     private function checkStorage(): array
     {
+        /** @var string $prefix */
         $prefix = config('queue-monitor.database.table_prefix', 'queue_monitor_');
 
         try {
@@ -218,7 +229,7 @@ final class HealthCheckService
         $check = $this->check();
         $checks = $check['checks'];
 
-        $healthyCount = collect($checks)->filter(fn ($c) => $c['healthy'])->count();
+        $healthyCount = collect($checks)->filter(fn (array $c): bool => (bool) ($c['healthy'] ?? false))->count();
         $totalChecks = count($checks);
 
         return (int) round(($healthyCount / $totalChecks) * 100);

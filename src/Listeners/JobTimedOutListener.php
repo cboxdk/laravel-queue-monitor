@@ -7,12 +7,8 @@ namespace Cbox\LaravelQueueMonitor\Listeners;
 use Cbox\LaravelQueueMonitor\Actions\Core\RecordJobTimeoutAction;
 use Illuminate\Queue\Events\JobTimedOut;
 
-final readonly class JobTimedOutListener
+final class JobTimedOutListener
 {
-    public function __construct(
-        private RecordJobTimeoutAction $action,
-    ) {}
-
     /**
      * Handle the event
      */
@@ -22,8 +18,14 @@ final readonly class JobTimedOutListener
             return;
         }
 
+        /** @var string $actionClass */
+        $actionClass = config('queue-monitor.actions.record_job_timeout', RecordJobTimeoutAction::class);
+
+        /** @var RecordJobTimeoutAction $action */
+        $action = app($actionClass);
+
         try {
-            $this->action->execute($event);
+            $action->execute($event);
         } catch (\Throwable $e) {
             // Silently fail to prevent breaking queue operations
             report($e);

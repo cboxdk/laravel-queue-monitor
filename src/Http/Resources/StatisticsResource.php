@@ -16,6 +16,9 @@ class StatisticsResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        return $this->resource;
+        /** @var array<string, mixed> $resource */
+        $resource = $this->resource;
+
+        return $resource;
     }
 }

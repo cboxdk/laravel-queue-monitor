@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Cbox\LaravelQueueMonitor\Services;
 
+use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\Models\JobMonitor;
 use Cbox\LaravelQueueMonitor\Utilities\QueryBuilderHelper;
 
@@ -48,7 +49,7 @@ final class AlertingService
         }
 
         // Check for high backlog
-        $queued = JobMonitor::where('status', 'queued')->count();
+        $queued = JobMonitor::where('status', JobStatus::QUEUED)->count();
         if ($queued > 1000) {
             $alerts['high_backlog'] = [
                 'severity' => 'warning',

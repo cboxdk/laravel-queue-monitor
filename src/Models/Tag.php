@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Cbox\LaravelQueueMonitor\Models;
 
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -32,6 +33,7 @@ class Tag extends Model
      */
     public function getTable(): string
     {
+        /** @var string $prefix */
         $prefix = config('queue-monitor.database.table_prefix', 'queue_monitor_');
 
         return $prefix.'tags';
@@ -42,11 +44,16 @@ class Tag extends Model
      */
     public function getConnectionName(): string
     {
-        return config('queue-monitor.database.connection') ?? parent::getConnectionName();
+        /** @var string|null $connection */
+        $connection = config('queue-monitor.database.connection');
+
+        return $connection ?? parent::getConnectionName() ?? 'default';
     }
 
     /**
      * Get the job this tag belongs to
+     *
+     * @return BelongsTo<JobMonitor, $this>
      */
     public function job(): BelongsTo
     {
@@ -55,8 +62,11 @@ class Tag extends Model
 
     /**
      * Scope to filter by tag name
+     *
+     * @param  Builder<self>  $query
+     * @return Builder<self>
      */
-    public function scopeForTag($query, string $tag)
+    public function scopeForTag(Builder $query, string $tag): Builder
     {
         return $query->where('tag', $tag);
     }

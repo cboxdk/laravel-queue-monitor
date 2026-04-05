@@ -62,7 +62,7 @@ return [
         'store_payload' => env('QUEUE_MONITOR_STORE_PAYLOAD', true),
 
         // Maximum payload size in bytes (default: 64KB)
-        'payload_max_size' => 65535,
+        'payload_max_size' => env('QUEUE_MONITOR_PAYLOAD_MAX_SIZE', 65535),
 
         // Defer tag storage to queue for better performance
         // When true, tags are stored asynchronously after job completion
@@ -78,11 +78,12 @@ return [
     |
     */
     'retention' => [
-        // Number of days to retain job records
+        // Number of days to retain job records (applies to statuses below)
         'days' => 30,
 
         // Which statuses to prune (empty array = prune all statuses)
-        'prune_statuses' => ['completed'],
+        // Failed and timeout jobs are included to prevent unbounded growth
+        'prune_statuses' => ['completed', 'failed', 'timeout'],
     ],
 
     /*
@@ -145,7 +146,7 @@ return [
 
         // Keys to mask in the payload response (e.g. password, token, secret)
         // Set to empty array to disable redaction
-        'sensitive_keys' => ['password', 'token', 'secret', 'key', 'authorization'],
+        'sensitive_keys' => ['password', 'token', 'secret', 'key', 'authorization', 'api_key', 'credit_card', 'cvv', 'ssn', 'private_key'],
     ],
 
     /*

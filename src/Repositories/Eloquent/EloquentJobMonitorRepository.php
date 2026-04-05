@@ -10,6 +10,7 @@ use Cbox\LaravelQueueMonitor\DataTransferObjects\JobMonitorData;
 use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\Models\JobMonitor;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\JobMonitorRepositoryContract;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
 final class EloquentJobMonitorRepository implements JobMonitorRepositoryContract
@@ -40,6 +41,7 @@ final class EloquentJobMonitorRepository implements JobMonitorRepositoryContract
             'exception_trace' => $data->exception?->trace,
             'tags' => $data->tags,
             'queued_at' => $data->queuedAt,
+            'available_at' => $data->availableAt,
             'started_at' => $data->startedAt,
             'completed_at' => $data->completedAt,
         ]);
@@ -55,6 +57,7 @@ final class EloquentJobMonitorRepository implements JobMonitorRepositoryContract
 
         $job->update($data);
 
+        /** @var JobMonitor */
         return $job->fresh();
     }
 
@@ -66,6 +69,14 @@ final class EloquentJobMonitorRepository implements JobMonitorRepositoryContract
     public function findByJobId(string $jobId): ?JobMonitor
     {
         return JobMonitor::where('job_id', $jobId)->first();
+    }
+
+    public function findLatestAttemptByJobId(string $jobId): ?JobMonitor
+    {
+        return JobMonitor::where('job_id', $jobId)
+            ->orderByDesc('attempt')
+            ->orderByDesc('created_at')
+            ->first();
     }
 
     public function query(JobFilterData $filters): Collection
@@ -98,31 +109,56 @@ final class EloquentJobMonitorRepository implements JobMonitorRepositoryContract
             return collect();
         }
 
-        // Get all jobs with the same UUID (across retries)
+        // Strategy: find ALL records with the same job_id (all attempts share one job_id)
+        if ($job->job_id !== null) {
+            $chain = JobMonitor::where('job_id', $job->job_id)
+                ->orderBy('attempt')
+                ->orderBy('created_at')
+                ->get();
+
+            if ($chain->count() > 1) {
+                return $chain->values();
+            }
+        }
+
+        // Fallback: use retried_from_id linkage (iterative, bounded to 50 depth)
         $chain = JobMonitor::where('uuid', $uuid)
             ->orWhere('retried_from_id', $job->id)
             ->orderBy('attempt')
             ->get();
 
-        // If this job is a retry, also get the parent chain
-        if ($job->retried_from_id !== null) {
-            $parent = JobMonitor::find($job->retried_from_id);
-            if ($parent !== null) {
-                $parentChain = $this->getRetryChain($parent->uuid);
-                $chain = $parentChain->merge($chain)->unique('id')->sortBy('attempt');
+        // Walk up the parent chain iteratively (not recursively) with depth limit
+        $current = $job;
+        $depth = 0;
+        while ($current->retried_from_id !== null && $depth < 50) {
+            $parent = JobMonitor::find($current->retried_from_id);
+            if ($parent === null) {
+                break;
             }
+            $chain->push($parent);
+            // Also get siblings of the parent
+            $siblings = JobMonitor::where('retried_from_id', $parent->id)
+                ->where('id', '!=', $current->id)
+                ->get();
+            $chain = $chain->merge($siblings);
+            $current = $parent;
+            $depth++;
         }
+        $chain = $chain->unique('id')->sortBy('attempt');
 
         return $chain->values();
     }
 
+    /**
+     * @param  array<JobStatus>  $statuses
+     */
     public function prune(int $days, array $statuses = []): int
     {
         $query = JobMonitor::where('created_at', '<', Carbon::now()->subDays($days));
 
         if (! empty($statuses)) {
             $statusValues = array_map(
-                fn ($status) => $status instanceof JobStatus ? $status->value : $status,
+                fn (JobStatus $status) => $status->value,
                 $statuses
             );
             $query->whereIn('status', $statusValues);
@@ -208,8 +244,10 @@ final class EloquentJobMonitorRepository implements JobMonitorRepositoryContract
 
     /**
      * Apply filters to query
+     *
+     * @param  Builder<JobMonitor>  $query
      */
-    private function applyFilters($query, JobFilterData $filters): void
+    private function applyFilters(Builder $query, JobFilterData $filters): void
     {
         if ($filters->statuses !== null && count($filters->statuses) > 0) {
             $query->whereIn('status', array_map(fn ($s) => $s->value, $filters->statuses));
@@ -275,6 +313,10 @@ final class EloquentJobMonitorRepository implements JobMonitorRepositoryContract
 
         if ($filters->maxDurationMs !== null) {
             $query->where('duration_ms', '<=', $filters->maxDurationMs);
+        }
+
+        if ($filters->minAttempts !== null) {
+            $query->where('attempt', '>=', $filters->minAttempts);
         }
 
         if ($filters->search !== null) {

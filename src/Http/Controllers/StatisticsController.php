@@ -51,7 +51,8 @@ class StatisticsController extends Controller
      */
     public function queues(Request $request): StatisticsResource
     {
-        $queue = $request->input('queue');
+        $queueInput = $request->input('queue');
+        $queue = is_string($queueInput) ? $queueInput : null;
 
         $stats = $this->statsRepository->getQueueStatistics($queue);
 
@@ -63,7 +64,8 @@ class StatisticsController extends Controller
      */
     public function jobClasses(Request $request): StatisticsResource
     {
-        $jobClass = $request->input('job_class');
+        $jobClassInput = $request->input('job_class');
+        $jobClass = is_string($jobClassInput) ? $jobClassInput : null;
 
         $stats = $this->statsRepository->getJobClassStatistics($jobClass);
 

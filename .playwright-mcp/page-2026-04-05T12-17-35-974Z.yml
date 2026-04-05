@@ -1,0 +1,43 @@
+- generic [ref=e2]:
+  - banner [ref=e3]:
+    - generic [ref=e5]:
+      - generic [ref=e6]:
+        - img [ref=e7]
+        - generic [ref=e9]: Queue Monitor
+        - generic [ref=e154]: Degraded
+      - button "Live" [ref=e11] [cursor=pointer]:
+        - generic [ref=e15]: Live
+  - navigation [ref=e16]:
+    - tablist [ref=e18]:
+      - tab "Overview" [ref=e19] [cursor=pointer]:
+        - img [ref=e20]
+        - generic [ref=e22]: Overview
+      - tab "Jobs" [ref=e23] [cursor=pointer]:
+        - img [ref=e24]
+        - generic [ref=e26]: Jobs
+      - tab "Analytics" [ref=e27] [cursor=pointer]:
+        - img [ref=e28]
+        - generic [ref=e31]: Analytics
+      - tab "Health" [active] [selected] [ref=e32] [cursor=pointer]:
+        - img [ref=e33]
+        - generic [ref=e35]: Health
+  - main [ref=e36]:
+    - generic [ref=e678]:
+      - generic [ref=e679]:
+        - heading "System Health" [level=3] [ref=e680]
+        - button "Refresh" [ref=e681] [cursor=pointer]:
+          - img [ref=e682]
+          - text: Refresh
+      - generic [ref=e684]:
+        - generic [ref=e686]:
+          - generic [ref=e687]: "100"
+          - generic [ref=e688]: Health Score
+          - generic [ref=e690]: HEALTHY
+        - generic [ref=e691]:
+          - heading "Health Checks" [level=4] [ref=e693]
+          - generic [ref=e695]:
+            - img [ref=e697]
+            - generic [ref=e700]: Storage check not available
+      - generic [ref=e701]:
+        - heading "Active Alerts" [level=4] [ref=e703]
+        - generic [ref=e704]: No active alerts

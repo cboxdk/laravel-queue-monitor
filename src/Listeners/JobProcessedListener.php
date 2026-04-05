@@ -7,12 +7,8 @@ namespace Cbox\LaravelQueueMonitor\Listeners;
 use Cbox\LaravelQueueMonitor\Actions\Core\RecordJobCompletedAction;
 use Illuminate\Queue\Events\JobProcessed;
 
-final readonly class JobProcessedListener
+final class JobProcessedListener
 {
-    public function __construct(
-        private RecordJobCompletedAction $action,
-    ) {}
-
     /**
      * Handle the event
      */
@@ -22,8 +18,14 @@ final readonly class JobProcessedListener
             return;
         }
 
+        /** @var string $actionClass */
+        $actionClass = config('queue-monitor.actions.record_job_completed', RecordJobCompletedAction::class);
+
+        /** @var RecordJobCompletedAction $action */
+        $action = app($actionClass);
+
         try {
-            $this->action->execute($event);
+            $action->execute($event);
         } catch (\Throwable $e) {
             // Silently fail to prevent breaking queue operations
             report($e);

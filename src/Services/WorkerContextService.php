@@ -15,10 +15,16 @@ final readonly class WorkerContextService
 
     public function __construct()
     {
-        // Detect Horizon context on construction
-        $this->horizonContext = config('queue-monitor.horizon_detection', true)
-            ? HorizonDetector::detect()
-            : null;
+        // Detect Horizon context on construction — never crash on detection failure
+        try {
+            /** @var bool $horizonDetection */
+            $horizonDetection = config('queue-monitor.worker_detection.horizon_detection', true);
+            $this->horizonContext = $horizonDetection
+                ? HorizonDetector::detect()
+                : null;
+        } catch (\Throwable) {
+            $this->horizonContext = null;
+        }
     }
 
     /**
@@ -39,10 +45,14 @@ final readonly class WorkerContextService
     private function getServerName(): string
     {
         /** @var callable|null $callable */
-        $callable = config('queue-monitor.server_name');
+        $callable = config('queue-monitor.worker_detection.server_name_callable');
 
         if (is_callable($callable)) {
-            return (string) $callable();
+            try {
+                return (string) $callable();
+            } catch (\Throwable) {
+                // Fall through to gethostname()
+            }
         }
 
         return gethostname() ?: 'unknown';
@@ -69,7 +79,8 @@ final readonly class WorkerContextService
      */
     private function getAutoscaleWorkerId(): string
     {
-        $managerId = isset($_SERVER['AUTOSCALE_MANAGER_ID']) ? (string) $_SERVER['AUTOSCALE_MANAGER_ID'] : '';
+        $managerIdRaw = $_SERVER['AUTOSCALE_MANAGER_ID'] ?? null;
+        $managerId = is_scalar($managerIdRaw) ? (string) $managerIdRaw : '';
 
         if ($managerId !== '') {
             return 'autoscale-'.$managerId.'-'.getmypid();
@@ -120,7 +131,7 @@ final readonly class WorkerContextService
     private function getHorizonWorkerId(): string
     {
         // Try to get supervisor name from environment
-        if (isset($_SERVER['HORIZON_SUPERVISOR'])) {
+        if (isset($_SERVER['HORIZON_SUPERVISOR']) && is_scalar($_SERVER['HORIZON_SUPERVISOR'])) {
             return (string) $_SERVER['HORIZON_SUPERVISOR'];
         }
 

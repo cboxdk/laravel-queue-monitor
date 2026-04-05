@@ -15,7 +15,7 @@ final readonly class CalculateQueueHealthAction
     /**
      * Calculate queue health metrics
      *
-     * @return array<string, mixed>
+     * @return array<int, array<string, mixed>>
      */
     public function execute(): array
     {

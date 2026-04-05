@@ -18,6 +18,13 @@ use Illuminate\Support\Collection;
 
 final class LaravelQueueMonitor
 {
+    /**
+     * The callback that should be used to authenticate users.
+     *
+     * @var (\Closure(\Illuminate\Http\Request): bool)|null
+     */
+    public static ?\Closure $authUsing = null;
+
     public function __construct(
         private readonly JobMonitorRepositoryContract $repository,
         private readonly ReplayJobAction $replayAction,
@@ -27,6 +34,29 @@ final class LaravelQueueMonitor
         private readonly CalculateServerStatisticsAction $serverStatsAction,
         private readonly CalculateQueueHealthAction $queueHealthAction,
     ) {}
+
+    /**
+     * Register the callback used to authorize access to the dashboard and API.
+     *
+     * Usage in AuthServiceProvider::boot():
+     *   LaravelQueueMonitor::auth(function ($request) {
+     *       return $request->user()?->isAdmin();
+     *   });
+     *
+     * @param  \Closure(\Illuminate\Http\Request): bool  $callback
+     */
+    public static function auth(\Closure $callback): void
+    {
+        self::$authUsing = $callback;
+    }
+
+    /**
+     * Check if the given request is authorized.
+     */
+    public static function check(\Illuminate\Http\Request $request): bool
+    {
+        return (self::$authUsing ?: fn () => app()->environment('local'))($request);
+    }
 
     /**
      * Get a job by UUID
@@ -85,7 +115,7 @@ final class LaravelQueueMonitor
     /**
      * Get per-server statistics
      *
-     * @return array<string, mixed>
+     * @return array<int, array<string, mixed>>
      */
     public function serverStatistics(?string $serverName = null): array
     {
@@ -95,7 +125,7 @@ final class LaravelQueueMonitor
     /**
      * Get queue health metrics
      *
-     * @return array<string, mixed>
+     * @return array<int, array<string, mixed>>
      */
     public function queueHealth(): array
     {
@@ -105,7 +135,7 @@ final class LaravelQueueMonitor
     /**
      * Prune old job records
      *
-     * @param  array<string>|null  $statuses
+     * @param  array<\Cbox\LaravelQueueMonitor\Enums\JobStatus>|null  $statuses
      */
     public function prune(?int $days = null, ?array $statuses = null): int
     {

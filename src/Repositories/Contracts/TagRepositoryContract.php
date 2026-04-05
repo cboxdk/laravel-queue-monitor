@@ -25,7 +25,7 @@ interface TagRepositoryContract
     /**
      * Get tag statistics
      *
-     * @return Collection<int, array{tag: string, count: int, success_rate: float}>
+     * @return Collection<int, array{tag: string, count: int, successful_count: int, success_rate: float}>
      */
     public function getTagStatistics(): Collection;
 

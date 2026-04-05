@@ -1,31 +1,31 @@
-# Composer Related
-composer.lock
-/vendor
-
-# Frontend Assets
-/node_modules
-
-# Logs
-npm-debug.log
-yarn-error.log
 
 # Caches
+# Composer Related
+# Editors
+# Frontend Assets
+# IDE Helper
+# Logs
+# Misc
+*.png
+.gemini-clipboard/
+.phpstorm.meta.php
 .phpunit.cache
 .phpunit.result.cache
+.playwright-mcp/
+.superpowers/
+/.fleet
+/.idea
+/.vscode
 /build
-
-# IDE Helper
+/coverage
+/node_modules
+/vendor
 _ide_helper.php
 _ide_helper_models.php
-.phpstorm.meta.php
-
-# Editors
-/.idea
-/.fleet
-/.vscode
-
-# Misc
-phpunit.xml
+composer.lock
+dashboard-*.png
+npm-debug.log
 phpstan.neon
+phpunit.xml
 testbench.yaml
-/coverage
+yarn-error.log

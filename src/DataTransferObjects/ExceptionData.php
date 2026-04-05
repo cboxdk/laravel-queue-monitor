@@ -37,14 +37,18 @@ final readonly class ExceptionData
      */
     public static function fromArray(array $data): self
     {
-        $class = $data['class'] ?? '';
-        $message = $data['message'] ?? '';
-        $trace = $data['trace'] ?? '';
+        $classRaw = $data['class'] ?? '';
+        $messageRaw = $data['message'] ?? '';
+        $traceRaw = $data['trace'] ?? '';
+
+        $class = is_string($classRaw) ? $classRaw : (is_scalar($classRaw) ? (string) $classRaw : '');
+        $message = is_string($messageRaw) ? $messageRaw : (is_scalar($messageRaw) ? (string) $messageRaw : '');
+        $trace = is_string($traceRaw) ? $traceRaw : (is_scalar($traceRaw) ? (string) $traceRaw : '');
 
         return new self(
-            class: is_string($class) ? $class : (string) $class,
-            message: is_string($message) ? $message : (string) $message,
-            trace: is_string($trace) ? $trace : (string) $trace,
+            class: $class,
+            message: $message,
+            trace: $trace,
             file: isset($data['file']) && is_string($data['file']) ? $data['file'] : null,
             line: isset($data['line']) && is_int($data['line']) ? $data['line'] : null,
         );

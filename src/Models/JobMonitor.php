@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace Cbox\LaravelQueueMonitor\Models;
 
 use Carbon\Carbon;
+use Cbox\LaravelQueueMonitor\Database\Factories\JobMonitorFactory;
 use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\Enums\WorkerType;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -20,7 +22,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string|null $display_name
  * @property string $connection
  * @property string $queue
- * @property array|null $payload
+ * @property array<string, mixed>|null $payload
  * @property JobStatus $status
  * @property int $attempt
  * @property int $max_attempts
@@ -35,15 +37,19 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string|null $exception_class
  * @property string|null $exception_message
  * @property string|null $exception_trace
- * @property array|null $tags
+ * @property array<string>|null $tags
  * @property Carbon $queued_at
+ * @property Carbon|null $available_at
  * @property Carbon|null $started_at
  * @property Carbon|null $completed_at
  * @property Carbon $created_at
  * @property Carbon $updated_at
+ *
+ * @use HasFactory<JobMonitorFactory>
  */
 class JobMonitor extends Model
 {
+    /** @use HasFactory<JobMonitorFactory> */
     use HasFactory;
 
     /**
@@ -83,6 +89,7 @@ class JobMonitor extends Model
         'exception_trace',
         'tags',
         'queued_at',
+        'available_at',
         'started_at',
         'completed_at',
     ];
@@ -92,6 +99,7 @@ class JobMonitor extends Model
      */
     public function getTable(): string
     {
+        /** @var string $prefix */
         $prefix = config('queue-monitor.database.table_prefix', 'queue_monitor_');
 
         return $prefix.'jobs';
@@ -102,6 +110,7 @@ class JobMonitor extends Model
      */
     public function getConnectionName(): ?string
     {
+        /** @var string|null $connection */
         $connection = config('queue-monitor.database.connection');
 
         if ($connection !== null) {
@@ -130,6 +139,7 @@ class JobMonitor extends Model
             'file_descriptors' => 'integer',
             'duration_ms' => 'integer',
             'queued_at' => 'datetime',
+            'available_at' => 'datetime',
             'started_at' => 'datetime',
             'completed_at' => 'datetime',
         ];
@@ -137,6 +147,8 @@ class JobMonitor extends Model
 
     /**
      * Get the parent job that this job was retried from
+     *
+     * @return BelongsTo<JobMonitor, $this>
      */
     public function retriedFrom(): BelongsTo
     {
@@ -145,6 +157,8 @@ class JobMonitor extends Model
 
     /**
      * Get all retry attempts for this job
+     *
+     * @return HasMany<JobMonitor, $this>
      */
     public function retries(): HasMany
     {
@@ -153,6 +167,8 @@ class JobMonitor extends Model
 
     /**
      * Get the normalized tags relationship
+     *
+     * @return HasMany<Tag, $this>
      */
     public function tagRecords(): HasMany
     {
@@ -161,18 +177,26 @@ class JobMonitor extends Model
 
     /**
      * Scope to filter by status
+     *
+     * @param  Builder<self>  $query
+     * @param  JobStatus|array<JobStatus>  $status
+     * @return Builder<self>
      */
-    public function scopeWithStatus($query, JobStatus|array $status)
+    public function scopeWithStatus(Builder $query, JobStatus|array $status): Builder
     {
         $statuses = is_array($status) ? $status : [$status];
 
-        return $query->whereIn('status', array_map(fn ($s) => $s instanceof JobStatus ? $s->value : $s, $statuses));
+        return $query->whereIn('status', array_map(fn (JobStatus $s) => $s->value, $statuses));
     }
 
     /**
      * Scope to filter by queue
+     *
+     * @param  Builder<self>  $query
+     * @param  string|array<string>  $queue
+     * @return Builder<self>
      */
-    public function scopeOnQueue($query, string|array $queue)
+    public function scopeOnQueue(Builder $query, string|array $queue): Builder
     {
         $queues = is_array($queue) ? $queue : [$queue];
 
@@ -181,16 +205,23 @@ class JobMonitor extends Model
 
     /**
      * Scope to filter by connection
+     *
+     * @param  Builder<self>  $query
+     * @return Builder<self>
      */
-    public function scopeOnConnection($query, string $connection)
+    public function scopeOnConnection(Builder $query, string $connection): Builder
     {
         return $query->where('connection', $connection);
     }
 
     /**
      * Scope to filter by job class
+     *
+     * @param  Builder<self>  $query
+     * @param  string|array<string>  $jobClass
+     * @return Builder<self>
      */
-    public function scopeForJobClass($query, string|array $jobClass)
+    public function scopeForJobClass(Builder $query, string|array $jobClass): Builder
     {
         $classes = is_array($jobClass) ? $jobClass : [$jobClass];
 
@@ -199,8 +230,12 @@ class JobMonitor extends Model
 
     /**
      * Scope to filter by server
+     *
+     * @param  Builder<self>  $query
+     * @param  string|array<string>  $serverName
+     * @return Builder<self>
      */
-    public function scopeOnServer($query, string|array $serverName)
+    public function scopeOnServer(Builder $query, string|array $serverName): Builder
     {
         $servers = is_array($serverName) ? $serverName : [$serverName];
 
@@ -209,16 +244,22 @@ class JobMonitor extends Model
 
     /**
      * Scope to filter by worker type
+     *
+     * @param  Builder<self>  $query
+     * @return Builder<self>
      */
-    public function scopeByWorkerType($query, WorkerType $workerType)
+    public function scopeByWorkerType(Builder $query, WorkerType $workerType): Builder
     {
         return $query->where('worker_type', $workerType);
     }
 
     /**
      * Scope to get finished jobs
+     *
+     * @param  Builder<self>  $query
+     * @return Builder<self>
      */
-    public function scopeFinished($query)
+    public function scopeFinished(Builder $query): Builder
     {
         return $query->whereIn('status', [
             JobStatus::COMPLETED->value,
@@ -230,8 +271,11 @@ class JobMonitor extends Model
 
     /**
      * Scope to get failed jobs
+     *
+     * @param  Builder<self>  $query
+     * @return Builder<self>
      */
-    public function scopeFailed($query)
+    public function scopeFailed(Builder $query): Builder
     {
         return $query->whereIn('status', [
             JobStatus::FAILED->value,
@@ -241,16 +285,23 @@ class JobMonitor extends Model
 
     /**
      * Scope to get successful jobs
+     *
+     * @param  Builder<self>  $query
+     * @return Builder<self>
      */
-    public function scopeSuccessful($query)
+    public function scopeSuccessful(Builder $query): Builder
     {
         return $query->where('status', JobStatus::COMPLETED);
     }
 
     /**
      * Scope to filter by tags
+     *
+     * @param  Builder<self>  $query
+     * @param  string|array<string>  $tag
+     * @return Builder<self>
      */
-    public function scopeWithTag($query, string|array $tag)
+    public function scopeWithTag(Builder $query, string|array $tag): Builder
     {
         $tags = is_array($tag) ? $tag : [$tag];
 
@@ -259,16 +310,22 @@ class JobMonitor extends Model
 
     /**
      * Scope to get jobs queued within a time range
+     *
+     * @param  Builder<self>  $query
+     * @return Builder<self>
      */
-    public function scopeQueuedBetween($query, Carbon $start, Carbon $end)
+    public function scopeQueuedBetween(Builder $query, Carbon $start, Carbon $end): Builder
     {
         return $query->whereBetween('queued_at', [$start, $end]);
     }
 
     /**
      * Scope to get jobs with duration exceeding threshold
+     *
+     * @param  Builder<self>  $query
+     * @return Builder<self>
      */
-    public function scopeSlowJobs($query, int $thresholdMs = 1000)
+    public function scopeSlowJobs(Builder $query, int $thresholdMs = 1000): Builder
     {
         return $query->where('duration_ms', '>', $thresholdMs);
     }

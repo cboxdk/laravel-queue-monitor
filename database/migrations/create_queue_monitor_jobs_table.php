@@ -12,7 +12,9 @@ return new class extends Migration
 {
     public function up(): void
     {
+        /** @var string|null $connection */
         $connection = config('queue-monitor.database.connection');
+        /** @var string $prefix */
         $prefix = config('queue-monitor.database.table_prefix', 'queue_monitor_');
 
         if (! Schema::connection($connection)->hasTable($prefix.'jobs')) {
@@ -67,6 +69,7 @@ return new class extends Migration
 
                 // Timestamps
                 $table->timestamp('queued_at')->index();
+                $table->timestamp('available_at')->nullable(); // When delayed job becomes available for processing
                 $table->timestamp('started_at')->nullable()->index();
                 $table->timestamp('completed_at')->nullable()->index();
                 $table->timestamps();
@@ -100,13 +103,36 @@ return new class extends Migration
                 $table->timestamps();
             });
         }
+
+        // Create scaling_events table for autoscale integration
+        if (! Schema::connection($connection)->hasTable($prefix.'scaling_events')) {
+            Schema::connection($connection)->create($prefix.'scaling_events', function (Blueprint $table): void {
+                $table->id();
+                $table->string('connection');
+                $table->string('queue');
+                $table->string('action'); // scale_up, scale_down, hold
+                $table->integer('current_workers');
+                $table->integer('target_workers');
+                $table->string('reason');
+                $table->decimal('predicted_pickup_time', 10, 2)->nullable();
+                $table->integer('sla_target')->default(30);
+                $table->boolean('sla_breach_risk')->default(false);
+                $table->timestamps();
+
+                $table->index(['queue', 'created_at']);
+                $table->index(['action', 'created_at']);
+            });
+        }
     }
 
     public function down(): void
     {
+        /** @var string|null $connection */
         $connection = config('queue-monitor.database.connection');
+        /** @var string $prefix */
         $prefix = config('queue-monitor.database.table_prefix', 'queue_monitor_');
 
+        Schema::connection($connection)->dropIfExists($prefix.'scaling_events');
         Schema::connection($connection)->dropIfExists($prefix.'tags');
         Schema::connection($connection)->dropIfExists($prefix.'jobs');
     }
