@@ -6,6 +6,7 @@ namespace Cbox\LaravelQueueMonitor\Repositories\Contracts;
 
 use Cbox\LaravelQueueMonitor\DataTransferObjects\JobFilterData;
 use Cbox\LaravelQueueMonitor\DataTransferObjects\JobMonitorData;
+use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\Models\JobMonitor;
 use Illuminate\Support\Collection;
 
@@ -29,9 +30,14 @@ interface JobMonitorRepositoryContract
     public function findByUuid(string $uuid): ?JobMonitor;
 
     /**
-     * Find a job monitor record by job ID
+     * Find a job monitor record by job ID (first match)
      */
     public function findByJobId(string $jobId): ?JobMonitor;
+
+    /**
+     * Find the latest attempt record for a job ID (highest attempt number)
+     */
+    public function findLatestAttemptByJobId(string $jobId): ?JobMonitor;
 
     /**
      * Query job monitor records with filters
@@ -54,6 +60,8 @@ interface JobMonitorRepositoryContract
 
     /**
      * Prune old job records
+     *
+     * @param  array<JobStatus>  $statuses
      */
     public function prune(int $days, array $statuses = []): int;
 

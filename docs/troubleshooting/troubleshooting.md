@@ -1,7 +1,7 @@
 ---
 title: "Troubleshooting"
 description: "Comprehensive troubleshooting guide with solutions for common issues and debugging tips"
-weight: 85
+weight: 1
 ---
 
 # Troubleshooting
@@ -734,6 +734,6 @@ Payload contains non-serializable data.
 ## Still Need Help?
 
 1. Check [GitHub Issues](https://github.com/cboxdk/laravel-queue-monitor/issues)
-2. Review [Architecture Documentation](architecture)
-3. Check [Queue-Metrics Integration](metrics-integration)
-4. Read [Advanced Usage](advanced-usage) for custom solutions
+2. Review [Architecture Documentation](../reference/architecture)
+3. Check [Queue-Metrics Integration](../reference/metrics-integration)
+4. Read [Advanced Usage](../advanced/advanced-usage) for custom solutions

@@ -84,6 +84,6 @@ Built on solid architectural patterns:
 ## Next Steps
 
 - [Installation Guide](installation) - Get started in 5 minutes
-- [Facade Usage](facade-usage) - Learn the programmatic API
-- [Job Replay](job-replay) - Master the replay system
-- [API Reference](api-reference) - Complete REST API docs
+- [Facade Usage](../guides/facade-usage) - Learn the programmatic API
+- [Job Replay](../guides/job-replay) - Master the replay system
+- [API Reference](../reference/api-reference) - Complete REST API docs

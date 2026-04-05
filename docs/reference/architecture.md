@@ -1,7 +1,7 @@
 ---
 title: "Architecture"
 description: "Package architecture with Action, DTO, and Repository patterns explained"
-weight: 80
+weight: 2
 ---
 
 # Architecture

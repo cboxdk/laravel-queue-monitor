@@ -14,6 +14,8 @@ final class QueryBuilderHelper
 {
     /**
      * Get jobs from last N hours
+     *
+     * @return Builder<JobMonitor>
      */
     public static function lastHours(int $hours = 24): Builder
     {
@@ -23,6 +25,8 @@ final class QueryBuilderHelper
 
     /**
      * Get jobs from today
+     *
+     * @return Builder<JobMonitor>
      */
     public static function today(): Builder
     {
@@ -32,6 +36,8 @@ final class QueryBuilderHelper
 
     /**
      * Get slow jobs (above threshold)
+     *
+     * @return Builder<JobMonitor>
      */
     public static function slow(int $thresholdMs = 5000): Builder
     {
@@ -42,6 +48,8 @@ final class QueryBuilderHelper
 
     /**
      * Get memory-intensive jobs
+     *
+     * @return Builder<JobMonitor>
      */
     public static function memoryIntensive(float $thresholdMb = 100.0): Builder
     {
@@ -52,6 +60,8 @@ final class QueryBuilderHelper
 
     /**
      * Get jobs that failed with specific exception
+     *
+     * @return Builder<JobMonitor>
      */
     public static function failedWith(string $exceptionClass): Builder
     {
@@ -62,6 +72,8 @@ final class QueryBuilderHelper
 
     /**
      * Get retried jobs (have parent)
+     *
+     * @return Builder<JobMonitor>
      */
     public static function retried(): Builder
     {
@@ -71,6 +83,8 @@ final class QueryBuilderHelper
 
     /**
      * Get jobs with retries (have children)
+     *
+     * @return Builder<JobMonitor>
      */
     public static function withRetries(): Builder
     {
@@ -80,6 +94,8 @@ final class QueryBuilderHelper
 
     /**
      * Get jobs processed by specific server
+     *
+     * @return Builder<JobMonitor>
      */
     public static function byServer(string $serverName): Builder
     {
@@ -89,6 +105,8 @@ final class QueryBuilderHelper
 
     /**
      * Get horizon jobs only
+     *
+     * @return Builder<JobMonitor>
      */
     public static function horizonOnly(): Builder
     {
@@ -98,6 +116,8 @@ final class QueryBuilderHelper
 
     /**
      * Get queue:work jobs only
+     *
+     * @return Builder<JobMonitor>
      */
     public static function queueWorkOnly(): Builder
     {
@@ -107,6 +127,8 @@ final class QueryBuilderHelper
 
     /**
      * Get jobs between date range
+     *
+     * @return Builder<JobMonitor>
      */
     public static function between(Carbon $start, Carbon $end): Builder
     {
@@ -116,6 +138,8 @@ final class QueryBuilderHelper
 
     /**
      * Get recently completed jobs
+     *
+     * @return Builder<JobMonitor>
      */
     public static function recentlyCompleted(int $limit = 100): Builder
     {
@@ -127,6 +151,8 @@ final class QueryBuilderHelper
 
     /**
      * Get jobs with specific tag
+     *
+     * @return Builder<JobMonitor>
      */
     public static function withTag(string $tag): Builder
     {
@@ -138,6 +164,7 @@ final class QueryBuilderHelper
      * Get jobs matching multiple tags (AND logic)
      *
      * @param  array<string>  $tags
+     * @return Builder<JobMonitor>
      */
     public static function withAllTags(array $tags): Builder
     {
@@ -154,6 +181,7 @@ final class QueryBuilderHelper
      * Get jobs matching any of the tags (OR logic)
      *
      * @param  array<string>  $tags
+     * @return Builder<JobMonitor>
      */
     public static function withAnyTag(array $tags): Builder
     {
@@ -167,6 +195,8 @@ final class QueryBuilderHelper
 
     /**
      * Get long-running jobs (still processing for X minutes)
+     *
+     * @return Builder<JobMonitor>
      */
     public static function longRunning(int $minutes = 10): Builder
     {
@@ -177,6 +207,8 @@ final class QueryBuilderHelper
 
     /**
      * Get stuck jobs (processing but no recent activity)
+     *
+     * @return Builder<JobMonitor>
      */
     public static function stuck(int $minutes = 30): Builder
     {

@@ -32,25 +32,32 @@ final class JobPayloadSerializer
      * Security: Only allows deserialization of the specific class declared in the payload.
      * This prevents object injection attacks where a malicious serialized payload could
      * instantiate arbitrary classes.
+     *
+     * @param  array<string, mixed>  $payload
      */
     public static function deserialize(array $payload): ?object
     {
-        if (! isset($payload['data']['command'])) {
+        $data = $payload['data'] ?? null;
+
+        if (! is_array($data) || ! isset($data['command'])) {
             return null;
         }
 
         // Get the expected class name from the payload
-        $expectedClass = $payload['data']['commandName'] ?? null;
+        $expectedClass = $data['commandName'] ?? null;
 
-        if ($expectedClass === null || ! class_exists($expectedClass)) {
+        if (! is_string($expectedClass) || ! class_exists($expectedClass)) {
             return null;
         }
+
+        /** @var string $command */
+        $command = $data['command'];
 
         try {
             // Security: Only allow the specific expected class to be deserialized
             // This prevents object injection attacks via crafted serialized data
             $command = unserialize(
-                $payload['data']['command'],
+                $command,
                 ['allowed_classes' => [$expectedClass]]
             );
 
@@ -132,7 +139,7 @@ final class JobPayloadSerializer
 
         // Ensure all tags are strings and non-empty
         return array_values(array_filter(
-            array_map(fn (mixed $tag): string => is_string($tag) ? $tag : (string) $tag, $tags),
+            array_map(fn (mixed $tag): string => is_string($tag) ? $tag : (is_scalar($tag) ? (string) $tag : ''), $tags),
             fn (string $tag): bool => $tag !== ''
         ));
     }
@@ -151,9 +158,12 @@ final class JobPayloadSerializer
 
     /**
      * Check if payload size exceeds limit
+     *
+     * @param  array<string, mixed>  $payload
      */
     public static function exceedsSizeLimit(array $payload): bool
     {
+        /** @var int $maxSize */
         $maxSize = config('queue-monitor.storage.payload_max_size', 65535);
         $size = strlen(json_encode($payload) ?: '');
 

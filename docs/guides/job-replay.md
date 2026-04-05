@@ -1,7 +1,7 @@
 ---
 title: "Job Replay"
 description: "Re-dispatch failed jobs from stored payloads with complete validation"
-weight: 30
+weight: 3
 ---
 
 # Job Replay

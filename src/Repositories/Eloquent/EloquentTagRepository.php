@@ -40,10 +40,13 @@ final readonly class EloquentTagRepository implements TagRepositoryContract
         return $tags;
     }
 
+    /**
+     * @return Collection<int, array{tag: string, count: int, successful_count: int, success_rate: float}>
+     */
     public function getTagStatistics(): Collection
     {
         /** @var string $prefix */
-        $prefix = config('queue-monitor.table_prefix', 'queue_monitor_');
+        $prefix = config('queue-monitor.database.table_prefix', 'queue_monitor_');
 
         return DB::table($prefix.'tags as t')
             ->join($prefix.'jobs as j', 't.job_id', '=', 'j.id')
@@ -58,7 +61,7 @@ final readonly class EloquentTagRepository implements TagRepositoryContract
             ->orderByDesc('count')
             ->get()
             ->map(fn ($row) => [
-                'tag' => $row->tag,
+                'tag' => (string) $row->tag,
                 'count' => (int) $row->count,
                 'successful_count' => (int) $row->successful_count,
                 'success_rate' => (float) $row->success_rate,

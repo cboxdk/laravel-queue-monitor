@@ -56,6 +56,7 @@ final readonly class JobFilterData
         public ?Carbon $completedBefore = null,
         public ?int $minDurationMs = null,
         public ?int $maxDurationMs = null,
+        public ?int $minAttempts = null,
         public ?string $search = null,
         public int $limit = 50,
         public int $offset = 0,
@@ -73,36 +74,37 @@ final readonly class JobFilterData
         return new self(
             statuses: isset($data['statuses']) && is_array($data['statuses'])
                 ? array_map(
-                    fn (mixed $status): JobStatus => JobStatus::from(is_string($status) ? $status : (string) $status),
+                    fn (mixed $status): JobStatus => JobStatus::from(is_string($status) ? $status : (is_scalar($status) ? (string) $status : '')),
                     $data['statuses']
                 )
                 : null,
             queues: isset($data['queues']) && is_array($data['queues'])
-                ? $data['queues']
+                ? array_values(array_map(fn (mixed $v): string => is_string($v) ? $v : (is_scalar($v) ? (string) $v : ''), $data['queues']))
                 : null,
-            connection: isset($data['connection']) ? (string) $data['connection'] : null,
+            connection: isset($data['connection']) && is_scalar($data['connection']) ? (string) $data['connection'] : null,
             jobClasses: isset($data['job_classes']) && is_array($data['job_classes'])
-                ? $data['job_classes']
+                ? array_values(array_map(fn (mixed $v): string => is_string($v) ? $v : (is_scalar($v) ? (string) $v : ''), $data['job_classes']))
                 : null,
             serverNames: isset($data['server_names']) && is_array($data['server_names'])
-                ? $data['server_names']
+                ? array_values(array_map(fn (mixed $v): string => is_string($v) ? $v : (is_scalar($v) ? (string) $v : ''), $data['server_names']))
                 : null,
-            workerId: isset($data['worker_id']) ? (string) $data['worker_id'] : null,
-            workerType: isset($data['worker_type']) ? (string) $data['worker_type'] : null,
+            workerId: isset($data['worker_id']) && is_scalar($data['worker_id']) ? (string) $data['worker_id'] : null,
+            workerType: isset($data['worker_type']) && is_scalar($data['worker_type']) ? (string) $data['worker_type'] : null,
             tags: isset($data['tags']) && is_array($data['tags'])
-                ? $data['tags']
+                ? array_values(array_map(fn (mixed $v): string => is_string($v) ? $v : (is_scalar($v) ? (string) $v : ''), $data['tags']))
                 : null,
-            queuedAfter: isset($data['queued_after']) ? Carbon::parse($data['queued_after']) : null,
-            queuedBefore: isset($data['queued_before']) ? Carbon::parse($data['queued_before']) : null,
-            startedAfter: isset($data['started_after']) ? Carbon::parse($data['started_after']) : null,
-            startedBefore: isset($data['started_before']) ? Carbon::parse($data['started_before']) : null,
-            completedAfter: isset($data['completed_after']) ? Carbon::parse($data['completed_after']) : null,
-            completedBefore: isset($data['completed_before']) ? Carbon::parse($data['completed_before']) : null,
-            minDurationMs: isset($data['min_duration_ms']) ? (int) $data['min_duration_ms'] : null,
-            maxDurationMs: isset($data['max_duration_ms']) ? (int) $data['max_duration_ms'] : null,
-            search: isset($data['search']) ? (string) $data['search'] : null,
-            limit: isset($data['limit']) ? min((int) $data['limit'], 1000) : 50,
-            offset: isset($data['offset']) ? (int) $data['offset'] : 0,
+            queuedAfter: isset($data['queued_after']) && (is_string($data['queued_after']) || is_numeric($data['queued_after'])) ? Carbon::parse($data['queued_after']) : null,
+            queuedBefore: isset($data['queued_before']) && (is_string($data['queued_before']) || is_numeric($data['queued_before'])) ? Carbon::parse($data['queued_before']) : null,
+            startedAfter: isset($data['started_after']) && (is_string($data['started_after']) || is_numeric($data['started_after'])) ? Carbon::parse($data['started_after']) : null,
+            startedBefore: isset($data['started_before']) && (is_string($data['started_before']) || is_numeric($data['started_before'])) ? Carbon::parse($data['started_before']) : null,
+            completedAfter: isset($data['completed_after']) && (is_string($data['completed_after']) || is_numeric($data['completed_after'])) ? Carbon::parse($data['completed_after']) : null,
+            completedBefore: isset($data['completed_before']) && (is_string($data['completed_before']) || is_numeric($data['completed_before'])) ? Carbon::parse($data['completed_before']) : null,
+            minDurationMs: isset($data['min_duration_ms']) && is_numeric($data['min_duration_ms']) ? (int) $data['min_duration_ms'] : null,
+            maxDurationMs: isset($data['max_duration_ms']) && is_numeric($data['max_duration_ms']) ? (int) $data['max_duration_ms'] : null,
+            minAttempts: isset($data['min_attempts']) && is_numeric($data['min_attempts']) ? (int) $data['min_attempts'] : null,
+            search: isset($data['search']) && is_scalar($data['search']) ? (string) $data['search'] : null,
+            limit: isset($data['limit']) && is_numeric($data['limit']) ? min((int) $data['limit'], 1000) : 50,
+            offset: isset($data['offset']) && is_numeric($data['offset']) ? (int) $data['offset'] : 0,
             sortBy: self::validateSortColumn($data['sort_by'] ?? null),
             sortDirection: self::validateSortDirection($data['sort_direction'] ?? null),
         );
@@ -134,6 +136,7 @@ final readonly class JobFilterData
             'completed_before' => $this->completedBefore?->toIso8601String(),
             'min_duration_ms' => $this->minDurationMs,
             'max_duration_ms' => $this->maxDurationMs,
+            'min_attempts' => $this->minAttempts,
             'search' => $this->search,
             'limit' => $this->limit,
             'offset' => $this->offset,
@@ -163,6 +166,7 @@ final readonly class JobFilterData
             || $this->completedBefore !== null
             || $this->minDurationMs !== null
             || $this->maxDurationMs !== null
+            || $this->minAttempts !== null
             || $this->search !== null;
     }
 
@@ -171,7 +175,7 @@ final readonly class JobFilterData
      */
     private static function validateSortColumn(mixed $column): string
     {
-        if ($column === null) {
+        if ($column === null || ! is_scalar($column)) {
             return 'queued_at';
         }
 
@@ -185,7 +189,7 @@ final readonly class JobFilterData
      */
     private static function validateSortDirection(mixed $direction): string
     {
-        if ($direction === null) {
+        if ($direction === null || ! is_scalar($direction)) {
             return 'desc';
         }
 

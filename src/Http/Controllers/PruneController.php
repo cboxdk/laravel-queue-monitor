@@ -25,11 +25,13 @@ class PruneController extends Controller
         $statusesValue = $request->input('statuses');
 
         $days = is_numeric($daysValue) ? (int) $daysValue : null;
+        /** @var array<JobStatus>|null $statuses */
         $statuses = null;
 
         if ($statusesValue !== null && is_array($statusesValue)) {
+            /** @var array<JobStatus> $statuses */
             $statuses = array_map(
-                fn (mixed $status): JobStatus => JobStatus::from(is_string($status) ? $status : (string) $status),
+                fn (mixed $status): JobStatus => JobStatus::from(is_string($status) ? $status : (is_scalar($status) ? (string) $status : '')),
                 $statusesValue
             );
         }

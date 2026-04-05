@@ -1,7 +1,7 @@
 ---
 title: "Contributing"
 description: "Development setup, code standards, and contribution guidelines"
-weight: 95
+weight: 2
 hidden: true
 ---
 

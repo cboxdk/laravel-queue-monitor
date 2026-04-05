@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Cbox\LaravelQueueMonitor\Tests;
 
+use Cbox\LaravelQueueMonitor\LaravelQueueMonitor;
 use Cbox\LaravelQueueMonitor\LaravelQueueMonitorServiceProvider;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Orchestra\Testbench\TestCase as Orchestra;
@@ -17,6 +18,16 @@ class TestCase extends Orchestra
         Factory::guessFactoryNamesUsing(
             fn (string $modelName) => 'Cbox\\LaravelQueueMonitor\\Database\\Factories\\'.class_basename($modelName).'Factory'
         );
+
+        // Allow all requests in test environment
+        LaravelQueueMonitor::auth(fn () => true);
+    }
+
+    protected function tearDown(): void
+    {
+        LaravelQueueMonitor::$authUsing = null;
+
+        parent::tearDown();
     }
 
     protected function getPackageProviders($app): array
@@ -43,6 +54,18 @@ class TestCase extends Orchestra
 
     protected function defineDatabaseMigrations(): void
     {
-        // Removed manual loading to test ServiceProvider's automatic loading
+        // Create the cache table needed by statistics caching
+        if (! \Illuminate\Support\Facades\Schema::hasTable('cache')) {
+            \Illuminate\Support\Facades\Schema::create('cache', function (\Illuminate\Database\Schema\Blueprint $table): void {
+                $table->string('key')->primary();
+                $table->mediumText('value');
+                $table->integer('expiration');
+            });
+            \Illuminate\Support\Facades\Schema::create('cache_locks', function (\Illuminate\Database\Schema\Blueprint $table): void {
+                $table->string('key')->primary();
+                $table->string('owner');
+                $table->integer('expiration');
+            });
+        }
     }
 }

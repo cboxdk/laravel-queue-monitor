@@ -1,7 +1,7 @@
 ---
 title: "Queue-Metrics Integration"
 description: "Seamless integration with laravel-queue-metrics for enhanced resource tracking"
-weight: 60
+weight: 3
 ---
 
 # Queue-Metrics Integration

@@ -79,22 +79,22 @@ echo "Success Rate: {$stats['success_rate']}%\n";
 ## Documentation Structure
 
 ### Getting Started
-- [Introduction](introduction) - Package overview and key features
-- [Installation](installation) - Setup in 5 minutes
-- [Quick Start](quickstart) - Common usage patterns
-- [Configuration](configuration) - Customize behavior
+- [Introduction](getting-started/introduction) - Package overview and key features
+- [Installation](getting-started/installation) - Setup in 5 minutes
+- [Quick Start](getting-started/quickstart) - Common usage patterns
+- [Configuration](guides/configuration) - Customize behavior
 
 ### Core Features
-- [Facade Usage](facade-usage) - Programmatic API
-- [Job Replay](job-replay) - Replay system deep dive
-- [Advanced Usage](advanced-usage) - Custom monitoring and dashboards
-- [Events](events) - Event-driven integration
+- [Facade Usage](guides/facade-usage) - Programmatic API
+- [Job Replay](guides/job-replay) - Replay system deep dive
+- [Advanced Usage](advanced/advanced-usage) - Custom monitoring and dashboards
+- [Events](guides/events) - Event-driven integration
 
 ### Reference
-- [Queue-Metrics Integration](metrics-integration) - Resource tracking
-- [API Reference](api-reference) - Complete REST API docs
-- [Testing Guide](testing) - Write tests with Pest 4
-- [Architecture](architecture) - Package design patterns
+- [Queue-Metrics Integration](reference/metrics-integration) - Resource tracking
+- [API Reference](reference/api-reference) - Complete REST API docs
+- [Testing Guide](reference/testing) - Write tests with Pest 4
+- [Architecture](reference/architecture) - Package design patterns
 
 ## Architecture
 
@@ -133,4 +133,4 @@ Built on solid patterns for maintainability:
 
 ## Next Steps
 
-Start with the [Installation Guide](installation) to get up and running in minutes.
+Start with the [Installation Guide](getting-started/installation) to get up and running in minutes.

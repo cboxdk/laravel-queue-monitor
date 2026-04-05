@@ -1,7 +1,7 @@
 ---
 title: "Implementation Summary"
 description: "Complete technical specifications and implementation details for developers"
-weight: 99
+weight: 3
 hidden: true
 ---
 

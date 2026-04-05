@@ -22,7 +22,7 @@ Route::prefix(config('queue-monitor.api.prefix', 'api/queue-monitor'))
     ->middleware(array_merge(
         config('queue-monitor.api.middleware', ['api']),
         [
-            EnsureQueueMonitorEnabled::class,
+            EnsureQueueMonitorEnabled::class.':api',
             'throttle:'.$rateLimit,
         ]
     ))

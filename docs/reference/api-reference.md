@@ -1,3 +1,9 @@
+---
+title: "API Reference"
+description: "Complete REST API documentation with all endpoints, parameters, and response examples"
+weight: 1
+---
+
 # API Reference
 
 The Laravel Queue Monitor package exposes a comprehensive REST API for integrating with external dashboards or monitoring tools.

@@ -22,15 +22,22 @@ class LaravelQueueMonitorCommand extends Command
 
         $stats = $monitor->statistics();
 
+        $total = is_numeric($stats['total'] ?? null) ? (int) $stats['total'] : 0;
+        $completed = is_numeric($stats['completed'] ?? null) ? (int) $stats['completed'] : 0;
+        $failed = is_numeric($stats['failed'] ?? null) ? (int) $stats['failed'] : 0;
+        $processing = is_numeric($stats['processing'] ?? null) ? (int) $stats['processing'] : 0;
+        $successRate = is_numeric($stats['success_rate'] ?? null) ? (string) $stats['success_rate'] : '0';
+        $failureRate = is_numeric($stats['failure_rate'] ?? null) ? (string) $stats['failure_rate'] : '0';
+
         $this->table(
             ['Metric', 'Value'],
             [
-                ['Total Jobs', number_format((int) ($stats['total'] ?? 0))],
-                ['Completed', number_format((int) ($stats['completed'] ?? 0))],
-                ['Failed', number_format((int) ($stats['failed'] ?? 0))],
-                ['Processing', number_format((int) ($stats['processing'] ?? 0))],
-                ['Success Rate', (string) ($stats['success_rate'] ?? 0).'%'],
-                ['Failure Rate', (string) ($stats['failure_rate'] ?? 0).'%'],
+                ['Total Jobs', number_format($total)],
+                ['Completed', number_format($completed)],
+                ['Failed', number_format($failed)],
+                ['Processing', number_format($processing)],
+                ['Success Rate', $successRate.'%'],
+                ['Failure Rate', $failureRate.'%'],
                 ['Avg Duration', isset($stats['avg_duration_ms']) && is_numeric($stats['avg_duration_ms']) ? number_format((float) $stats['avg_duration_ms']).'ms' : 'N/A'],
                 ['Max Duration', isset($stats['max_duration_ms']) && is_numeric($stats['max_duration_ms']) ? number_format((int) $stats['max_duration_ms']).'ms' : 'N/A'],
                 ['Avg Memory', isset($stats['avg_memory_mb']) && is_numeric($stats['avg_memory_mb']) ? number_format((float) $stats['avg_memory_mb'], 2).'MB' : 'N/A'],

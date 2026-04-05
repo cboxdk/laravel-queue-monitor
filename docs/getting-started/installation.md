@@ -84,6 +84,6 @@ QUEUE_MONITOR_DB_CONNECTION=mysql
 
 ## Next Steps
 
-- [Configuration Guide](configuration)
-- [API Reference](api-reference)
-- [Facade Usage](facade-usage)
+- [Configuration Guide](../guides/configuration)
+- [API Reference](../reference/api-reference)
+- [Facade Usage](../guides/facade-usage)

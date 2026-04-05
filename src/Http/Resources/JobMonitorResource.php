@@ -66,11 +66,11 @@ class JobMonitorResource extends JsonResource
                 $sensitiveKeys
             ) : null,
             'timestamps' => [
-                'queued_at' => $this->queued_at?->toIso8601String(),
+                'queued_at' => $this->queued_at->toIso8601String(),
                 'started_at' => $this->started_at?->toIso8601String(),
                 'completed_at' => $this->completed_at?->toIso8601String(),
-                'created_at' => $this->created_at?->toIso8601String(),
-                'updated_at' => $this->updated_at?->toIso8601String(),
+                'created_at' => $this->created_at->toIso8601String(),
+                'updated_at' => $this->updated_at->toIso8601String(),
             ],
             'flags' => [
                 'is_finished' => $this->isFinished(),

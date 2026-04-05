@@ -1,7 +1,7 @@
 ---
 title: "Facade Usage"
 description: "Programmatic access to queue monitoring with type-safe facade methods"
-weight: 20
+weight: 2
 ---
 
 # Facade Usage

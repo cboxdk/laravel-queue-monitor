@@ -1,7 +1,7 @@
 ---
 title: "Events"
 description: "Event-driven architecture with Laravel Queue and package-specific events"
-weight: 50
+weight: 4
 ---
 
 # Events

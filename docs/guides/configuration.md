@@ -1,7 +1,7 @@
 ---
 title: "Configuration"
 description: "Configure database, payload storage, retention policies, and API settings"
-weight: 3
+weight: 1
 ---
 
 # Configuration

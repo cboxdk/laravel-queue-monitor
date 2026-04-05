@@ -35,6 +35,22 @@ class PayloadRedactor
     }
 
     /**
+     * Redact sensitive info from exception traces (file paths, credentials in stack frames).
+     *
+     * Strips the application base path to show relative paths only.
+     */
+    public static function redactTrace(?string $trace): ?string
+    {
+        if ($trace === null) {
+            return null;
+        }
+
+        $basePath = base_path().'/';
+
+        return str_replace($basePath, '', $trace);
+    }
+
+    /**
      * Check if a key is considered sensitive
      *
      * @param  array<string>  $sensitiveKeys

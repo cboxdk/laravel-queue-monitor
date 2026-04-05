@@ -16,7 +16,7 @@ final readonly class PruneJobsAction
     /**
      * Prune old job records
      *
-     * @param  array<JobStatus|string>|null  $statuses
+     * @param  array<JobStatus>|null  $statuses
      */
     public function execute(?int $days = null, ?array $statuses = null): int
     {

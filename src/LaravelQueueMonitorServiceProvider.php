@@ -9,12 +9,14 @@ use Cbox\LaravelQueueMonitor\Commands\LaravelQueueMonitorCommand;
 use Cbox\LaravelQueueMonitor\Commands\PruneJobsCommand;
 use Cbox\LaravelQueueMonitor\Commands\QueueMonitorDashboardCommand;
 use Cbox\LaravelQueueMonitor\Commands\ReplayJobCommand;
+use Cbox\LaravelQueueMonitor\Listeners\JobExceptionOccurredListener;
 use Cbox\LaravelQueueMonitor\Listeners\JobFailedListener;
 use Cbox\LaravelQueueMonitor\Listeners\JobProcessedListener;
 use Cbox\LaravelQueueMonitor\Listeners\JobProcessingListener;
 use Cbox\LaravelQueueMonitor\Listeners\JobQueuedListener;
 use Cbox\LaravelQueueMonitor\Listeners\JobTimedOutListener;
 use Cbox\LaravelQueueMonitor\Listeners\QueueMetricsSubscriber;
+use Cbox\LaravelQueueMonitor\Listeners\ScalingEventListener;
 use Illuminate\Queue\Events\JobFailed;
 use Illuminate\Queue\Events\JobProcessed;
 use Illuminate\Queue\Events\JobProcessing;
@@ -104,9 +106,24 @@ class LaravelQueueMonitorServiceProvider extends PackageServiceProvider
         Event::listen(JobProcessed::class, JobProcessedListener::class);
         Event::listen(JobFailed::class, JobFailedListener::class);
         Event::listen(JobTimedOut::class, JobTimedOutListener::class);
+        Event::listen(\Illuminate\Queue\Events\JobExceptionOccurred::class, JobExceptionOccurredListener::class);
 
         // Register queue-metrics event subscriber
         Event::subscribe(QueueMetricsSubscriber::class);
+
+        // Register autoscale event listeners (if autoscale package is installed)
+        $autoscaleEvents = [
+            'Cbox\\LaravelQueueAutoscale\\Events\\ScalingDecisionMade' => 'handleScalingDecision',
+            'Cbox\\LaravelQueueAutoscale\\Events\\WorkersScaled' => 'handleWorkersScaled',
+            'Cbox\\LaravelQueueAutoscale\\Events\\SlaBreached' => 'handleSlaBreached',
+            'Cbox\\LaravelQueueAutoscale\\Events\\SlaRecovered' => 'handleSlaRecovered',
+        ];
+
+        foreach ($autoscaleEvents as $eventClass => $method) {
+            if (class_exists($eventClass)) {
+                Event::listen($eventClass, [ScalingEventListener::class, $method]);
+            }
+        }
     }
 
     /**
@@ -114,6 +131,7 @@ class LaravelQueueMonitorServiceProvider extends PackageServiceProvider
      */
     protected function registerRepositories(): void
     {
+        /** @var array<string, string> $repositories */
         $repositories = config('queue-monitor.repositories', []);
 
         foreach ($repositories as $contract => $implementation) {
@@ -126,6 +144,7 @@ class LaravelQueueMonitorServiceProvider extends PackageServiceProvider
      */
     protected function registerActions(): void
     {
+        /** @var array<string, string> $actions */
         $actions = config('queue-monitor.actions', []);
 
         foreach ($actions as $key => $implementation) {

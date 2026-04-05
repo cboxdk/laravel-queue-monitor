@@ -25,7 +25,8 @@ class HealthCheckCommand extends Command
         $health = $healthCheck->check();
 
         if ($this->option('json')) {
-            $this->line(json_encode($health, JSON_PRETTY_PRINT));
+            $json = json_encode($health, JSON_PRETTY_PRINT);
+            $this->line($json !== false ? $json : '{}');
 
             return self::SUCCESS;
         }
@@ -38,7 +39,7 @@ class HealthCheckCommand extends Command
     /**
      * Display health status in table format
      *
-     * @param  array<string, mixed>  $health
+     * @param  array{status: string, checks: array<string, array<string, mixed>>}  $health
      */
     private function displayHealthStatus(array $health): void
     {
@@ -50,11 +51,15 @@ class HealthCheckCommand extends Command
         $rows = [];
 
         foreach ($health['checks'] as $name => $check) {
-            $icon = $check['healthy'] ? '✅' : '❌';
+            /** @var bool $isHealthy */
+            $isHealthy = $check['healthy'];
+            $icon = $isHealthy ? '✅' : '❌';
+            /** @var string $message */
+            $message = $check['message'];
             $rows[] = [
                 $icon,
                 ucwords(str_replace('_', ' ', $name)),
-                $check['message'],
+                $message,
             ];
         }
 

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Cbox\LaravelQueueMonitor\Http\Controllers;
 
 use Cbox\LaravelQueueMonitor\DataTransferObjects\JobFilterData;
+use Cbox\LaravelQueueMonitor\Http\Requests\ListJobsRequest;
 use Cbox\LaravelQueueMonitor\Http\Resources\JobMonitorCollection;
 use Cbox\LaravelQueueMonitor\Http\Resources\JobMonitorResource;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\JobMonitorRepositoryContract;
@@ -21,9 +22,9 @@ class JobMonitorController extends Controller
     /**
      * List jobs with optional filtering
      */
-    public function index(Request $request): JobMonitorCollection
+    public function index(ListJobsRequest $request): JobMonitorCollection
     {
-        $filters = JobFilterData::fromRequest($request->all());
+        $filters = JobFilterData::fromRequest($request->validated());
 
         $jobs = $this->repository->query($filters);
         $total = $this->repository->count($filters);

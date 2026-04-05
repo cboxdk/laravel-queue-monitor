@@ -47,6 +47,7 @@ class ListJobsRequest extends FormRequest
             'completed_before' => 'sometimes|date',
             'min_duration_ms' => 'sometimes|integer|min:0',
             'max_duration_ms' => 'sometimes|integer|min:0',
+            'min_attempts' => 'sometimes|integer|min:1',
             'search' => 'sometimes|string|max:255',
             'limit' => 'sometimes|integer|min:1|max:1000',
             'offset' => 'sometimes|integer|min:0',

@@ -15,7 +15,7 @@ final readonly class CalculateServerStatisticsAction
     /**
      * Calculate per-server statistics
      *
-     * @return array<string, mixed>
+     * @return array<int, array<string, mixed>>
      */
     public function execute(?string $serverName = null): array
     {

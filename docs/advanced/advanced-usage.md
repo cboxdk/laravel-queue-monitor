@@ -1,7 +1,7 @@
 ---
 title: "Advanced Usage"
 description: "Custom monitoring, dashboards, multi-tenancy, and performance optimization"
-weight: 40
+weight: 1
 ---
 
 # Advanced Usage

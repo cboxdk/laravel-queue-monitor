@@ -16,21 +16,21 @@ interface StatisticsRepositoryContract
     /**
      * Get per-server statistics
      *
-     * @return array<string, mixed>
+     * @return array<int, array<string, mixed>>
      */
     public function getServerStatistics(?string $serverName = null): array;
 
     /**
      * Get per-queue statistics
      *
-     * @return array<string, mixed>
+     * @return array<int, array<string, mixed>>
      */
     public function getQueueStatistics(?string $queue = null): array;
 
     /**
      * Get per-job-class statistics
      *
-     * @return array<string, mixed>
+     * @return array<int, array<string, mixed>>
      */
     public function getJobClassStatistics(?string $jobClass = null): array;
 
@@ -44,7 +44,14 @@ interface StatisticsRepositoryContract
     /**
      * Get queue health metrics
      *
-     * @return array<string, mixed>
+     * @return array<int, array<string, mixed>>
      */
     public function getQueueHealth(): array;
+
+    /**
+     * Get jobs per minute for the last N minutes
+     *
+     * @return array<int, array{minute: string, total: int, completed: int, failed: int}>
+     */
+    public function getThroughputByMinute(int $minutes = 60): array;
 }

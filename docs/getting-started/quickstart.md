@@ -1,7 +1,7 @@
 ---
 title: "Quick Start"
 description: "Get started with Laravel Queue Monitor in 5 minutes with essential examples"
-weight: 4
+weight: 3
 ---
 
 # Quick Start
@@ -156,8 +156,8 @@ php artisan queue-monitor:prune --days=30 --statuses=completed
 
 ## What's Next?
 
-- [Facade Usage](facade-usage) - Learn all facade methods
-- [Job Replay](job-replay) - Master the replay system
-- [API Reference](api-reference) - Explore all endpoints
-- [Advanced Usage](advanced-usage) - Custom monitoring and dashboards
-- [Configuration](configuration) - Customize behavior
+- [Facade Usage](../guides/facade-usage) - Learn all facade methods
+- [Job Replay](../guides/job-replay) - Master the replay system
+- [API Reference](../reference/api-reference) - Explore all endpoints
+- [Advanced Usage](../advanced/advanced-usage) - Custom monitoring and dashboards
+- [Configuration](../guides/configuration) - Customize behavior

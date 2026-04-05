@@ -24,18 +24,19 @@ final readonly class JobReplayData
      */
     public static function fromArray(array $data): self
     {
-        $originalUuid = $data['original_uuid'] ?? '';
-        $newUuid = $data['new_uuid'] ?? '';
-        $queue = $data['queue'] ?? '';
-        $connection = $data['connection'] ?? '';
+        $originalUuidRaw = $data['original_uuid'] ?? '';
+        $newUuidRaw = $data['new_uuid'] ?? '';
+        $queueRaw = $data['queue'] ?? '';
+        $connectionRaw = $data['connection'] ?? '';
+        $replayedAtRaw = $data['replayed_at'] ?? null;
 
         return new self(
-            originalUuid: is_string($originalUuid) ? $originalUuid : (string) $originalUuid,
-            newUuid: is_string($newUuid) ? $newUuid : (string) $newUuid,
+            originalUuid: is_string($originalUuidRaw) ? $originalUuidRaw : (is_scalar($originalUuidRaw) ? (string) $originalUuidRaw : ''),
+            newUuid: is_string($newUuidRaw) ? $newUuidRaw : (is_scalar($newUuidRaw) ? (string) $newUuidRaw : ''),
             newJobId: isset($data['new_job_id']) && is_string($data['new_job_id']) ? $data['new_job_id'] : null,
-            queue: is_string($queue) ? $queue : (string) $queue,
-            connection: is_string($connection) ? $connection : (string) $connection,
-            replayedAt: Carbon::parse($data['replayed_at']),
+            queue: is_string($queueRaw) ? $queueRaw : (is_scalar($queueRaw) ? (string) $queueRaw : ''),
+            connection: is_string($connectionRaw) ? $connectionRaw : (is_scalar($connectionRaw) ? (string) $connectionRaw : ''),
+            replayedAt: Carbon::parse(is_string($replayedAtRaw) || is_numeric($replayedAtRaw) || $replayedAtRaw instanceof \DateTimeInterface ? $replayedAtRaw : null),
         );
     }
 

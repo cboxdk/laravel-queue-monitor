@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Cbox\LaravelQueueMonitor\Repositories\Eloquent;
 
+use Carbon\Carbon;
+use Carbon\CarbonPeriod;
 use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\StatisticsRepositoryContract;
 use Illuminate\Support\Facades\Cache;
@@ -16,6 +18,9 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
         return $this->remember('global_statistics', fn () => $this->computeGlobalStatistics());
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     private function computeGlobalStatistics(): array
     {
         /** @var string $prefix */
@@ -87,6 +92,9 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
         ];
     }
 
+    /**
+     * @return array<int, array<string, mixed>>
+     */
     public function getServerStatistics(?string $serverName = null): array
     {
         $cacheKey = 'server_statistics_'.($serverName ?? 'all');
@@ -139,6 +147,9 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
         return $result;
     }
 
+    /**
+     * @return array<int, array<string, mixed>>
+     */
     public function getQueueStatistics(?string $queue = null): array
     {
         $cacheKey = 'queue_statistics_'.($queue ?? 'all');
@@ -196,6 +207,9 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
         return $result;
     }
 
+    /**
+     * @return array<int, array<string, mixed>>
+     */
     public function getJobClassStatistics(?string $jobClass = null): array
     {
         $cacheKey = 'job_class_statistics_'.($jobClass !== null ? md5($jobClass) : 'all');
@@ -289,6 +303,9 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
         ];
     }
 
+    /**
+     * @return array<int, array<string, mixed>>
+     */
     public function getQueueHealth(): array
     {
         return $this->remember('queue_health', fn () => $this->computeQueueHealth(), 30);
@@ -343,6 +360,72 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
             ->all();
 
         return $queueHealth;
+    }
+
+    public function getThroughputByMinute(int $minutes = 60): array
+    {
+        return $this->remember("throughput_{$minutes}", fn () => $this->computeThroughputByMinute($minutes), 30);
+    }
+
+    /**
+     * @param  array<string, string>|null  $filter  Optional filter e.g. ['queue' => 'payments']
+     * @return array<int, array{minute: string, total: int, completed: int, failed: int}>
+     */
+    public function computeThroughputByMinute(int $minutes = 60, ?array $filter = null): array
+    {
+        /** @var string $prefix */
+        $prefix = config('queue-monitor.database.table_prefix', 'queue_monitor_');
+
+        $driver = DB::connection()->getDriverName();
+        $dateFormat = $driver === 'sqlite'
+            ? "strftime('%Y-%m-%d %H:%M', queued_at)"
+            : "DATE_FORMAT(queued_at, '%Y-%m-%d %H:%i')";
+
+        $query = DB::table($prefix.'jobs')
+            ->select([
+                DB::raw("{$dateFormat} as minute"),
+                DB::raw('COUNT(*) as total'),
+                DB::raw('SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as completed'),
+                DB::raw('SUM(CASE WHEN status IN (?, ?) THEN 1 ELSE 0 END) as failed'),
+            ])
+            ->addBinding([
+                JobStatus::COMPLETED->value,
+                JobStatus::FAILED->value,
+                JobStatus::TIMEOUT->value,
+            ])
+            ->where('queued_at', '>=', now()->subMinutes($minutes))
+            ->groupBy(DB::raw($dateFormat))
+            ->orderBy(DB::raw($dateFormat));
+
+        if ($filter !== null) {
+            foreach ($filter as $column => $value) {
+                $query->where($column, $value);
+            }
+        }
+
+        $rows = $query->get()->keyBy('minute');
+
+        // Fill gaps with zeros so every minute has an entry
+        $result = [];
+        $period = CarbonPeriod::create(
+            now()->subMinutes($minutes)->startOfMinute(),
+            '1 minute',
+            now()->startOfMinute()
+        );
+
+        foreach ($period as $date) {
+            /** @var Carbon $date */
+            $key = $date->format('Y-m-d H:i');
+            $row = $rows->get($key);
+            $result[] = [
+                'minute' => $key,
+                'total' => $row ? (int) $row->total : 0,
+                'completed' => $row ? (int) $row->completed : 0,
+                'failed' => $row ? (int) $row->failed : 0,
+            ];
+        }
+
+        return $result;
     }
 
     /**

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Cbox\LaravelQueueMonitor\Actions\Core;
 
+use Carbon\Carbon;
 use Cbox\LaravelQueueMonitor\DataTransferObjects\JobMonitorData;
 use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\Models\JobMonitor;
@@ -27,9 +28,11 @@ final readonly class RecordJobQueuedAction
      */
     public function execute(object $event): JobMonitor
     {
-        // JobQueued event structure: connectionName, job (the actual job object, not Job interface)
+        // JobQueued event has: connectionName, queue, id, job, payload, delay
         $jobInstance = $event->job ?? null;
         $connectionName = $event->connectionName ?? 'default';
+        $jobId = isset($event->id) ? (string) $event->id : null;
+        $availableAt = $this->calculateAvailableAt($event->delay ?? null);
 
         if ($jobInstance === null) {
             throw new \RuntimeException('Job instance not found in event');
@@ -43,7 +46,7 @@ final readonly class RecordJobQueuedAction
         $data = new JobMonitorData(
             id: null,
             uuid: Str::uuid()->toString(),
-            jobId: null, // Will be set when job starts processing
+            jobId: $jobId,
             jobClass: $this->getJobClass($jobInstance),
             displayName: $this->getDisplayName($jobInstance),
             connection: $connectionName,
@@ -63,6 +66,7 @@ final readonly class RecordJobQueuedAction
             exception: null,
             tags: $this->extractTags($jobInstance),
             queuedAt: now(),
+            availableAt: $availableAt,
             startedAt: null,
             completedAt: null,
             createdAt: now(),
@@ -178,9 +182,33 @@ final readonly class RecordJobQueuedAction
             // Ensure all tags are strings
             /** @var array<string> */
             return array_filter(
-                array_map(fn (mixed $tag): string => is_string($tag) ? $tag : (string) $tag, $tags),
+                array_map(fn (mixed $tag): string => is_string($tag) ? $tag : (is_scalar($tag) || $tag === null ? (string) $tag : ''), $tags),
                 fn (string $tag): bool => $tag !== ''
             );
+        }
+
+        return null;
+    }
+
+    /**
+     * Calculate when a delayed job becomes available for processing
+     */
+    private function calculateAvailableAt(mixed $delay): ?Carbon
+    {
+        if ($delay === null || $delay === 0) {
+            return null; // Not delayed — available immediately
+        }
+
+        if ($delay instanceof \DateTimeInterface) {
+            return Carbon::instance($delay);
+        }
+
+        if ($delay instanceof \DateInterval) {
+            return now()->add($delay);
+        }
+
+        if (is_numeric($delay)) {
+            return now()->addSeconds((int) $delay);
         }
 
         return null;
