@@ -12,8 +12,10 @@ use Cbox\LaravelQueueMonitor\Actions\Core\PruneJobsAction;
 use Cbox\LaravelQueueMonitor\Actions\Replay\ReplayJobAction;
 use Cbox\LaravelQueueMonitor\DataTransferObjects\JobFilterData;
 use Cbox\LaravelQueueMonitor\DataTransferObjects\JobReplayData;
+use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\Models\JobMonitor;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\JobMonitorRepositoryContract;
+use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 
 final class LaravelQueueMonitor
@@ -21,7 +23,7 @@ final class LaravelQueueMonitor
     /**
      * The callback that should be used to authenticate users.
      *
-     * @var (\Closure(\Illuminate\Http\Request): bool)|null
+     * @var (\Closure(Request): bool)|null
      */
     public static ?\Closure $authUsing = null;
 
@@ -43,7 +45,7 @@ final class LaravelQueueMonitor
      *       return $request->user()?->isAdmin();
      *   });
      *
-     * @param  \Closure(\Illuminate\Http\Request): bool  $callback
+     * @param  \Closure(Request): bool  $callback
      */
     public static function auth(\Closure $callback): void
     {
@@ -53,7 +55,7 @@ final class LaravelQueueMonitor
     /**
      * Check if the given request is authorized.
      */
-    public static function check(\Illuminate\Http\Request $request): bool
+    public static function check(Request $request): bool
     {
         return (self::$authUsing ?: fn () => app()->environment('local'))($request);
     }
@@ -135,7 +137,7 @@ final class LaravelQueueMonitor
     /**
      * Prune old job records
      *
-     * @param  array<\Cbox\LaravelQueueMonitor\Enums\JobStatus>|null  $statuses
+     * @param  array<JobStatus>|null  $statuses
      */
     public function prune(?int $days = null, ?array $statuses = null): int
     {

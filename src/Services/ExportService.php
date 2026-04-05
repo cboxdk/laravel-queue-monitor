@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Cbox\LaravelQueueMonitor\Services;
 
+use Cbox\LaravelQueueMonitor\Actions\Analytics\CalculateJobStatisticsAction;
+use Cbox\LaravelQueueMonitor\Actions\Analytics\CalculateQueueHealthAction;
+use Cbox\LaravelQueueMonitor\Actions\Analytics\CalculateServerStatisticsAction;
 use Cbox\LaravelQueueMonitor\DataTransferObjects\JobFilterData;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\JobMonitorRepositoryContract;
 
@@ -127,13 +130,13 @@ final readonly class ExportService
      */
     public function statisticsReport(): array
     {
-        $stats = app(\Cbox\LaravelQueueMonitor\Actions\Analytics\CalculateJobStatisticsAction::class)
+        $stats = app(CalculateJobStatisticsAction::class)
             ->execute();
 
-        $serverStats = app(\Cbox\LaravelQueueMonitor\Actions\Analytics\CalculateServerStatisticsAction::class)
+        $serverStats = app(CalculateServerStatisticsAction::class)
             ->execute();
 
-        $queueHealth = app(\Cbox\LaravelQueueMonitor\Actions\Analytics\CalculateQueueHealthAction::class)
+        $queueHealth = app(CalculateQueueHealthAction::class)
             ->execute();
 
         return [

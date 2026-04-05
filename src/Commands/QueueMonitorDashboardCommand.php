@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace Cbox\LaravelQueueMonitor\Commands;
 
 use Cbox\LaravelQueueMonitor\Enums\JobStatus;
+use Cbox\LaravelQueueMonitor\LaravelQueueMonitor;
 use Cbox\LaravelQueueMonitor\Models\JobMonitor;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\JobMonitorRepositoryContract;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\StatisticsRepositoryContract;
 use Illuminate\Console\Command;
+use Illuminate\Support\Collection;
 
 use function Termwind\render;
 
@@ -204,8 +206,8 @@ class QueueMonitorDashboardCommand extends Command
 
             if ($this->confirm("Replay {$job->getShortJobClass()} (attempt #{$job->attempt})?")) {
                 try {
-                    /** @var \Cbox\LaravelQueueMonitor\LaravelQueueMonitor $monitor */
-                    $monitor = app(\Cbox\LaravelQueueMonitor\LaravelQueueMonitor::class);
+                    /** @var LaravelQueueMonitor $monitor */
+                    $monitor = app(LaravelQueueMonitor::class);
                     $result = $monitor->replay($job->uuid);
                     $this->info("Replayed → new job: {$result->newJobId}");
                     sleep(1);
@@ -303,9 +305,9 @@ class QueueMonitorDashboardCommand extends Command
     }
 
     /**
-     * @return \Illuminate\Support\Collection<int, JobMonitor>
+     * @return Collection<int, JobMonitor>
      */
-    private function getFilteredJobs(JobMonitorRepositoryContract $jobRepository): \Illuminate\Support\Collection
+    private function getFilteredJobs(JobMonitorRepositoryContract $jobRepository): Collection
     {
         $query = JobMonitor::query()->orderByDesc('queued_at')->limit(20);
 

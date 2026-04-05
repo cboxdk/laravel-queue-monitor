@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Cbox\LaravelQueueMonitor\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Str;
 
 class ReplayJobRequest extends FormRequest
 {
@@ -36,7 +37,7 @@ class ReplayJobRequest extends FormRequest
         // UUID comes from route parameter, validate format
         $uuid = $this->route('uuid');
 
-        if (! is_string($uuid) || ! \Illuminate\Support\Str::isUuid($uuid)) {
+        if (! is_string($uuid) || ! Str::isUuid($uuid)) {
             abort(422, 'Invalid UUID format');
         }
     }

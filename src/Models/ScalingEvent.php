@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Cbox\LaravelQueueMonitor\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -17,8 +18,8 @@ use Illuminate\Database\Eloquent\Model;
  * @property string|null $predicted_pickup_time
  * @property int $sla_target
  * @property bool $sla_breach_risk
- * @property \Carbon\Carbon $created_at
- * @property \Carbon\Carbon $updated_at
+ * @property Carbon $created_at
+ * @property Carbon $updated_at
  */
 class ScalingEvent extends Model
 {

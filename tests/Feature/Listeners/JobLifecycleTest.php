@@ -2,11 +2,14 @@
 
 declare(strict_types=1);
 
+use Cbox\LaravelQueueMonitor\Actions\Core\RecordJobCompletedAction;
+use Cbox\LaravelQueueMonitor\Actions\Core\RecordJobFailedAction;
 use Cbox\LaravelQueueMonitor\Actions\Core\RecordJobQueuedAction;
 use Cbox\LaravelQueueMonitor\Actions\Core\RecordJobStartedAction;
 use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\Models\JobMonitor;
 use Cbox\LaravelQueueMonitor\Tests\Support\ExampleJob;
+use Illuminate\Contracts\Queue\Job;
 use Illuminate\Queue\Events\JobFailed;
 use Illuminate\Queue\Events\JobProcessed;
 use Illuminate\Queue\Events\JobProcessing;
@@ -32,7 +35,7 @@ test('job processing event updates status', function () {
         'job_id' => '12345',
     ]);
 
-    $mockJob = Mockery::mock(\Illuminate\Contracts\Queue\Job::class);
+    $mockJob = Mockery::mock(Job::class);
     $mockJob->shouldReceive('getJobId')->andReturn('12345');
     $mockJob->shouldReceive('attempts')->andReturn(1);
     $mockJob->shouldReceive('payload')->andReturn([]);
@@ -53,12 +56,12 @@ test('job processed event marks completion', function () {
         'started_at' => now()->subSeconds(5),
     ]);
 
-    $mockJob = Mockery::mock(\Illuminate\Contracts\Queue\Job::class);
+    $mockJob = Mockery::mock(Job::class);
     $mockJob->shouldReceive('getJobId')->andReturn('12345');
 
     // Directly invoke the action to avoid silent failures in listener try/catch
     $event = new JobProcessed('redis', $mockJob);
-    $action = app(\Cbox\LaravelQueueMonitor\Actions\Core\RecordJobCompletedAction::class);
+    $action = app(RecordJobCompletedAction::class);
     $action->execute($event);
 
     $monitor->refresh();
@@ -72,14 +75,14 @@ test('job failed event captures exception', function () {
         'job_id' => '12345',
     ]);
 
-    $mockJob = Mockery::mock(\Illuminate\Contracts\Queue\Job::class);
+    $mockJob = Mockery::mock(Job::class);
     $mockJob->shouldReceive('getJobId')->andReturn('12345');
 
-    $exception = new \RuntimeException('Test failure');
+    $exception = new RuntimeException('Test failure');
 
     // Directly invoke the action to avoid silent failures in listener try/catch
     $event = new JobFailed('redis', $mockJob, $exception);
-    $action = app(\Cbox\LaravelQueueMonitor\Actions\Core\RecordJobFailedAction::class);
+    $action = app(RecordJobFailedAction::class);
     $action->execute($event);
 
     $monitor->refresh();
@@ -98,7 +101,7 @@ test('complete job lifecycle is tracked', function () {
     expect($monitor->status)->toBe(JobStatus::QUEUED);
 
     // 2. Processing
-    $mockJob = Mockery::mock(\Illuminate\Contracts\Queue\Job::class);
+    $mockJob = Mockery::mock(Job::class);
     $mockJob->shouldReceive('getJobId')->andReturn('12345');
     $mockJob->shouldReceive('attempts')->andReturn(1);
     $mockJob->shouldReceive('payload')->andReturn([]);
@@ -111,7 +114,7 @@ test('complete job lifecycle is tracked', function () {
 
     // 3. Completed
     $processedEvent = new JobProcessed('redis', $mockJob);
-    app(\Cbox\LaravelQueueMonitor\Actions\Core\RecordJobCompletedAction::class)->execute($processedEvent);
+    app(RecordJobCompletedAction::class)->execute($processedEvent);
     $monitor->refresh();
     expect($monitor->status)->toBe(JobStatus::COMPLETED);
     expect($monitor->isFinished())->toBeTrue();
