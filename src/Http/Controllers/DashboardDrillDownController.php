@@ -210,7 +210,8 @@ class DashboardDrillDownController extends Controller
             return $displayName;
         }
 
-        $command = $payload['data']['command'] ?? null;
+        $data = $payload['data'] ?? null;
+        $command = is_array($data) ? ($data['command'] ?? null) : null;
         if (! is_string($command)) {
             return $displayName;
         }

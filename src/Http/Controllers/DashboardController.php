@@ -48,10 +48,11 @@ class DashboardController extends Controller
             default => 'queue',
         };
 
-        $value = $request->route()?->parameter('queue')
+        $raw = $request->route()?->parameter('queue')
             ?? $request->route()?->parameter('server')
-            ?? $request->route()?->parameter('jobClass')
-            ?? '';
+            ?? $request->route()?->parameter('jobClass');
+
+        $value = is_string($raw) ? $raw : '';
 
         return $this->render(drillDownType: $type, drillDownValue: $value);
     }
