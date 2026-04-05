@@ -23,6 +23,7 @@ final class HealthCheckService
         $cachePrefix = config('queue-monitor.cache.prefix', 'queue_monitor_');
 
         if (config('queue-monitor.cache.enabled', true)) {
+            /** @var array{status: string, checks: array<string, array<string, mixed>>}|null $cached */
             $cached = Cache::get($cachePrefix.'health_check');
             if ($cached !== null) {
                 return $cached;
