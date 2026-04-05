@@ -40,14 +40,14 @@ final readonly class RecordJobCompletedAction
         $completedAt = now();
         $durationMs = $this->calculateDuration($jobMonitor->started_at, $completedAt);
 
-        // Capture basic resource metrics
-        $memoryPeakMb = memory_get_peak_usage(true) / 1024 / 1024;
+        // Note: cpu_time_ms and memory_peak_mb are set by QueueMetricsSubscriber
+        // from laravel-queue-metrics' process-level instrumentation (ProcessMetrics).
+        // We do NOT set them here to avoid overwriting accurate data with imprecise fallbacks.
 
         $this->repository->update($jobMonitor->uuid, [
             'status' => JobStatus::COMPLETED,
             'completed_at' => $completedAt,
             'duration_ms' => $durationMs,
-            'memory_peak_mb' => round($memoryPeakMb, 2),
         ]);
 
         // Store normalized tags if present

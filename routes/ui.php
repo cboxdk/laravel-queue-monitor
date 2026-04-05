@@ -13,7 +13,14 @@ Route::prefix(config('queue-monitor.ui.route_prefix'))
         [EnsureQueueMonitorEnabled::class.':ui']
     ))
     ->group(function () {
+        // Dashboard (tabs use #hash fragments: #jobs, #analytics, #health, #infrastructure)
         Route::get('/', [DashboardController::class, 'index'])->name('queue-monitor.dashboard');
+
+        // Deep-link views (hard-refreshable)
+        Route::get('/job/{uuid}', [DashboardController::class, 'show'])->name('queue-monitor.job.view');
+        Route::get('/queue/{queue}', [DashboardController::class, 'drillDownView'])->name('queue-monitor.queue.view')->where('queue', '.*');
+        Route::get('/server/{server}', [DashboardController::class, 'drillDownView'])->name('queue-monitor.server.view')->where('server', '.*');
+        Route::get('/class/{jobClass}', [DashboardController::class, 'drillDownView'])->name('queue-monitor.class.view')->where('jobClass', '.*');
         Route::get('/metrics', [DashboardMetricsController::class, 'overview'])->name('queue-monitor.dashboard.metrics');
         Route::get('/jobs', [DashboardMetricsController::class, 'jobs'])->name('queue-monitor.dashboard.jobs');
         Route::get('/jobs/{uuid}', [DashboardMetricsController::class, 'jobDetail'])->name('queue-monitor.dashboard.job.detail');

@@ -40,10 +40,22 @@ final class QueueMetricsSubscriber
         }
 
         try {
+            // Find the attempt that is currently processing (the one this event is for).
+            // We can't just pick the latest attempt — a retried job has multiple records
+            // sharing the same job_id, and the latest might already be completed.
             $monitor = JobMonitor::where('job_id', $jobId)
+                ->where('status', 'processing')
                 ->orderByDesc('attempt')
-                ->orderByDesc('created_at')
                 ->first();
+
+            // Fallback: if already transitioned to completed/failed (race with other listeners),
+            // pick the most recent attempt that still has no metrics set.
+            if ($monitor === null) {
+                $monitor = JobMonitor::where('job_id', $jobId)
+                    ->whereNull('cpu_time_ms')
+                    ->orderByDesc('attempt')
+                    ->first();
+            }
 
             if ($monitor === null) {
                 return;
