@@ -31,8 +31,12 @@ class DashboardHealthController extends Controller
         $alertingService = app(AlertingService::class);
 
         $healthCheck = $healthService->check();
-        $score = $healthService->getHealthScore();
         $alerts = $alertingService->checkAlertConditions();
+
+        // Derive score from already-computed checks to avoid running health queries twice
+        $checks = $healthCheck['checks'];
+        $healthyCount = collect($checks)->filter(fn (array $c): bool => (bool) ($c['healthy'] ?? false))->count();
+        $score = (int) round(($healthyCount / max(count($checks), 1)) * 100);
 
         return response()->json([
             'score' => $score,

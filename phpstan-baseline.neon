@@ -17,3 +17,16 @@ parameters:
 			identifier: trait.unused
 			count: 1
 			path: src/Traits/MonitorsJobs.php
+
+		-
+			message: '#.*#'
+			identifier: class.notFound
+			path: src/Listeners/QueueMetricsSubscriber.php
+
+		-
+			message: '#.*unknown class Cbox\\\\LaravelQueueMetrics.*#'
+			path: src/Listeners/QueueMetricsSubscriber.php
+
+		-
+			message: '#.*invalid type Cbox\\\\LaravelQueueMetrics.*#'
+			path: src/Listeners/QueueMetricsSubscriber.php

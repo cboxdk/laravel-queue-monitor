@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Cbox\LaravelQueueMonitor\Models\JobMonitor;
+use Cbox\LaravelQueueMonitor\Models\ScalingEvent;
 
 use function Pest\Laravel\getJson;
 
@@ -249,7 +250,7 @@ test('infrastructure endpoint includes scaling history when table exists', funct
     // The scaling_events table is already created by the package migration
 
     // Insert a scaling event
-    \Cbox\LaravelQueueMonitor\Models\ScalingEvent::create([
+    ScalingEvent::create([
         'connection' => 'redis',
         'queue' => 'default',
         'action' => 'scale_up',

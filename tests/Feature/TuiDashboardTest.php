@@ -6,6 +6,7 @@ namespace Cbox\LaravelQueueMonitor\Tests\Feature;
 
 use Cbox\LaravelQueueMonitor\Models\JobMonitor;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\StatisticsRepositoryContract;
+use Illuminate\Support\Facades\Artisan;
 
 use function Termwind\render;
 
@@ -236,7 +237,7 @@ it('dashboard renders with empty job list', function () {
 });
 
 it('can publish migrations and config', function () {
-    $exitCode = \Illuminate\Support\Facades\Artisan::call('vendor:publish', [
+    $exitCode = Artisan::call('vendor:publish', [
         '--provider' => 'Cbox\LaravelQueueMonitor\LaravelQueueMonitorServiceProvider',
     ]);
 

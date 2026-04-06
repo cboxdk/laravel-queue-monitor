@@ -7,6 +7,7 @@ namespace Cbox\LaravelQueueMonitor\Services;
 use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\Models\JobMonitor;
 use Cbox\LaravelQueueMonitor\Utilities\QueryBuilderHelper;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 final class HealthCheckService
@@ -18,6 +19,17 @@ final class HealthCheckService
      */
     public function check(): array
     {
+        /** @var string $cachePrefix */
+        $cachePrefix = config('queue-monitor.cache.prefix', 'queue_monitor_');
+
+        if (config('queue-monitor.cache.enabled', true)) {
+            /** @var array{status: string, checks: array<string, array<string, mixed>>}|null $cached */
+            $cached = Cache::get($cachePrefix.'health_check');
+            if ($cached !== null) {
+                return $cached;
+            }
+        }
+
         $checks = [
             'database' => $this->checkDatabase(),
             'recent_activity' => $this->checkRecentActivity(),
@@ -29,11 +41,17 @@ final class HealthCheckService
 
         $healthy = collect($checks)->every(fn ($check) => $check['healthy']);
 
-        return [
+        $result = [
             'status' => $healthy ? 'healthy' : 'degraded',
             'checks' => $checks,
             'timestamp' => now()->toIso8601String(),
         ];
+
+        if (config('queue-monitor.cache.enabled', true)) {
+            Cache::put($cachePrefix.'health_check', $result, 15);
+        }
+
+        return $result;
     }
 
     /**

@@ -21,14 +21,20 @@ class PruneController extends Controller
      */
     public function __invoke(Request $request): JsonResponse
     {
-        $daysValue = $request->input('days');
-        $statusesValue = $request->input('statuses');
+        $validated = $request->validate([
+            'days' => 'sometimes|integer|min:1',
+            'statuses' => 'sometimes|array',
+            'statuses.*' => 'string',
+        ]);
 
-        $days = is_numeric($daysValue) ? (int) $daysValue : null;
+        $daysValue = $validated['days'] ?? null;
+        $statusesValue = $validated['statuses'] ?? null;
+
+        $days = is_int($daysValue) ? $daysValue : null;
         /** @var array<JobStatus>|null $statuses */
         $statuses = null;
 
-        if ($statusesValue !== null && is_array($statusesValue)) {
+        if (is_array($statusesValue)) {
             /** @var array<JobStatus> $statuses */
             $statuses = array_map(
                 fn (mixed $status): JobStatus => JobStatus::from(is_string($status) ? $status : (is_scalar($status) ? (string) $status : '')),

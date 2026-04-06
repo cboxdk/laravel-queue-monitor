@@ -55,9 +55,9 @@ class JobMonitor extends Model
     /**
      * Create a new factory instance for the model.
      */
-    protected static function newFactory(): \Cbox\LaravelQueueMonitor\Database\Factories\JobMonitorFactory
+    protected static function newFactory(): JobMonitorFactory
     {
-        return \Cbox\LaravelQueueMonitor\Database\Factories\JobMonitorFactory::new();
+        return JobMonitorFactory::new();
     }
 
     /**

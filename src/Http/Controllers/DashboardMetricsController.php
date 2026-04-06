@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Cbox\LaravelQueueMonitor\Http\Controllers;
 
 use Cbox\LaravelQueueMonitor\DataTransferObjects\JobFilterData;
+use Cbox\LaravelQueueMonitor\Models\JobMonitor;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\JobMonitorRepositoryContract;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\StatisticsRepositoryContract;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\TagRepositoryContract;
@@ -13,6 +14,7 @@ use Cbox\LaravelQueueMonitor\Utilities\PayloadRedactor;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * Handles overview metrics, job listing, job detail, analytics, and legacy payload endpoints.
@@ -124,14 +126,15 @@ class DashboardMetricsController extends Controller
             ];
         });
 
-        // Provide distinct queue names for the filter dropdown
-        $availableQueues = \Cbox\LaravelQueueMonitor\Models\JobMonitor::query()
+        // Provide distinct queue names for the filter dropdown (cached to avoid full table scan)
+        $availableQueues = Cache::remember('queue_monitor:available_queues', 60, fn () => JobMonitor::query()
             ->distinct()
             ->whereNotNull('queue')
             ->pluck('queue')
             ->sort()
             ->values()
-            ->all();
+            ->all()
+        );
 
         return response()->json([
             'data' => $data,

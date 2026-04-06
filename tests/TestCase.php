@@ -7,6 +7,8 @@ namespace Cbox\LaravelQueueMonitor\Tests;
 use Cbox\LaravelQueueMonitor\LaravelQueueMonitor;
 use Cbox\LaravelQueueMonitor\LaravelQueueMonitorServiceProvider;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 use Orchestra\Testbench\TestCase as Orchestra;
 
 class TestCase extends Orchestra
@@ -55,13 +57,13 @@ class TestCase extends Orchestra
     protected function defineDatabaseMigrations(): void
     {
         // Create the cache table needed by statistics caching
-        if (! \Illuminate\Support\Facades\Schema::hasTable('cache')) {
-            \Illuminate\Support\Facades\Schema::create('cache', function (\Illuminate\Database\Schema\Blueprint $table): void {
+        if (! Schema::hasTable('cache')) {
+            Schema::create('cache', function (Blueprint $table): void {
                 $table->string('key')->primary();
                 $table->mediumText('value');
                 $table->integer('expiration');
             });
-            \Illuminate\Support\Facades\Schema::create('cache_locks', function (\Illuminate\Database\Schema\Blueprint $table): void {
+            Schema::create('cache_locks', function (Blueprint $table): void {
                 $table->string('key')->primary();
                 $table->string('owner');
                 $table->integer('expiration');

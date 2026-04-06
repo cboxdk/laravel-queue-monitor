@@ -17,6 +17,7 @@ use Cbox\LaravelQueueMonitor\Listeners\JobQueuedListener;
 use Cbox\LaravelQueueMonitor\Listeners\JobTimedOutListener;
 use Cbox\LaravelQueueMonitor\Listeners\QueueMetricsSubscriber;
 use Cbox\LaravelQueueMonitor\Listeners\ScalingEventListener;
+use Illuminate\Queue\Events\JobExceptionOccurred;
 use Illuminate\Queue\Events\JobFailed;
 use Illuminate\Queue\Events\JobProcessed;
 use Illuminate\Queue\Events\JobProcessing;
@@ -106,7 +107,7 @@ class LaravelQueueMonitorServiceProvider extends PackageServiceProvider
         Event::listen(JobProcessed::class, JobProcessedListener::class);
         Event::listen(JobFailed::class, JobFailedListener::class);
         Event::listen(JobTimedOut::class, JobTimedOutListener::class);
-        Event::listen(\Illuminate\Queue\Events\JobExceptionOccurred::class, JobExceptionOccurredListener::class);
+        Event::listen(JobExceptionOccurred::class, JobExceptionOccurredListener::class);
 
         // Register queue-metrics event subscriber
         Event::subscribe(QueueMetricsSubscriber::class);

@@ -194,57 +194,44 @@ final class InfrastructureService
 
         // Get SLA targets from autoscale config (per queue)
         $slaTargets = $this->getAutoscaleSlaTargets();
+        $defaultTarget = $slaTargets['*'] ?? 30;
 
-        // Get all queues with jobs in last hour
-        $queues = DB::table($prefix.'jobs')
+        // Single aggregation query: count total and within-SLA per queue
+        $pickupExpr = $driver === 'sqlite'
+            ? '(julianday(started_at) - julianday(COALESCE(available_at, queued_at))) * 86400'
+            : 'TIMESTAMPDIFF(SECOND, COALESCE(available_at, queued_at), started_at)';
+
+        $rows = DB::table($prefix.'jobs')
+            ->selectRaw("queue, COUNT(*) as total, {$pickupExpr} as pickup_seconds")
             ->whereNotNull('started_at')
             ->where('created_at', '>=', now()->subHour())
-            ->select('queue')
-            ->distinct()
-            ->pluck('queue')
-            ->all();
+            ->groupBy('queue')
+            ->get();
 
-        if (empty($queues)) {
+        if ($rows->isEmpty()) {
             return ['available' => true, 'per_queue' => [], 'source' => empty($slaTargets) ? 'default' : 'autoscale'];
         }
 
+        // For per-queue SLA with different targets, we need pickup times per queue.
+        // Use a single query to get all pickup seconds, grouped by queue.
+        $allPickups = DB::table($prefix.'jobs')
+            ->selectRaw("queue, {$pickupExpr} as pickup_seconds")
+            ->whereNotNull('started_at')
+            ->where('created_at', '>=', now()->subHour())
+            ->get()
+            ->groupBy('queue');
+
         $perQueue = [];
-        foreach ($queues as $queue) {
-            $queueStr = (string) $queue;
-            $target = $slaTargets[$queueStr] ?? $slaTargets['*'] ?? 30;
-
-            $total = DB::table($prefix.'jobs')
-                ->whereNotNull('started_at')
-                ->where('created_at', '>=', now()->subHour())
-                ->where('queue', $queueStr)
-                ->count();
-
-            if ($total === 0) {
-                $perQueue[] = ['queue' => $queueStr, 'target_seconds' => $target, 'compliance' => 100.0, 'total' => 0, 'within' => 0, 'breached' => 0];
-
-                continue;
-            }
-
-            if ($driver === 'sqlite') {
-                $within = DB::table($prefix.'jobs')
-                    ->whereNotNull('started_at')
-                    ->where('created_at', '>=', now()->subHour())
-                    ->where('queue', $queueStr)
-                    ->whereRaw('(julianday(started_at) - julianday(COALESCE(available_at, queued_at))) * 86400 <= ?', [$target])
-                    ->count();
-            } else {
-                $within = DB::table($prefix.'jobs')
-                    ->whereNotNull('started_at')
-                    ->where('created_at', '>=', now()->subHour())
-                    ->where('queue', $queueStr)
-                    ->whereRaw('TIMESTAMPDIFF(SECOND, COALESCE(available_at, queued_at), started_at) <= ?', [$target])
-                    ->count();
-            }
+        foreach ($allPickups as $queueName => $queueRows) {
+            $queueStr = (string) $queueName;
+            $target = $slaTargets[$queueStr] ?? $defaultTarget;
+            $total = $queueRows->count();
+            $within = $queueRows->filter(fn ($row) => (float) $row->pickup_seconds <= $target)->count();
 
             $perQueue[] = [
                 'queue' => $queueStr,
                 'target_seconds' => $target,
-                'compliance' => round(($within / $total) * 100, 1),
+                'compliance' => $total > 0 ? round(($within / $total) * 100, 1) : 100.0,
                 'total' => $total,
                 'within' => $within,
                 'breached' => $total - $within,

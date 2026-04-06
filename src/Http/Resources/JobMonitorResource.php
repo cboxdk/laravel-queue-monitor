@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace Cbox\LaravelQueueMonitor\Http\Resources;
 
+use Cbox\LaravelQueueMonitor\Models\JobMonitor;
 use Cbox\LaravelQueueMonitor\Utilities\PayloadRedactor;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * @mixin \Cbox\LaravelQueueMonitor\Models\JobMonitor
+ * @mixin JobMonitor
  */
 class JobMonitorResource extends JsonResource
 {

@@ -84,6 +84,9 @@ return new class extends Migration
                 $table->index(['status', 'completed_at']); // Error rate trends
                 $table->index(['queue', 'created_at']);    // Queue health metrics
                 $table->index(['job_class', 'completed_at', 'duration_ms']); // Performance regression detection
+                $table->index(['status', 'started_at']);   // Stuck job detection (AlertingService + HealthCheckService)
+                $table->index(['worker_type', 'created_at']); // Worker type breakdown (InfrastructureService)
+                $table->index('created_at');               // Prune without status filter, SLA queries
             });
         }
 

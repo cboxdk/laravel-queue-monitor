@@ -16,7 +16,7 @@ test('handles job with no payload gracefully', function () {
 
 test('handles invalid uuid format', function () {
     expect(fn () => QueueMonitor::getJob('invalid-uuid'))
-        ->not->toThrow(\Exception::class);
+        ->not->toThrow(Exception::class);
 
     expect(QueueMonitor::getJob('invalid-uuid'))->toBeNull();
 });
