@@ -577,7 +577,12 @@ class QueueMonitorDashboardCommand extends Command
         if ($this->interactive) {
             // Parse to string (no side-effects) → cursor home → write → clear rest
             $rendered = parse($html);
-            $this->output->write("\033[H".$rendered."\n\033[J");
+
+            // Append "erase to end of line" (\033[K) on every line so that
+            // shorter lines don't leave ghost characters from a previous frame
+            // (e.g. switching from a wide Jobs view to a narrower Health view).
+            $cleaned = str_replace("\n", "\033[K\n", $rendered);
+            $this->output->write("\033[H".$cleaned."\033[K\n\033[J");
         } else {
             // --once mode: just render inline
             render($html);
