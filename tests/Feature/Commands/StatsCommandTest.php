@@ -7,6 +7,23 @@ use Cbox\LaravelQueueMonitor\Enums\WorkerType;
 use Cbox\LaravelQueueMonitor\Models\JobMonitor;
 use Illuminate\Support\Str;
 
+test('stats command outputs valid JSON with --json flag', function () {
+    JobMonitor::factory()->count(3)->create();
+    JobMonitor::factory()->failed()->create();
+
+    $this->artisan('queue-monitor:stats', ['--json' => true])
+        ->assertSuccessful()
+        ->expectsOutputToContain('"total"');
+});
+
+test('stats command json output does not contain table headers', function () {
+    JobMonitor::factory()->create();
+
+    $this->artisan('queue-monitor:stats', ['--json' => true])
+        ->assertSuccessful()
+        ->doesntExpectOutputToContain('Queue Monitor Statistics');
+});
+
 test('stats command displays statistics', function () {
     JobMonitor::create([
         'uuid' => Str::uuid()->toString(),

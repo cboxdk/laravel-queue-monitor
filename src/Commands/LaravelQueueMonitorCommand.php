@@ -11,16 +11,24 @@ class LaravelQueueMonitorCommand extends Command
 {
     public $signature = 'queue-monitor:stats
                         {--connection= : The connection to show stats for}
-                        {--queue= : The queue to show stats for}';
+                        {--queue= : The queue to show stats for}
+                        {--json : Output as JSON}';
 
     public $description = 'Show queue monitor statistics';
 
     public function handle(LaravelQueueMonitor $monitor): int
     {
+        $stats = $monitor->statistics();
+
+        if ($this->option('json')) {
+            $json = json_encode($stats, JSON_PRETTY_PRINT);
+            $this->line($json !== false ? $json : '{}');
+
+            return self::SUCCESS;
+        }
+
         $this->info('Queue Monitor Statistics');
         $this->newLine();
-
-        $stats = $monitor->statistics();
 
         $total = is_numeric($stats['total'] ?? null) ? (int) $stats['total'] : 0;
         $completed = is_numeric($stats['completed'] ?? null) ? (int) $stats['completed'] : 0;
