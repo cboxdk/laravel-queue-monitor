@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Cbox\LaravelQueueMonitor\Tests\Feature;
 
+use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\Models\JobMonitor;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\StatisticsRepositoryContract;
 use Illuminate\Support\Facades\Artisan;
@@ -1141,7 +1142,7 @@ test('job detail view does not show retry chain section for single attempt', fun
 test('job detail view renders completed job without replay keybinding', function () {
     $job = JobMonitor::factory()->create([
         'job_class' => 'App\\Jobs\\SyncData',
-        'status' => \Cbox\LaravelQueueMonitor\Enums\JobStatus::COMPLETED,
+        'status' => JobStatus::COMPLETED,
     ]);
 
     $html = view('queue-monitor::tui.dashboard', tuiViewData([

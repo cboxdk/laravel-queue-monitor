@@ -13,7 +13,6 @@ use Cbox\LaravelQueueMonitor\Repositories\Contracts\TagRepositoryContract;
 use Cbox\LaravelQueueMonitor\Services\AlertingService;
 use Cbox\LaravelQueueMonitor\Services\HealthCheckService;
 use Cbox\LaravelQueueMonitor\Services\InfrastructureService;
-use Cbox\LaravelQueueMonitor\Utilities\PayloadRedactor;
 use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
 
@@ -330,8 +329,8 @@ class QueueMonitorDashboardCommand extends Command
 
             if ($this->confirm("Replay {$job->getShortJobClass()} (attempt #{$job->attempt})?")) {
                 try {
-                    /** @var \Cbox\LaravelQueueMonitor\LaravelQueueMonitor $monitor */
-                    $monitor = app(\Cbox\LaravelQueueMonitor\LaravelQueueMonitor::class);
+                    /** @var LaravelQueueMonitor $monitor */
+                    $monitor = app(LaravelQueueMonitor::class);
                     $result = $monitor->replay($job->uuid);
                     $this->info("Replayed → new job: {$result->newJobId}");
                     sleep(1);
@@ -578,7 +577,7 @@ class QueueMonitorDashboardCommand extends Command
         if ($this->interactive) {
             // Parse to string (no side-effects) → cursor home → write → clear rest
             $rendered = parse($html);
-            $this->output->write("\033[H" . $rendered . "\n\033[J");
+            $this->output->write("\033[H".$rendered."\n\033[J");
         } else {
             // --once mode: just render inline
             render($html);
