@@ -31,6 +31,8 @@ class QueueMonitorDashboardCommand extends Command
 
     private int $currentView = 1;
 
+    private bool $needsFullClear = true;
+
     private ?string $statusFilter = null;
 
     private string $searchQuery = '';
@@ -424,6 +426,7 @@ class QueueMonitorDashboardCommand extends Command
     {
         $this->currentView = $view;
         $this->selectedIndex = 0;
+        $this->needsFullClear = true;
 
         // Invalidate cached data when switching to force a fresh fetch
         if ($view === 5) {
@@ -575,14 +578,16 @@ class QueueMonitorDashboardCommand extends Command
         ])->render();
 
         if ($this->interactive) {
-            // Parse to string (no side-effects) → cursor home → write → clear rest
             $rendered = parse($html);
 
-            // Append "erase to end of line" (\033[K) on every line so that
-            // shorter lines don't leave ghost characters from a previous frame
-            // (e.g. switching from a wide Jobs view to a narrower Health view).
-            $cleaned = str_replace("\n", "\033[K\n", $rendered);
-            $this->output->write("\033[H".$cleaned."\033[K\n\033[J");
+            // Full clear on view switch to prevent ghost lines; incremental clear otherwise
+            if ($this->needsFullClear) {
+                $this->output->write("\033[H\033[2J".$rendered);
+                $this->needsFullClear = false;
+            } else {
+                $cleaned = str_replace("\n", "\033[K\n", $rendered);
+                $this->output->write("\033[H".$cleaned."\033[K\n\033[J");
+            }
         } else {
             // --once mode: just render inline
             render($html);

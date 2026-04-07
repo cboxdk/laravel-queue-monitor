@@ -10,6 +10,18 @@
         <span class="text-gray-400">{{ $timestamp }}</span>
     </div>
 
+    {{-- ═══════════ TAB BAR (always visible, k9s-style) ═══════════ --}}
+    @if($jobDetail === null)
+        <div class="flex px-1 bg-gray-800">
+            <span class="{{ $currentView === 1 ? 'text-white font-bold' : 'text-gray-500' }} mr-2">[1] Jobs</span>
+            <span class="{{ $currentView === 2 ? 'text-white font-bold' : 'text-gray-500' }} mr-2">[2] Stats</span>
+            <span class="{{ $currentView === 3 ? 'text-white font-bold' : 'text-gray-500' }} mr-2">[3] Queues</span>
+            <span class="{{ $currentView === 4 ? 'text-white font-bold' : 'text-gray-500' }} mr-2">[4] Health</span>
+            <span class="{{ $currentView === 5 ? 'text-white font-bold' : 'text-gray-500' }} mr-2">[5] Analytics</span>
+            <span class="{{ $currentView === 6 ? 'text-white font-bold' : 'text-gray-500' }}">[6] Infra</span>
+        </div>
+    @endif
+
     @if($jobDetail !== null)
         {{-- ═══════════ JOB DETAIL VIEW ═══════════ --}}
         @include('queue-monitor::tui.partials.job-detail', ['job' => $jobDetail, 'retryChain' => $jobRetryChain])
@@ -500,18 +512,8 @@
             @endif
         @endif
 
-        {{-- ═══════════ VIEW TABS ═══════════ --}}
-        <div class="mt-1 flex px-1 bg-gray-800">
-            <span class="{{ $currentView === 1 ? 'text-white font-bold' : 'text-gray-500' }} mr-2">[1] Jobs</span>
-            <span class="{{ $currentView === 2 ? 'text-white font-bold' : 'text-gray-500' }} mr-2">[2] Stats</span>
-            <span class="{{ $currentView === 3 ? 'text-white font-bold' : 'text-gray-500' }} mr-2">[3] Queues</span>
-            <span class="{{ $currentView === 4 ? 'text-white font-bold' : 'text-gray-500' }} mr-2">[4] Health</span>
-            <span class="{{ $currentView === 5 ? 'text-white font-bold' : 'text-gray-500' }} mr-2">[5] Analytics</span>
-            <span class="{{ $currentView === 6 ? 'text-white font-bold' : 'text-gray-500' }}">[6] Infra</span>
-        </div>
-
-        {{-- ═══════════ KEYBINDINGS FOOTER ═══════════ --}}
-        <div class="flex px-1">
+        {{-- ═══════════ KEYBINDINGS FOOTER (always at bottom) ═══════════ --}}
+        <div class="flex px-1 bg-gray-800 mt-1">
             @if($currentView === 1)
                 <span class="text-cyan-400 font-bold mr-1">↑↓</span><span class="text-gray-400 mr-2">Nav</span>
                 <span class="text-cyan-400 font-bold mr-1">Enter</span><span class="text-gray-400 mr-2">Detail</span>
