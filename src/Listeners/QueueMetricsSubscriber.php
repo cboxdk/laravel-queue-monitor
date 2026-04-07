@@ -19,12 +19,12 @@ final class QueueMetricsSubscriber
 {
     public function handleJobMetricsCompleted(JobMetricsCompleted $event): void
     {
-        $this->updateJobMetrics($event->jobId, $event->cpuTimeMs, $event->memoryMb);
+        $this->updateJobMetrics($event->jobId, $event->cpuTimeMs, $event->memoryMb, $event->workerMemoryLimitMb);
     }
 
     public function handleJobMetricsFailed(JobMetricsFailed $event): void
     {
-        $this->updateJobMetrics($event->jobId, $event->cpuTimeMs, $event->memoryMb);
+        $this->updateJobMetrics($event->jobId, $event->cpuTimeMs, $event->memoryMb, $event->workerMemoryLimitMb);
     }
 
     public function subscribe(Dispatcher $events): void
@@ -33,7 +33,7 @@ final class QueueMetricsSubscriber
         $events->listen(JobMetricsFailed::class, [self::class, 'handleJobMetricsFailed']);
     }
 
-    private function updateJobMetrics(string $jobId, float $cpuTimeMs, float $memoryMb): void
+    private function updateJobMetrics(string $jobId, float $cpuTimeMs, float $memoryMb, ?float $workerMemoryLimitMb = null): void
     {
         if (! config('queue-monitor.enabled', true)) {
             return;
@@ -61,10 +61,14 @@ final class QueueMetricsSubscriber
                 return;
             }
 
-            $monitor->update([
+            $data = [
                 'cpu_time_ms' => round($cpuTimeMs, 2),
                 'memory_peak_mb' => round($memoryMb, 2),
-            ]);
+            ];
+            if ($workerMemoryLimitMb !== null) {
+                $data['worker_memory_limit_mb'] = round($workerMemoryLimitMb, 2);
+            }
+            $monitor->update($data);
         } catch (\Throwable $e) {
             report($e);
         }

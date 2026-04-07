@@ -62,6 +62,7 @@ class DashboardMetricsController extends Controller
                     'duration_ms' => $job->duration_ms,
                     'cpu_time_ms' => $job->cpu_time_ms,
                     'memory_peak_mb' => $job->memory_peak_mb,
+                    'worker_memory_limit_mb' => $job->worker_memory_limit_mb,
                     'queued_at' => $job->queued_at->diffForHumans(),
                     'attempt' => $job->attempt,
                     'max_attempts' => $job->max_attempts,
@@ -121,6 +122,7 @@ class DashboardMetricsController extends Controller
                 'duration' => $job->duration_ms ? number_format($job->duration_ms).'ms' : '-',
                 'cpu_time_ms' => $job->cpu_time_ms,
                 'memory_peak_mb' => $job->memory_peak_mb,
+                'worker_memory_limit_mb' => $job->worker_memory_limit_mb,
                 'queued_at' => $job->queued_at->toIso8601String(),
                 'started_at' => $job->started_at?->toIso8601String(),
                 'completed_at' => $job->completed_at?->toIso8601String(),
@@ -220,6 +222,7 @@ class DashboardMetricsController extends Controller
                     'duration_ms' => $job->duration_ms,
                     'cpu_time_ms' => $job->cpu_time_ms,
                     'memory_peak_mb' => $job->memory_peak_mb,
+                    'worker_memory_limit_mb' => $job->worker_memory_limit_mb,
                     'file_descriptors' => $job->file_descriptors,
                     'wait_time_ms' => $job->started_at !== null
                         ? (int) $job->queued_at->diffInMilliseconds($job->started_at)

@@ -256,7 +256,7 @@
                                                     <td class="px-4 py-2.5 whitespace-nowrap text-sm text-brand hover:underline drill-arrow" x-text="job.queue" @click.stop="openDrillDown('queue', job.queue)"></td>
                                                     <td class="px-4 py-2.5 whitespace-nowrap text-sm text-gray-500 text-right font-mono tabular-nums" x-text="formatDuration(job.duration_ms)"></td>
                                                     <td class="px-4 py-2.5 whitespace-nowrap text-sm text-gray-500 text-right font-mono tabular-nums" x-text="formatCpu(job.cpu_time_ms, job.duration_ms)"></td>
-                                                    <td class="px-4 py-2.5 whitespace-nowrap text-sm text-gray-500 text-right font-mono tabular-nums" x-text="job.memory_peak_mb ? parseFloat(job.memory_peak_mb).toFixed(0) + ' MB' : '-'"></td>
+                                                    <td class="px-4 py-2.5 whitespace-nowrap text-sm text-gray-500 text-right font-mono tabular-nums" x-text="formatMemoryShort(job.memory_peak_mb, job.worker_memory_limit_mb)"></td>
                                                     <td class="px-4 py-2.5 whitespace-nowrap text-[11px] text-gray-400 text-right" x-text="job.queued_at"></td>
                                                     <td class="px-4 py-2.5 whitespace-nowrap text-right">
                                                         <button x-show="job.is_failed" @click.stop="replayJob(job.uuid)" class="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-medium text-amber-700 bg-amber-50 rounded-md hover:bg-amber-100 border border-amber-200 transition">
@@ -504,7 +504,7 @@
                                             <td class="px-4 py-2.5 whitespace-nowrap text-sm text-brand hover:underline drill-arrow" x-text="job.queue" @click.stop="openDrillDown('queue', job.queue)"></td>
                                             <td class="px-4 py-2.5 whitespace-nowrap text-sm text-gray-500 text-right font-mono tabular-nums" x-text="formatDuration(job.duration_ms)"></td>
                                             <td class="px-4 py-2.5 whitespace-nowrap text-sm text-gray-500 text-right font-mono tabular-nums" x-text="formatCpu(job.cpu_time_ms, job.duration_ms)"></td>
-                                            <td class="px-4 py-2.5 whitespace-nowrap text-sm text-gray-500 text-right font-mono tabular-nums" x-text="job.memory_peak_mb ? parseFloat(job.memory_peak_mb).toFixed(0) + ' MB' : '-'"></td>
+                                            <td class="px-4 py-2.5 whitespace-nowrap text-sm text-gray-500 text-right font-mono tabular-nums" x-text="formatMemoryShort(job.memory_peak_mb, job.worker_memory_limit_mb)"></td>
                                             <td class="px-4 py-2.5 whitespace-nowrap text-[11px] text-brand hover:underline drill-arrow font-mono truncate max-w-[120px]" x-text="job.server" @click.stop="openDrillDown('server', job.server)"></td>
                                             <td class="px-4 py-2.5 whitespace-nowrap text-center">
                                                 <span x-show="job.attempt <= 1" class="text-sm text-gray-400">1</span>
@@ -967,8 +967,8 @@
                                 <div class="text-lg font-bold font-mono text-gray-900 tabular-nums" x-text="formatCpu(jobDetail?.job?.metrics?.cpu_time_ms, jobDetail?.job?.metrics?.duration_ms)"></div>
                             </div>
                             <div class="bg-white border border-gray-200/80 rounded-xl p-4">
-                                <div class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Memory Peak</div>
-                                <div class="text-lg font-bold font-mono text-gray-900 tabular-nums" x-text="jobDetail?.job?.metrics?.memory_peak_mb ? jobDetail.job.metrics.memory_peak_mb + ' MB' : '-'"></div>
+                                <div class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Memory</div>
+                                <div class="text-lg font-bold font-mono tabular-nums" :class="jobDetail?.job?.metrics?.worker_memory_limit_mb && (jobDetail.job.metrics.memory_peak_mb / jobDetail.job.metrics.worker_memory_limit_mb) > 0.8 ? 'text-red-600' : 'text-gray-900'" x-text="formatMemory(jobDetail?.job?.metrics?.memory_peak_mb, jobDetail?.job?.metrics?.worker_memory_limit_mb)"></div>
                             </div>
                             <div class="bg-white border border-gray-200/80 rounded-xl p-4">
                                 <div class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Attempt</div>
@@ -1783,6 +1783,25 @@
                     if (cpuTimeMs == null || durationMs == null || durationMs === 0) return '-';
                     const pct = (cpuTimeMs / durationMs) * 100;
                     return pct < 1 ? '<1%' : Math.round(pct) + '%';
+                },
+
+                formatMemory(peakMb, limitMb) {
+                    if (peakMb == null) return '-';
+                    const peak = parseFloat(peakMb).toFixed(0);
+                    if (limitMb != null && limitMb > 0) {
+                        const pct = Math.round((peakMb / limitMb) * 100);
+                        return peak + ' / ' + parseFloat(limitMb).toFixed(0) + ' MB (' + pct + '%)';
+                    }
+                    return peak + ' MB';
+                },
+
+                formatMemoryShort(peakMb, limitMb) {
+                    if (peakMb == null) return '-';
+                    const peak = parseFloat(peakMb).toFixed(0);
+                    if (limitMb != null && limitMb > 0) {
+                        return Math.round((peakMb / limitMb) * 100) + '%';
+                    }
+                    return peak + ' MB';
                 },
 
                 shortClass(fqcn) { if (!fqcn) return '-'; return fqcn.split('\\').pop(); },

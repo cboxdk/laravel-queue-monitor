@@ -54,6 +54,7 @@ return new class extends Migration
                 // Metrics from laravel-queue-metrics
                 $table->decimal('cpu_time_ms', 10, 2)->nullable();
                 $table->decimal('memory_peak_mb', 10, 2)->nullable();
+                $table->decimal('worker_memory_limit_mb', 10, 2)->nullable();
                 $table->unsignedInteger('file_descriptors')->nullable();
 
                 // Performance

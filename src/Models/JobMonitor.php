@@ -32,6 +32,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property WorkerType $worker_type
  * @property float|null $cpu_time_ms
  * @property float|null $memory_peak_mb
+ * @property float|null $worker_memory_limit_mb
  * @property int|null $file_descriptors
  * @property int|null $duration_ms
  * @property string|null $exception_class
@@ -82,6 +83,7 @@ class JobMonitor extends Model
         'worker_type',
         'cpu_time_ms',
         'memory_peak_mb',
+        'worker_memory_limit_mb',
         'file_descriptors',
         'duration_ms',
         'exception_class',
@@ -136,6 +138,7 @@ class JobMonitor extends Model
             'max_attempts' => 'integer',
             'cpu_time_ms' => 'decimal:2',
             'memory_peak_mb' => 'decimal:2',
+            'worker_memory_limit_mb' => 'decimal:2',
             'file_descriptors' => 'integer',
             'duration_ms' => 'integer',
             'queued_at' => 'datetime',
