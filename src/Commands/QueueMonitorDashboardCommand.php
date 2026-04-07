@@ -89,8 +89,8 @@ class QueueMonitorDashboardCommand extends Command
     /** @var array<int, array<string, mixed>> */
     private array $cachedQueues = [];
 
-    /** @var \Illuminate\Support\Collection<int, JobMonitor> */
-    private \Illuminate\Support\Collection $cachedJobs;
+    /** @var Collection<int, JobMonitor> */
+    private Collection $cachedJobs;
 
     private int $cachedTotalJobs = 0;
 
