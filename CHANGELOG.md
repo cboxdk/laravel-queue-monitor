@@ -2,6 +2,44 @@
 
 All notable changes to `laravel-queue-monitor` will be documented in this file.
 
+## v1.2.0 - 2026-04-07
+
+### What's New
+
+#### Web Dashboard
+
+- Full dashboard redesign with 5-tab monitoring hub (overview, jobs, analytics, health, infrastructure)
+- Full-page job detail with drill-down views and deep-linkable URLs
+- Attempts trail and retry chain visualization
+
+#### Terminal Dashboard (TUI)
+
+- Complete rebuild with k9s-inspired compact design
+- Arrow key navigation, status/queue filters, search
+- Feature parity with the web dashboard
+- Memory utilization shown as percentage of worker limit
+- CPU % and memory columns in job list tables
+
+#### Performance
+
+- Added missing database indexes, fixed N+1 queries
+- Health check caching and prune validation
+- Batch keypresses and cached data for instant TUI navigation
+
+#### Bug Fixes
+
+- Fixed Redis job serialization for queue job wrappers
+- Fixed TUI ghost rendering on view switch
+- Fixed CPU display (percentage instead of raw milliseconds)
+- Resolved all PHPStan errors
+
+#### Documentation
+
+- Rewrote README with driver-agnostic positioning
+- Clarified ecosystem integration with Queue Metrics, Queue Autoscale, and System Metrics
+
+**Full Changelog**: https://github.com/cboxdk/laravel-queue-monitor/compare/v1.1.0...v1.2.0
+
 ## v1.1.0 - PHP 8.4 & 8.5 Support - 2026-01-03
 
 ### What's Changed
@@ -49,6 +87,7 @@ First stable release of Laravel Queue Monitor - a comprehensive job monitoring s
 
 ```bash
 composer require cboxdk/laravel-queue-monitor
+
 
 
 ```
