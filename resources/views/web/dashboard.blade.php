@@ -955,8 +955,8 @@
                                 <div class="text-lg font-bold font-mono text-gray-900 tabular-nums" x-text="formatDuration(jobDetail?.job?.metrics?.duration_ms)"></div>
                             </div>
                             <div class="bg-white border border-gray-200/80 rounded-xl p-4">
-                                <div class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">CPU Time</div>
-                                <div class="text-lg font-bold font-mono text-gray-900 tabular-nums" x-text="formatDuration(jobDetail?.job?.metrics?.cpu_time_ms)"></div>
+                                <div class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">CPU</div>
+                                <div class="text-lg font-bold font-mono text-gray-900 tabular-nums" x-text="formatCpu(jobDetail?.job?.metrics?.cpu_time_ms, jobDetail?.job?.metrics?.duration_ms)"></div>
                             </div>
                             <div class="bg-white border border-gray-200/80 rounded-xl p-4">
                                 <div class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Memory Peak</div>
@@ -1769,6 +1769,12 @@
                     if (sr == null || sr >= 95) return 'healthy';
                     if (sr >= 75) return 'degraded';
                     return 'unhealthy';
+                },
+
+                formatCpu(cpuTimeMs, durationMs) {
+                    if (cpuTimeMs == null || durationMs == null || durationMs === 0) return '-';
+                    const pct = (cpuTimeMs / durationMs) * 100;
+                    return pct < 1 ? '<1%' : Math.round(pct) + '%';
                 },
 
                 shortClass(fqcn) { if (!fqcn) return '-'; return fqcn.split('\\').pop(); },

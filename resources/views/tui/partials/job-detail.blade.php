@@ -109,9 +109,10 @@
 <div class="flex px-1">
     <span class="text-cyan-400 font-bold mr-1">Duration:</span>
     <span class="{{ ($job->duration_ms ?? 0) > 5000 ? 'text-red-400' : (($job->duration_ms ?? 0) > 1000 ? 'text-yellow-400' : 'text-white') }} mr-3">{{ $job->duration_ms !== null ? number_format($job->duration_ms) . 'ms' : '-' }}</span>
-    @if($job->cpu_time_ms !== null)
+    @if($job->cpu_time_ms !== null && $job->duration_ms)
+        @php $cpuPct = ($job->cpu_time_ms / $job->duration_ms) * 100; @endphp
         <span class="text-cyan-400 font-bold mr-1">CPU:</span>
-        <span class="text-white mr-3">{{ number_format((float)$job->cpu_time_ms, 1) }}ms</span>
+        <span class="text-white mr-3">{{ $cpuPct < 1 ? '<1%' : round($cpuPct) . '%' }}</span>
     @endif
     <span class="text-cyan-400 font-bold mr-1">Memory:</span>
     <span class="text-white mr-3">{{ $job->memory_peak_mb !== null ? number_format((float)$job->memory_peak_mb, 2) . 'MB' : '-' }}</span>
