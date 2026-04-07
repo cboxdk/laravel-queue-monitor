@@ -229,6 +229,8 @@
                                             <th class="px-4 py-2.5 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider">Job</th>
                                             <th class="px-4 py-2.5 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider">Queue</th>
                                             <th class="px-4 py-2.5 text-right text-[10px] font-bold text-gray-400 uppercase tracking-wider">Duration</th>
+                                            <th class="px-4 py-2.5 text-right text-[10px] font-bold text-gray-400 uppercase tracking-wider">CPU</th>
+                                            <th class="px-4 py-2.5 text-right text-[10px] font-bold text-gray-400 uppercase tracking-wider">Memory</th>
                                             <th class="px-4 py-2.5 text-right text-[10px] font-bold text-gray-400 uppercase tracking-wider">Time</th>
                                             <th class="px-4 py-2.5 w-10"></th>
                                         </tr>
@@ -253,6 +255,8 @@
                                                     </td>
                                                     <td class="px-4 py-2.5 whitespace-nowrap text-sm text-brand hover:underline drill-arrow" x-text="job.queue" @click.stop="openDrillDown('queue', job.queue)"></td>
                                                     <td class="px-4 py-2.5 whitespace-nowrap text-sm text-gray-500 text-right font-mono tabular-nums" x-text="formatDuration(job.duration_ms)"></td>
+                                                    <td class="px-4 py-2.5 whitespace-nowrap text-sm text-gray-500 text-right font-mono tabular-nums" x-text="formatCpu(job.cpu_time_ms, job.duration_ms)"></td>
+                                                    <td class="px-4 py-2.5 whitespace-nowrap text-sm text-gray-500 text-right font-mono tabular-nums" x-text="job.memory_peak_mb ? parseFloat(job.memory_peak_mb).toFixed(0) + ' MB' : '-'"></td>
                                                     <td class="px-4 py-2.5 whitespace-nowrap text-[11px] text-gray-400 text-right" x-text="job.queued_at"></td>
                                                     <td class="px-4 py-2.5 whitespace-nowrap text-right">
                                                         <button x-show="job.is_failed" @click.stop="replayJob(job.uuid)" class="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-medium text-amber-700 bg-amber-50 rounded-md hover:bg-amber-100 border border-amber-200 transition">
@@ -472,6 +476,8 @@
                                     <th class="px-4 py-2.5 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider cursor-pointer select-none" @click="toggleSort('job_class')"><span class="flex items-center gap-1">Job <span x-text="sortIndicator('job_class')"></span></span></th>
                                     <th class="px-4 py-2.5 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider">Queue</th>
                                     <th class="px-4 py-2.5 text-right text-[10px] font-bold text-gray-400 uppercase tracking-wider cursor-pointer select-none" @click="toggleSort('duration_ms')"><span class="flex items-center gap-1 justify-end">Duration <span x-text="sortIndicator('duration_ms')"></span></span></th>
+                                    <th class="px-4 py-2.5 text-right text-[10px] font-bold text-gray-400 uppercase tracking-wider">CPU</th>
+                                    <th class="px-4 py-2.5 text-right text-[10px] font-bold text-gray-400 uppercase tracking-wider">Memory</th>
                                     <th class="px-4 py-2.5 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider">Server</th>
                                     <th class="px-4 py-2.5 text-center text-[10px] font-bold text-gray-400 uppercase tracking-wider">Attempt</th>
                                     <th class="px-4 py-2.5 text-right text-[10px] font-bold text-gray-400 uppercase tracking-wider cursor-pointer select-none" @click="toggleSort('queued_at')"><span class="flex items-center gap-1 justify-end">Time <span x-text="sortIndicator('queued_at')"></span></span></th>
@@ -497,6 +503,8 @@
                                             </td>
                                             <td class="px-4 py-2.5 whitespace-nowrap text-sm text-brand hover:underline drill-arrow" x-text="job.queue" @click.stop="openDrillDown('queue', job.queue)"></td>
                                             <td class="px-4 py-2.5 whitespace-nowrap text-sm text-gray-500 text-right font-mono tabular-nums" x-text="formatDuration(job.duration_ms)"></td>
+                                            <td class="px-4 py-2.5 whitespace-nowrap text-sm text-gray-500 text-right font-mono tabular-nums" x-text="formatCpu(job.cpu_time_ms, job.duration_ms)"></td>
+                                            <td class="px-4 py-2.5 whitespace-nowrap text-sm text-gray-500 text-right font-mono tabular-nums" x-text="job.memory_peak_mb ? parseFloat(job.memory_peak_mb).toFixed(0) + ' MB' : '-'"></td>
                                             <td class="px-4 py-2.5 whitespace-nowrap text-[11px] text-brand hover:underline drill-arrow font-mono truncate max-w-[120px]" x-text="job.server" @click.stop="openDrillDown('server', job.server)"></td>
                                             <td class="px-4 py-2.5 whitespace-nowrap text-center">
                                                 <span x-show="job.attempt <= 1" class="text-sm text-gray-400">1</span>
