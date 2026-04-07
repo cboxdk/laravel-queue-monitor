@@ -32,11 +32,11 @@ Works with Horizon? Yes — and it enriches the experience with worker superviso
 - **Web Dashboard** — Full-page job detail, drill-down views, deep-linkable URLs
 - **Terminal Dashboard** — k9s-style TUI with keyboard navigation (`php artisan queue-monitor:dashboard`)
 - **Analytics** — Per-queue, per-server, per-job-class breakdowns with p50/p95/p99 percentiles
-- **Infrastructure** — Worker utilization, queue capacity, SLA compliance, autoscale integration
+- **Infrastructure** — Worker utilization, queue capacity, SLA compliance, [cboxdk/laravel-queue-autoscale](https://github.com/cboxdk/laravel-queue-autoscale) integration
 - **Health Checks** — Stuck job detection, error rate monitoring, queue backlog alerts
 - **REST API** — Paginated, filterable, with payload redaction
 - **Horizon Integration** — Optional: supervisor data, workload metrics, jobs/minute (auto-detected)
-- **Autoscale Integration** — Optional: scaling timeline, SLA breach/recovery events (with [laravel-queue-autoscale](https://github.com/cboxdk/laravel-queue-autoscale))
+- **Autoscale Integration** — Optional: scaling timeline, SLA breach/recovery events (with [cboxdk/laravel-queue-autoscale](https://github.com/cboxdk/laravel-queue-autoscale))
 
 ## Requirements
 
@@ -135,7 +135,20 @@ GET  /api/queue-monitor/statistics/queue-health
 
 **With Horizon (optional):** adds worker supervisor data, workload metrics, jobs/minute, busy/total workers.
 
-**With Autoscale (optional):** adds scaling timeline, SLA breach/recovery tracking, scaling decision history.
+**With [cboxdk/laravel-queue-autoscale](https://github.com/cboxdk/laravel-queue-autoscale) (optional):** adds scaling timeline, SLA breach/recovery tracking, scaling decision history.
+
+### Cbox Ecosystem
+
+Queue Monitor is part of a suite of first-party packages that integrate seamlessly:
+
+| Package | Purpose |
+|---------|---------|
+| [cboxdk/laravel-queue-monitor](https://github.com/cboxdk/laravel-queue-monitor) | Per-job tracking, dashboard, replay, analytics |
+| [cboxdk/laravel-queue-metrics](https://github.com/cboxdk/laravel-queue-metrics) | Process-level CPU/memory instrumentation |
+| [cboxdk/laravel-queue-autoscale](https://github.com/cboxdk/laravel-queue-autoscale) | SLA-based predictive autoscaling |
+| [cboxdk/system-metrics](https://github.com/cboxdk/system-metrics) | Low-level system metrics (RSS, CPU) for PHP |
+
+Install any combination — they auto-discover each other via events.
 
 ## Configuration
 
