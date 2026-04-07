@@ -186,25 +186,44 @@ class QueueMonitorDashboardCommand extends Command
         }
     }
 
+    /** @var string Buffered bytes from fread that haven't been consumed yet */
+    private string $inputBuffer = '';
+
     private function readKey(): ?string
     {
-        $stdin = STDIN;
-        $read = [$stdin];
-        $write = null;
-        $except = null;
+        // Fill buffer from stdin if empty
+        if ($this->inputBuffer === '') {
+            $stdin = STDIN;
+            $read = [$stdin];
+            $write = null;
+            $except = null;
 
-        // Non-blocking check with 0-second timeout
-        if (stream_select($read, $write, $except, 0, 0) > 0) {
-            $char = fread($stdin, 16);
-
-            if ($char === false || $char === '') {
+            if (stream_select($read, $write, $except, 0, 0) > 0) {
+                $chunk = fread($stdin, 128);
+                if ($chunk === false || $chunk === '') {
+                    return null;
+                }
+                $this->inputBuffer = $chunk;
+            } else {
                 return null;
             }
-
-            return $char;
         }
 
-        return null;
+        // Parse one key event from the buffer
+        $byte = $this->inputBuffer[0];
+
+        if ($byte === "\x1b" && strlen($this->inputBuffer) >= 3 && $this->inputBuffer[1] === '[') {
+            // CSI escape sequence: \x1b [ <char>
+            $seq = substr($this->inputBuffer, 0, 3);
+            $this->inputBuffer = substr($this->inputBuffer, 3);
+
+            return $seq;
+        }
+
+        // Single byte (regular char, enter, backspace, etc.)
+        $this->inputBuffer = substr($this->inputBuffer, 1);
+
+        return $byte;
     }
 
     private function handleKeyPress(string $key, JobMonitorRepositoryContract $jobRepository): ?string
