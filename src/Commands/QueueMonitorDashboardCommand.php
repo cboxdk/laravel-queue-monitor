@@ -82,6 +82,22 @@ class QueueMonitorDashboardCommand extends Command
 
     private bool $interactive = false;
 
+    /** Cached core data for fast re-renders (navigation doesn't need fresh queries) */
+    /** @var array<string, mixed> */
+    private array $cachedStats = [];
+
+    /** @var array<int, array<string, mixed>> */
+    private array $cachedQueues = [];
+
+    /** @var \Illuminate\Support\Collection<int, JobMonitor> */
+    private \Illuminate\Support\Collection $cachedJobs;
+
+    private int $cachedTotalJobs = 0;
+
+    private bool $cachedHealthy = true;
+
+    private bool $coreDataStale = true;
+
     public function handle(
         JobMonitorRepositoryContract $jobRepository,
         StatisticsRepositoryContract $statsRepository,
@@ -107,6 +123,7 @@ class QueueMonitorDashboardCommand extends Command
         }
 
         $this->interactive = true;
+        $this->cachedJobs = collect();
 
         // Enter alternate screen buffer + hide cursor + raw mode
         $this->output->write("\033[?1049h"); // Enter alternate screen
@@ -134,42 +151,38 @@ class QueueMonitorDashboardCommand extends Command
 
         while (true) {
             $now = time();
+            $dirty = false;
 
-            // Render at interval
-            if ($now - $lastRender >= $interval) {
-                $this->renderView($jobRepository, $statsRepository);
-                $lastRender = $now;
+            // Drain all pending keypresses before rendering (batches rapid input)
+            while (($key = $this->readKey()) !== null) {
+                if ($this->inSearchMode) {
+                    $this->handleSearchInput($key);
+                    $dirty = true;
+
+                    continue;
+                }
+
+                $action = $this->handleKeyPress($key, $jobRepository);
+
+                if ($action === 'quit') {
+                    return;
+                }
+
+                $dirty = true;
             }
 
-            // Non-blocking key read
-            $key = $this->readKey();
-
-            if ($key === null) {
-                // Small sleep to avoid CPU spinning
-                usleep(50000); // 50ms
-
-                continue;
+            // Render if dirty (keypress) or interval elapsed
+            $intervalElapsed = $now - $lastRender >= $interval;
+            if ($intervalElapsed) {
+                $this->coreDataStale = true;
             }
-
-            if ($this->inSearchMode) {
-                $this->handleSearchInput($key);
-
-                // Re-render immediately after search input
+            if ($dirty || $intervalElapsed) {
                 $this->renderView($jobRepository, $statsRepository);
                 $lastRender = time();
-
-                continue;
+            } else {
+                // No input, no render needed — sleep to avoid CPU spinning
+                usleep(30000); // 30ms
             }
-
-            $action = $this->handleKeyPress($key, $jobRepository);
-
-            if ($action === 'quit') {
-                break;
-            }
-
-            // Re-render immediately after key press
-            $this->renderView($jobRepository, $statsRepository);
-            $lastRender = time();
         }
     }
 
@@ -242,6 +255,7 @@ class QueueMonitorDashboardCommand extends Command
         // Escape or Enter exits search mode
         if ($key === "\x1b" || $key === "\n" || $key === "\r") {
             $this->inSearchMode = false;
+            $this->coreDataStale = true;
 
             return;
         }
@@ -277,6 +291,7 @@ class QueueMonitorDashboardCommand extends Command
     {
         $this->pageOffset += $this->perPage;
         $this->selectedIndex = 0;
+        $this->coreDataStale = true;
 
         return null;
     }
@@ -285,6 +300,7 @@ class QueueMonitorDashboardCommand extends Command
     {
         $this->pageOffset = max(0, $this->pageOffset - $this->perPage);
         $this->selectedIndex = 0;
+        $this->coreDataStale = true;
 
         return null;
     }
@@ -390,6 +406,7 @@ class QueueMonitorDashboardCommand extends Command
         $this->statusFilter = $filter === 'all' ? null : $filter;
         $this->selectedIndex = 0;
         $this->pageOffset = 0;
+        $this->coreDataStale = true;
 
         return null;
     }
@@ -410,6 +427,7 @@ class QueueMonitorDashboardCommand extends Command
 
         $this->selectedIndex = 0;
         $this->pageOffset = 0;
+        $this->coreDataStale = true;
 
         return null;
     }
@@ -459,34 +477,37 @@ class QueueMonitorDashboardCommand extends Command
         JobMonitorRepositoryContract $jobRepository,
         StatisticsRepositoryContract $statsRepository,
     ): void {
-        $globalStats = $statsRepository->getGlobalStatistics();
-        $queueHealth = $statsRepository->getQueueHealth();
-        $jobs = $this->getFilteredJobs($jobRepository);
+        // Only re-query database when data is stale (interval elapsed, filter changed, page changed)
+        if ($this->coreDataStale) {
+            $this->cachedStats = $statsRepository->getGlobalStatistics();
+            $this->cachedQueues = $statsRepository->getQueueHealth();
+            $this->cachedJobs = $this->getFilteredJobs($jobRepository);
+            $this->cachedTotalJobs = $this->getTotalFilteredJobs();
 
-        // Count total for pagination
-        $totalJobs = $this->getTotalFilteredJobs();
+            $this->cachedHealthy = true;
+            /** @var array<string, mixed> $queue */
+            foreach ($this->cachedQueues as $queue) {
+                if (($queue['status'] ?? 'healthy') !== 'healthy') {
+                    $this->cachedHealthy = false;
+                    break;
+                }
+            }
+
+            try {
+                $alertingService = app(AlertingService::class);
+                $this->alertsData = $alertingService->checkAlertConditions();
+            } catch (\Throwable) {
+                $this->alertsData = [];
+            }
+
+            $this->coreDataStale = false;
+        }
+
+        $jobs = $this->cachedJobs;
 
         // Clamp selected index to valid range
         $maxIndex = max(0, $jobs->count() - 1);
         $this->selectedIndex = min($this->selectedIndex, $maxIndex);
-
-        // Determine overall health
-        $healthy = true;
-        /** @var array<string, mixed> $queue */
-        foreach ($queueHealth as $queue) {
-            if (($queue['status'] ?? 'healthy') !== 'healthy') {
-                $healthy = false;
-                break;
-            }
-        }
-
-        // Fetch alerts
-        try {
-            $alertingService = app(AlertingService::class);
-            $this->alertsData = $alertingService->checkAlertConditions();
-        } catch (\Throwable) {
-            $this->alertsData = [];
-        }
 
         // Lazy-load view-specific data
         $now = time();
@@ -551,10 +572,10 @@ class QueueMonitorDashboardCommand extends Command
         $view = 'queue-monitor::tui.dashboard';
 
         $html = view($view, [
-            'stats' => $globalStats,
-            'queues' => $queueHealth,
+            'stats' => $this->cachedStats,
+            'queues' => $this->cachedQueues,
             'jobs' => $jobs,
-            'totalJobs' => $totalJobs,
+            'totalJobs' => $this->cachedTotalJobs,
             'selectedIndex' => $this->selectedIndex,
             'currentView' => $this->currentView,
             'statusFilter' => $this->statusFilter,
@@ -562,7 +583,7 @@ class QueueMonitorDashboardCommand extends Command
             'searchQuery' => $this->searchQuery,
             'inSearchMode' => $this->inSearchMode,
             'timestamp' => now()->format('H:i:s'),
-            'healthy' => $healthy,
+            'healthy' => $this->cachedHealthy,
             'alerts' => $this->alertsData,
             'pageOffset' => $this->pageOffset,
             'perPage' => $this->perPage,
