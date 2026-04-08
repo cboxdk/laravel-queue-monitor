@@ -2,6 +2,24 @@
 
 All notable changes to `laravel-queue-monitor` will be documented in this file.
 
+## v1.2.0-beta.8 - 2026-04-08
+
+### Papercut Fixes & Test Coverage
+
+#### Fixes
+
+- **Input validation**: Bound `failed()` and `recent()` API limit parameter to 1-1000 (was unbounded)
+- **Error reporting**: Add `report($e)` to silent catch blocks in `BatchDeleteAction` and `RecordJobQueuedAction`
+- **Query safety**: Replace fragile `addBinding()` with inline `selectRaw()` bindings in `DashboardDrillDownController`
+- **Transformer extraction**: Create `JobMonitorTransformer` to consolidate duplicated job-to-array mapping (~90 lines removed)
+- **Cleanup**: Remove duplicate variable assignment in `DashboardDrillDownController`
+
+#### Testing
+
+- 16 new test files, 103 new tests
+- Test coverage: 65.9% → 78.6%
+- 391 tests passing, 1056 assertions
+
 ## v1.2.0 - 2026-04-07
 
 ### What's New
@@ -87,6 +105,7 @@ First stable release of Queue Monitor for Laravel - a comprehensive job monitori
 
 ```bash
 composer require cboxdk/laravel-queue-monitor
+
 
 
 
