@@ -47,7 +47,6 @@ class DashboardDrillDownController extends Controller
         if ($cached !== null) {
             return response()->json($cached);
         }
-        $value = $validated['value'];
 
         // Map type to database column
         $column = match ($type) {
@@ -62,21 +61,18 @@ class DashboardDrillDownController extends Controller
         $table = $prefix.'jobs';
 
         // Stats
+        $completedValue = JobStatus::COMPLETED->value;
+        $failedValue = JobStatus::FAILED->value;
+        $timeoutValue = JobStatus::TIMEOUT->value;
+
         $statsRow = DB::table($table)
-            ->select([
-                DB::raw('COUNT(*) as total'),
-                DB::raw('SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as completed'),
-                DB::raw('SUM(CASE WHEN status IN (?, ?) THEN 1 ELSE 0 END) as failed'),
-                DB::raw('AVG(CASE WHEN duration_ms IS NOT NULL THEN duration_ms END) as avg_duration_ms'),
-                DB::raw('MAX(duration_ms) as max_duration_ms'),
-                DB::raw('MIN(CASE WHEN duration_ms IS NOT NULL THEN duration_ms END) as min_duration_ms'),
-                DB::raw('AVG(CASE WHEN memory_peak_mb IS NOT NULL THEN memory_peak_mb END) as avg_memory_mb'),
-            ])
-            ->addBinding([
-                JobStatus::COMPLETED->value,
-                JobStatus::FAILED->value,
-                JobStatus::TIMEOUT->value,
-            ])
+            ->selectRaw('COUNT(*) as total')
+            ->selectRaw('SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as completed', [$completedValue])
+            ->selectRaw('SUM(CASE WHEN status IN (?, ?) THEN 1 ELSE 0 END) as failed', [$failedValue, $timeoutValue])
+            ->selectRaw('AVG(CASE WHEN duration_ms IS NOT NULL THEN duration_ms END) as avg_duration_ms')
+            ->selectRaw('MAX(duration_ms) as max_duration_ms')
+            ->selectRaw('MIN(CASE WHEN duration_ms IS NOT NULL THEN duration_ms END) as min_duration_ms')
+            ->selectRaw('AVG(CASE WHEN memory_peak_mb IS NOT NULL THEN memory_peak_mb END) as avg_memory_mb')
             ->where($column, $value)
             ->first();
 

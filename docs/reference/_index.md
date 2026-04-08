@@ -6,7 +6,7 @@ weight: 20
 
 # Reference Documentation
 
-Complete technical reference materials for Laravel Queue Monitor.
+Queue Monitor for Laravel: complete technical reference materials.
 
 ## Available References
 

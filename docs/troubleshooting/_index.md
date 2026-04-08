@@ -1,6 +1,6 @@
 ---
 title: "Troubleshooting"
-description: "Solutions for common issues, debugging tips, and FAQ for Laravel Queue Monitor"
+description: "Queue Monitor for Laravel: solutions for common issues, debugging tips, and FAQ"
 weight: 40
 ---
 

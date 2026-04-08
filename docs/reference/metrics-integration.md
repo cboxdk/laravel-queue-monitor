@@ -6,7 +6,7 @@ weight: 3
 
 # Queue-Metrics Integration
 
-Laravel Queue Monitor is built on top of [laravel-queue-metrics](https://github.com/cboxdk/laravel-queue-metrics) and automatically integrates with its event system for enhanced resource tracking.
+Queue Monitor for Laravel is built on top of [laravel-queue-metrics](https://github.com/cboxdk/laravel-queue-metrics) and automatically integrates with its event system for enhanced resource tracking.
 
 ## How Integration Works
 

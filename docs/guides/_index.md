@@ -1,12 +1,12 @@
 ---
 title: "Guides"
-description: "Configuration, facade usage, job replay, events, and practical examples for Laravel Queue Monitor"
+description: "Queue Monitor for Laravel: configuration, facade usage, job replay, events, and practical examples"
 weight: 10
 ---
 
 # Guides
 
-Detailed guides for using Laravel Queue Monitor features.
+Detailed guides for using Queue Monitor for Laravel.
 
 ## Available Guides
 

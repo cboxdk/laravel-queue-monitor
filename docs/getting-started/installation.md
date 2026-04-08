@@ -1,6 +1,6 @@
 ---
 title: "Installation"
-description: "Install and configure Laravel Queue Monitor in your Laravel application"
+description: "Install and configure Queue Monitor for Laravel in your application"
 weight: 2
 ---
 

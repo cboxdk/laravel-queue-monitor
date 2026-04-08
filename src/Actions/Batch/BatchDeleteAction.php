@@ -35,7 +35,8 @@ final readonly class BatchDeleteAction
                     } else {
                         $failed++;
                     }
-                } catch (\Throwable) {
+                } catch (\Throwable $e) {
+                    report($e);
                     $failed++;
                 }
             }
@@ -68,7 +69,8 @@ final readonly class BatchDeleteAction
                     } else {
                         $failed++;
                     }
-                } catch (\Throwable) {
+                } catch (\Throwable $e) {
+                    report($e);
                     $failed++;
                 }
             }

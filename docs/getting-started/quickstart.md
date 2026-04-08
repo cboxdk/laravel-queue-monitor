@@ -1,12 +1,12 @@
 ---
 title: "Quick Start"
-description: "Get started with Laravel Queue Monitor in 5 minutes with essential examples"
+description: "Get started with Queue Monitor for Laravel in 5 minutes with essential examples"
 weight: 3
 ---
 
 # Quick Start
 
-Get Laravel Queue Monitor up and running in 5 minutes.
+Get Queue Monitor for Laravel up and running in 5 minutes.
 
 ## Installation
 

@@ -85,7 +85,7 @@ class JobMonitorController extends Controller
     public function failed(Request $request): JobMonitorCollection
     {
         $limitValue = $request->input('limit', 100);
-        $limit = is_numeric($limitValue) ? (int) $limitValue : 100;
+        $limit = is_numeric($limitValue) ? min(max((int) $limitValue, 1), 1000) : 100;
 
         $jobs = $this->repository->getFailedJobs($limit);
 
@@ -98,7 +98,7 @@ class JobMonitorController extends Controller
     public function recent(Request $request): JobMonitorCollection
     {
         $limitValue = $request->input('limit', 100);
-        $limit = is_numeric($limitValue) ? (int) $limitValue : 100;
+        $limit = is_numeric($limitValue) ? min(max((int) $limitValue, 1), 1000) : 100;
 
         $jobs = $this->repository->getRecentJobs($limit);
 

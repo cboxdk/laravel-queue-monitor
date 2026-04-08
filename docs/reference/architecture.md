@@ -8,7 +8,7 @@ weight: 2
 
 ## Design Principles
 
-The Laravel Queue Monitor package follows these architectural principles:
+The Queue Monitor for Laravel package follows these architectural principles:
 
 1. **Action Pattern** - All business logic in single-responsibility actions
 2. **DTO Pattern** - Type-safe data transfer objects for all data movement

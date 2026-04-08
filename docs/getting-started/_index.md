@@ -1,12 +1,12 @@
 ---
 title: "Getting Started"
-description: "Get started with Laravel Queue Monitor - installation, quickstart, and core concepts"
+description: "Get started with Queue Monitor for Laravel - installation, quickstart, and core concepts"
 weight: 1
 ---
 
 # Getting Started
 
-New to Laravel Queue Monitor? This section will help you get up and running quickly.
+New to Queue Monitor for Laravel? This section will help you get up and running quickly.
 
 ## Start Here
 
