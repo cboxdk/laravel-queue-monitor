@@ -56,7 +56,7 @@ test('createFromProcessing when no existing record for job', function () {
 });
 
 test('returns early when no job in event', function () {
-    $event = new \stdClass;
+    $event = new stdClass;
 
     $action = app(RecordJobStartedAction::class);
     $action->execute($event);

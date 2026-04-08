@@ -17,7 +17,7 @@ test('listeners skip when monitoring is disabled', function () {
     config()->set('queue-monitor.enabled', false);
 
     // Create a mock event that would fail if handle() proceeded past the config check
-    $mockEvent = new \stdClass;
+    $mockEvent = new stdClass;
 
     $listeners = [
         new JobFailedListener,
@@ -30,7 +30,7 @@ test('listeners skip when monitoring is disabled', function () {
     foreach ($listeners as $listener) {
         // The reflection hack: call handle with wrong type — if it passes the config check,
         // it will try to resolve the action and fail. We expect it to return early.
-        expect(fn () => $listener->handle($mockEvent))->not->toThrow(\Throwable::class);
+        expect(fn () => $listener->handle($mockEvent))->not->toThrow(Throwable::class);
     }
 
     expect(JobMonitor::count())->toBe(0);
@@ -48,7 +48,7 @@ test('job exception occurred listener skips when disabled', function () {
         {
             return 'test-123';
         }
-    }, new \RuntimeException('test')));
+    }, new RuntimeException('test')));
 
     expect(JobMonitor::count())->toBe(0);
 });
@@ -69,7 +69,7 @@ test('job exception occurred listener captures exception on processing job', fun
     $listener->handle(new JobExceptionOccurred(
         'redis',
         $mockQueueJob,
-        new \RuntimeException('Something broke'),
+        new RuntimeException('Something broke'),
     ));
 
     $job->refresh();
@@ -97,7 +97,7 @@ test('job exception occurred listener does not overwrite existing exception', fu
     $listener->handle(new JobExceptionOccurred(
         'redis',
         $mockQueueJob,
-        new \RuntimeException('New exception'),
+        new RuntimeException('New exception'),
     ));
 
     $job->refresh();
@@ -112,14 +112,14 @@ test('scaling event listener handles scaling decision without crashing', functio
     // field, which means it needs a decision object matching the autoscale package
     // interface. With a plain object, action resolves to null and the NOT NULL
     // constraint causes a silent failure — by design (never crash the queue).
-    $decision = new \stdClass;
+    $decision = new stdClass;
     $decision->connection = 'redis';
     $decision->queue = 'default';
     $decision->currentWorkers = 2;
     $decision->targetWorkers = 5;
     $decision->reason = 'High load';
 
-    $event = new \stdClass;
+    $event = new stdClass;
     $event->decision = $decision;
 
     // Must not throw — listener catches all exceptions
@@ -132,7 +132,7 @@ test('scaling event listener handles scaling decision without crashing', functio
 test('scaling event listener handles workers scaled', function () {
     $listener = new ScalingEventListener;
 
-    $event = new \stdClass;
+    $event = new stdClass;
     $event->connection = 'redis';
     $event->queue = 'emails';
     $event->action = 'scale_up';
@@ -150,7 +150,7 @@ test('scaling event listener handles workers scaled', function () {
 test('scaling event listener handles SLA breach', function () {
     $listener = new ScalingEventListener;
 
-    $event = new \stdClass;
+    $event = new stdClass;
     $event->connection = 'redis';
     $event->queue = 'payments';
     $event->activeWorkers = 3;
@@ -169,7 +169,7 @@ test('scaling event listener handles SLA breach', function () {
 test('scaling event listener handles SLA recovered', function () {
     $listener = new ScalingEventListener;
 
-    $event = new \stdClass;
+    $event = new stdClass;
     $event->connection = 'redis';
     $event->queue = 'payments';
     $event->workersScaled = 5;

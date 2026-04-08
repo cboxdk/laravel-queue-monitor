@@ -17,7 +17,7 @@ test('timeout action marks job as timed out', function () {
     $mockJob = Mockery::mock(Job::class);
     $mockJob->shouldReceive('getJobId')->andReturn('timeout-job');
 
-    $event = new \stdClass;
+    $event = new stdClass;
     $event->job = $mockJob;
 
     $action = app(RecordJobTimeoutAction::class);
@@ -32,7 +32,7 @@ test('timeout action marks job as timed out', function () {
 });
 
 test('timeout action returns early when no job in event', function () {
-    $event = new \stdClass;
+    $event = new stdClass;
 
     $action = app(RecordJobTimeoutAction::class);
     $action->execute($event);
@@ -44,7 +44,7 @@ test('timeout action returns early when job not found', function () {
     $mockJob = Mockery::mock(Job::class);
     $mockJob->shouldReceive('getJobId')->andReturn('nonexistent');
 
-    $event = new \stdClass;
+    $event = new stdClass;
     $event->job = $mockJob;
 
     $action = app(RecordJobTimeoutAction::class);
@@ -63,7 +63,7 @@ test('timeout action handles job without started_at', function () {
     $mockJob = Mockery::mock(Job::class);
     $mockJob->shouldReceive('getJobId')->andReturn('no-start');
 
-    $event = new \stdClass;
+    $event = new stdClass;
     $event->job = $mockJob;
 
     $action = app(RecordJobTimeoutAction::class);
