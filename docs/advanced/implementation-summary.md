@@ -355,4 +355,4 @@ tests/
 
 **Status**: ✅ **PRODUCTION READY**
 
-The Laravel Queue Monitor package is a complete, professional implementation ready for production use.
+The Queue Monitor for Laravel package is a complete, professional implementation ready for production use.

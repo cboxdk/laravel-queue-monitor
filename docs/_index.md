@@ -1,16 +1,16 @@
 ---
-title: "Laravel Queue Monitor"
+title: "Queue Monitor for Laravel"
 description: "Track individual queue jobs with payload storage, replay capability, and comprehensive analytics"
 weight: 1
 ---
 
-# Laravel Queue Monitor
+# Queue Monitor for Laravel
 
 **Production-ready queue monitoring for Laravel with individual job tracking, payload storage, and job replay.**
 
 ## Overview
 
-Laravel Queue Monitor provides granular visibility into every queue job in your Laravel application. Unlike aggregate metrics packages, it tracks each job individually from dispatch to completion, stores payloads for replay, and offers comprehensive analytics.
+Queue Monitor for Laravel provides granular visibility into every queue job in your Laravel application. Unlike aggregate metrics packages, it tracks each job individually from dispatch to completion, stores payloads for replay, and offers comprehensive analytics.
 
 ## Key Capabilities
 

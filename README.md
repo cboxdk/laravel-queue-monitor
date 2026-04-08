@@ -1,4 +1,4 @@
-# Laravel Queue Monitor
+# Queue Monitor for Laravel
 
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/cboxdk/laravel-queue-monitor.svg?style=flat-square)](https://packagist.org/packages/cboxdk/laravel-queue-monitor)
 [![Total Downloads](https://img.shields.io/packagist/dt/cboxdk/laravel-queue-monitor.svg?style=flat-square)](https://packagist.org/packages/cboxdk/laravel-queue-monitor)

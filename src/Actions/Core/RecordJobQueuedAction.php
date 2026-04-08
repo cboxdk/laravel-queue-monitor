@@ -91,7 +91,8 @@ final readonly class RecordJobQueuedAction
 
         try {
             $serialized = serialize($jobInstance);
-        } catch (\Throwable) {
+        } catch (\Throwable $e) {
+            report($e);
             $serialized = null;
         }
 

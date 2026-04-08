@@ -6,7 +6,7 @@ weight: 30
 
 # Advanced Topics
 
-Deep dives for customization and scaling Laravel Queue Monitor.
+Deep dives for customization and scaling Queue Monitor for Laravel.
 
 ## Available Topics
 

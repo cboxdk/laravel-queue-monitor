@@ -60,9 +60,9 @@ All notable changes to `laravel-queue-monitor` will be documented in this file.
 
 ## v1.0.0 - Initial Release - 2026-01-01
 
-### Laravel Queue Monitor v1.0.0
+### Queue Monitor for Laravel v1.0.0
 
-First stable release of Laravel Queue Monitor - a comprehensive job monitoring solution for Laravel.
+First stable release of Queue Monitor for Laravel - a comprehensive job monitoring solution.
 
 #### Features
 

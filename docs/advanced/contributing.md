@@ -5,9 +5,9 @@ weight: 2
 hidden: true
 ---
 
-# Contributing to Laravel Queue Monitor
+# Contributing to Queue Monitor for Laravel
 
-Thank you for considering contributing to Laravel Queue Monitor!
+Thank you for considering contributing to Queue Monitor for Laravel!
 
 ## Development Setup
 

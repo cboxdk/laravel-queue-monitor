@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Cbox\LaravelQueueMonitor\Http\Controllers;
 
 use Cbox\LaravelQueueMonitor\DataTransferObjects\JobFilterData;
+use Cbox\LaravelQueueMonitor\Http\Transformers\JobMonitorTransformer;
 use Cbox\LaravelQueueMonitor\Models\JobMonitor;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\JobMonitorRepositoryContract;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\StatisticsRepositoryContract;
@@ -42,34 +43,10 @@ class DashboardMetricsController extends Controller
         $perPage = config('queue-monitor.ui.per_page', 35);
 
         $recentJobs = $this->jobRepository->getRecentJobs($perPage)
-            ->map(function ($job) {
-                return [
-                    'uuid' => $job->uuid,
-                    'job_class' => $job->getShortJobClass(),
-                    'full_job_class' => $job->job_class,
-                    'queue' => $job->queue,
-                    'status' => [
-                        'value' => $job->status->value,
-                        'label' => $job->status->label(),
-                        'color' => $job->status->color(),
-                    ],
-                    'worker_type' => [
-                        'value' => $job->worker_type->value,
-                        'label' => $job->worker_type->label(),
-                        'icon' => $job->worker_type->icon(),
-                    ],
-                    'server' => $job->server_name,
-                    'duration_ms' => $job->duration_ms,
-                    'cpu_time_ms' => $job->cpu_time_ms,
-                    'memory_peak_mb' => $job->memory_peak_mb,
-                    'worker_memory_limit_mb' => $job->worker_memory_limit_mb,
-                    'queued_at' => $job->queued_at->diffForHumans(),
-                    'attempt' => $job->attempt,
-                    'max_attempts' => $job->max_attempts,
-                    'error' => $job->exception_message,
-                    'is_failed' => $job->isFailed(),
-                ];
-            });
+            ->map(fn ($job) => array_merge(
+                JobMonitorTransformer::toListArray($job),
+                ['queued_at' => $job->queued_at->diffForHumans()],
+            ));
 
         $chartData = $this->statsRepository->getJobClassStatistics();
 
@@ -98,38 +75,7 @@ class DashboardMetricsController extends Controller
         $jobs = $this->jobRepository->query($filters);
         $total = $this->jobRepository->count($filters);
 
-        $data = $jobs->map(function ($job) {
-            return [
-                'uuid' => $job->uuid,
-                'job_class' => $job->getShortJobClass(),
-                'full_job_class' => $job->job_class,
-                'queue' => $job->queue,
-                'connection' => $job->connection,
-                'status' => [
-                    'value' => $job->status->value,
-                    'label' => $job->status->label(),
-                    'color' => $job->status->color(),
-                ],
-                'worker_type' => [
-                    'value' => $job->worker_type->value,
-                    'label' => $job->worker_type->label(),
-                    'icon' => $job->worker_type->icon(),
-                ],
-                'attempt' => $job->attempt,
-                'max_attempts' => $job->max_attempts,
-                'server' => $job->server_name,
-                'duration_ms' => $job->duration_ms,
-                'duration' => $job->duration_ms ? number_format($job->duration_ms).'ms' : '-',
-                'cpu_time_ms' => $job->cpu_time_ms,
-                'memory_peak_mb' => $job->memory_peak_mb,
-                'worker_memory_limit_mb' => $job->worker_memory_limit_mb,
-                'queued_at' => $job->queued_at->toIso8601String(),
-                'started_at' => $job->started_at?->toIso8601String(),
-                'completed_at' => $job->completed_at?->toIso8601String(),
-                'error' => $job->exception_message,
-                'is_failed' => $job->isFailed(),
-            ];
-        });
+        $data = $jobs->map(fn ($job) => JobMonitorTransformer::toListArray($job));
 
         // Provide distinct queue names for the filter dropdown (cached to avoid full table scan)
         $availableQueues = Cache::remember('queue_monitor:available_queues', 60, fn () => JobMonitor::query()
@@ -171,82 +117,10 @@ class DashboardMetricsController extends Controller
             : null;
 
         $retryChain = $this->jobRepository->getRetryChain($uuid)
-            ->map(function ($retryJob) use ($uuid) {
-                return [
-                    'uuid' => $retryJob->uuid,
-                    'attempt' => $retryJob->attempt,
-                    'status' => [
-                        'value' => $retryJob->status->value,
-                        'label' => $retryJob->status->label(),
-                        'color' => $retryJob->status->color(),
-                    ],
-                    'duration_ms' => $retryJob->duration_ms,
-                    'memory_peak_mb' => $retryJob->memory_peak_mb,
-                    'server_name' => $retryJob->server_name,
-                    'worker_id' => $retryJob->worker_id,
-                    'started_at' => $retryJob->started_at?->toIso8601String(),
-                    'completed_at' => $retryJob->completed_at?->toIso8601String(),
-                    'exception_class' => $retryJob->exception_class,
-                    'exception_message' => $retryJob->exception_message,
-                    'exception_trace' => PayloadRedactor::redactTrace($retryJob->exception_trace),
-                    'wait_time_ms' => $retryJob->started_at !== null
-                        ? (int) $retryJob->queued_at->diffInMilliseconds($retryJob->started_at)
-                        : null,
-                    'is_current' => $retryJob->uuid === $uuid,
-                ];
-            });
+            ->map(fn ($retryJob) => JobMonitorTransformer::toRetryChainArray($retryJob, $uuid));
 
         return response()->json([
-            'job' => [
-                'uuid' => $job->uuid,
-                'job_class' => $job->job_class,
-                'short_job_class' => $job->getShortJobClass(),
-                'display_name' => $job->display_name,
-                'queue' => $job->queue,
-                'connection' => $job->connection,
-                'status' => [
-                    'value' => $job->status->value,
-                    'label' => $job->status->label(),
-                    'color' => $job->status->color(),
-                ],
-                'worker_type' => [
-                    'value' => $job->worker_type->value,
-                    'label' => $job->worker_type->label(),
-                    'icon' => $job->worker_type->icon(),
-                ],
-                'attempt' => $job->attempt,
-                'max_attempts' => $job->max_attempts,
-                'server' => $job->server_name,
-                'worker_id' => $job->worker_id,
-                'metrics' => [
-                    'duration_ms' => $job->duration_ms,
-                    'cpu_time_ms' => $job->cpu_time_ms,
-                    'memory_peak_mb' => $job->memory_peak_mb,
-                    'worker_memory_limit_mb' => $job->worker_memory_limit_mb,
-                    'file_descriptors' => $job->file_descriptors,
-                    'wait_time_ms' => $job->started_at !== null
-                        ? (int) $job->queued_at->diffInMilliseconds($job->started_at)
-                        : null,
-                    'total_time_ms' => $job->completed_at !== null
-                        ? (int) $job->queued_at->diffInMilliseconds($job->completed_at)
-                        : null,
-                    'delay_ms' => $job->available_at !== null
-                        ? (int) $job->queued_at->diffInMilliseconds($job->available_at)
-                        : null,
-                    'pickup_latency_ms' => $job->started_at !== null && $job->available_at !== null
-                        ? (int) $job->available_at->diffInMilliseconds($job->started_at)
-                        : null,
-                ],
-                'timestamps' => [
-                    'queued_at' => $job->queued_at->toIso8601String(),
-                    'available_at' => $job->available_at?->toIso8601String(),
-                    'started_at' => $job->started_at?->toIso8601String(),
-                    'completed_at' => $job->completed_at?->toIso8601String(),
-                ],
-                'tags' => $job->tags,
-                'is_failed' => $job->isFailed(),
-                'is_retryable' => $job->isRetryable(),
-            ],
+            'job' => JobMonitorTransformer::toDetailArray($job, $sensitiveKeys),
             'payload' => $payload,
             'exception' => $job->isFailed() ? [
                 'class' => $job->exception_class,
