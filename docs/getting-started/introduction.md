@@ -78,8 +78,9 @@ Built on solid architectural patterns:
 ## Requirements
 
 - PHP 8.3+
-- Laravel 10+
-- **cboxdk/laravel-queue-metrics** ^1.0
+- Laravel 11+
+- [cboxdk/laravel-queue-metrics](https://github.com/cboxdk/laravel-queue-metrics) ^2.3 (installed automatically)
+- Redis (default for metrics storage) or database (for low-scale workloads)
 
 ## Next Steps
 
