@@ -199,12 +199,24 @@ foreach ($queueStats as $stat) {
 
 ## Configuration
 
-### Metrics Storage
+### Persistence
 
-Queue-metrics stores instrumentation data (CPU samples, memory samples, worker heartbeats) in a separate storage backend. This is independent of your queue driver.
+Queue-metrics has two layers: **instrumentation** (per-job CPU/memory events) and **persistence** (aggregate storage of workers, throughput, baselines).
+
+Queue Monitor only needs the instrumentation layer. If you don't use [queue-autoscale](https://github.com/cboxdk/laravel-queue-autoscale) or Prometheus export, you can disable persistence:
 
 ```php
 // config/queue-metrics.php
+'persistence' => [
+    'enabled' => env('QUEUE_METRICS_PERSISTENCE', true),
+],
+```
+
+With persistence off: per-job CPU/memory events still fire and Queue Monitor captures them. No storage backend required.
+
+### Storage Backend (when persistence is enabled)
+
+```php
 'storage' => [
     // 'redis' (default, recommended) or 'database'
     'driver' => env('QUEUE_METRICS_STORAGE', 'redis'),
@@ -215,18 +227,11 @@ Queue-metrics stores instrumentation data (CPU samples, memory samples, worker h
 ],
 ```
 
-**Redis** is the recommended driver for all production workloads. **Database** is available for teams without Redis infrastructure, but is only suitable for low-scale workloads (< 10 workers) due to write contention.
-
-For the database driver, publish and run the metrics storage migration:
-
-```bash
-php artisan vendor:publish --tag="queue-metrics-migrations"
-php artisan migrate
-```
+**Redis** is the recommended driver. **Database** is available for low-scale workloads (< 10 workers). See the [installation guide](../getting-started/installation) for setup.
 
 ### Metrics Collection
 
-Queue-metrics collects data automatically — no extra configuration needed beyond storage driver selection.
+Queue-metrics instruments jobs automatically — no configuration needed beyond persistence and storage settings.
 
 ### Integration Settings
 
