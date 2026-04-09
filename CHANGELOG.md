@@ -2,6 +2,34 @@
 
 All notable changes to `laravel-queue-monitor` will be documented in this file.
 
+## v1.3.0 - 2026-04-09
+
+### What's Changed
+
+#### Fixes
+
+- **Input validation**: Bound `failed()` and `recent()` API limit to 1-1000 (was unbounded)
+- **Error reporting**: Silent catch blocks now call `report($e)` in `BatchDeleteAction` and `RecordJobQueuedAction`
+- **Query safety**: Replace fragile `addBinding()` with inline `selectRaw()` bindings in drill-down controller
+- **Code quality**: Extract `JobMonitorTransformer` to consolidate duplicated response mapping (~90 lines removed)
+
+#### Documentation
+
+- Document metrics storage setup: Redis (default) vs database driver
+- Remove misleading "No Redis required" — Redis is default for metrics, database is opt-in for low-scale
+- Installation guide with step-by-step metrics storage configuration
+- Performance guidance: database driver for < 10 workers
+
+#### Testing
+
+- 16 new test files, 103 new tests
+- Coverage: 65.9% → 78.6%
+- 391 tests, 1056 assertions
+
+#### Compatibility
+
+- Supports `cboxdk/laravel-queue-metrics` v2.5.0 database driver (existing `^2.3` constraint)
+
 ## v1.2.0-beta.8 - 2026-04-08
 
 ### Papercut Fixes & Test Coverage
@@ -105,6 +133,7 @@ First stable release of Queue Monitor for Laravel - a comprehensive job monitori
 
 ```bash
 composer require cboxdk/laravel-queue-monitor
+
 
 
 
