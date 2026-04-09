@@ -199,21 +199,38 @@ foreach ($queueStats as $stat) {
 
 ## Configuration
 
-### Metrics Collection
+### Metrics Storage
 
-Queue-metrics has its own configuration for metrics collection:
+Queue-metrics stores instrumentation data (CPU samples, memory samples, worker heartbeats) in a separate storage backend. This is independent of your queue driver.
 
 ```php
 // config/queue-metrics.php
-'telemetry' => [
-    'enabled' => true,
-    'sample_rate' => 1.0, // Collect metrics for all jobs
+'storage' => [
+    // 'redis' (default, recommended) or 'database'
+    'driver' => env('QUEUE_METRICS_STORAGE', 'redis'),
+    'connection' => env('QUEUE_METRICS_CONNECTION', 'default'),
+    'prefix' => 'queue_metrics',
+    // Recommended: 1000 for Redis, 500 for database
+    'max_samples_per_key' => env('QUEUE_METRICS_MAX_SAMPLES', 1000),
 ],
 ```
 
+**Redis** is the recommended driver for all production workloads. **Database** is available for teams without Redis infrastructure, but is only suitable for low-scale workloads (< 10 workers) due to write contention.
+
+For the database driver, publish and run the metrics storage migration:
+
+```bash
+php artisan vendor:publish --tag="queue-metrics-migrations"
+php artisan migrate
+```
+
+### Metrics Collection
+
+Queue-metrics collects data automatically — no extra configuration needed beyond storage driver selection.
+
 ### Integration Settings
 
-Queue-monitor automatically subscribes to metrics events if queue-metrics is installed:
+Queue-monitor automatically subscribes to metrics events:
 
 ```php
 // No configuration needed - automatic integration

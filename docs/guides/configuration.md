@@ -98,6 +98,43 @@ You can add custom middleware for authentication:
 'middleware' => ['api', 'auth:sanctum'],
 ```
 
+## Metrics Storage
+
+Queue Monitor depends on [laravel-queue-metrics](https://github.com/cboxdk/laravel-queue-metrics) for per-job CPU and memory instrumentation. Metrics data is stored separately from job records.
+
+### Redis (default)
+
+Redis is the default and recommended storage driver. No extra configuration needed if you have a Redis connection:
+
+```env
+QUEUE_METRICS_STORAGE=redis
+QUEUE_METRICS_CONNECTION=default
+```
+
+### Database
+
+For applications without Redis, metrics can be stored in your application database:
+
+```env
+QUEUE_METRICS_STORAGE=database
+```
+
+Additional configuration in `config/queue-metrics.php`:
+
+```php
+'storage' => [
+    'driver' => env('QUEUE_METRICS_STORAGE', 'redis'),
+    'connection' => env('QUEUE_METRICS_CONNECTION', 'default'),
+    'prefix' => 'queue_metrics',
+    // Recommended: 1000 for Redis, 500 for database driver
+    'max_samples_per_key' => env('QUEUE_METRICS_MAX_SAMPLES', 1000),
+],
+```
+
+> **Performance note:** The database driver is designed for low-scale workloads (< 10 workers). At higher scale, metrics writes compete with your queue jobs for database connections. Use Redis for moderate to high workloads.
+
+For full metrics configuration options, see the [laravel-queue-metrics documentation](https://github.com/cboxdk/laravel-queue-metrics).
+
 ## Repository Bindings
 
 Override default repository implementations:
