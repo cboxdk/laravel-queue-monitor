@@ -9,8 +9,8 @@ weight: 2
 ## Requirements
 
 - PHP 8.3+
-- Laravel 10.0+
-- **cboxdk/laravel-queue-metrics** (hard dependency)
+- Laravel 11+
+- [cboxdk/laravel-queue-metrics](https://github.com/cboxdk/laravel-queue-metrics) ^2.3 (installed automatically)
 
 ## Installation Steps
 
@@ -32,16 +32,59 @@ php artisan vendor:publish --tag="queue-monitor-config"
 php artisan migrate
 ```
 
-The package will create two tables:
-- `queue_monitor_jobs` - Stores individual job records
-- `queue_monitor_tags` - Normalized tag storage for analytics
+The package will create three tables:
+- `queue_monitor_jobs` — Stores individual job records
+- `queue_monitor_tags` — Normalized tag storage for analytics
+- `queue_monitor_scaling_events` — Autoscale integration (if used)
 
-### 4. Advanced Installation (Optional)
+### 4. Configure Metrics Storage
 
-If you need to customize the migrations, you can publish them to your application:
+Queue Monitor depends on [laravel-queue-metrics](https://github.com/cboxdk/laravel-queue-metrics) for per-job CPU and memory instrumentation. Metrics data is stored separately from job records and needs a fast storage backend.
+
+#### Redis (default)
+
+If you already have a Redis connection, no configuration needed — this is the default.
+
+```env
+QUEUE_METRICS_STORAGE=redis
+QUEUE_METRICS_CONNECTION=default
+```
+
+Redis is the recommended driver for all production workloads.
+
+#### Database
+
+If you don't run Redis, metrics can be stored in your application database:
+
+```env
+QUEUE_METRICS_STORAGE=database
+```
+
+Publish and run the metrics storage migration:
+
+```bash
+php artisan vendor:publish --tag="queue-metrics-migrations"
+php artisan migrate
+```
+
+This creates 4 additional tables (`queue_metrics_keys`, `queue_metrics_hashes`, `queue_metrics_sets`, `queue_metrics_sorted_sets`) used for metrics storage.
+
+> **Performance note:** The database driver is designed for low-scale workloads (< 10 workers). At higher scale, metrics writes compete with your queue jobs for database connections. We recommend `QUEUE_METRICS_MAX_SAMPLES=500` to keep table sizes manageable.
+
+For full configuration options, see the [laravel-queue-metrics documentation](https://github.com/cboxdk/laravel-queue-metrics).
+
+### 5. Advanced Installation (Optional)
+
+Publish migrations for customization:
 
 ```bash
 php artisan vendor:publish --tag="queue-monitor-migrations"
+```
+
+Publish views for customization:
+
+```bash
+php artisan vendor:publish --tag="queue-monitor-views"
 ```
 
 ## Configuration
@@ -76,10 +119,15 @@ return [
 ## Environment Variables
 
 ```env
+# Queue Monitor
 QUEUE_MONITOR_ENABLED=true
 QUEUE_MONITOR_STORE_PAYLOAD=true
 QUEUE_MONITOR_API_ENABLED=true
-QUEUE_MONITOR_DB_CONNECTION=mysql
+
+# Metrics Storage (from laravel-queue-metrics)
+QUEUE_METRICS_STORAGE=redis          # redis (default) or database
+QUEUE_METRICS_CONNECTION=default     # Redis or database connection name
+QUEUE_METRICS_MAX_SAMPLES=1000       # Recommended: 500 for database driver
 ```
 
 ## Next Steps
