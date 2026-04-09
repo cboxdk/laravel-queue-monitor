@@ -5,7 +5,7 @@
 
 **Deep queue monitoring for any Laravel queue driver. Not just Horizon.**
 
-Track every queue job with per-job CPU, memory, payload, exceptions, and retry chains — on `database`, `redis`, `sqs`, `beanstalkd`, or any driver that fires Laravel's queue events. No Redis required. No Horizon required.
+Track every queue job with per-job CPU, memory, payload, exceptions, and retry chains — on `database`, `redis`, `sqs`, `beanstalkd`, or any driver that fires Laravel's queue events. No Horizon required.
 
 ## Why?
 
@@ -42,7 +42,7 @@ Works with Horizon? Yes — and it enriches the experience with worker superviso
 
 - PHP 8.3+
 - Laravel 11+
-- [cboxdk/laravel-queue-metrics](https://github.com/cboxdk/laravel-queue-metrics) ^2.3
+- [cboxdk/laravel-queue-metrics](https://github.com/cboxdk/laravel-queue-metrics) ^2.3 (installed automatically)
 
 ## Installation
 
@@ -56,6 +56,38 @@ php artisan migrate
 ```
 
 That's it. The package automatically starts monitoring all queue jobs.
+
+### Metrics Storage
+
+Queue Monitor depends on [laravel-queue-metrics](https://github.com/cboxdk/laravel-queue-metrics) for CPU/memory instrumentation. Metrics data needs a fast storage backend — you have two options:
+
+#### Redis (default, recommended)
+
+Redis is used by default. No extra configuration needed if you already have a Redis connection.
+
+```env
+QUEUE_METRICS_STORAGE=redis
+QUEUE_METRICS_CONNECTION=default
+```
+
+This is the recommended driver for all production workloads. See the [laravel-queue-metrics docs](https://github.com/cboxdk/laravel-queue-metrics) for advanced Redis configuration.
+
+#### Database
+
+If you don't run Redis, metrics can be stored in your application database:
+
+```env
+QUEUE_METRICS_STORAGE=database
+```
+
+Publish and run the metrics storage migration:
+
+```bash
+php artisan vendor:publish --tag="queue-metrics-migrations"
+php artisan migrate
+```
+
+> **Performance note:** The database driver is designed for low-scale workloads (< 10 workers). At higher scale, metrics writes compete with your queue jobs for database connections. We recommend setting `QUEUE_METRICS_MAX_SAMPLES=500` to keep table sizes manageable. See the [laravel-queue-metrics docs](https://github.com/cboxdk/laravel-queue-metrics) for details.
 
 ### Optional: Publish views for customization
 
