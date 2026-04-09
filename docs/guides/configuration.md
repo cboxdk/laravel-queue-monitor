@@ -100,28 +100,27 @@ You can add custom middleware for authentication:
 
 ## Metrics Storage
 
-Queue Monitor depends on [laravel-queue-metrics](https://github.com/cboxdk/laravel-queue-metrics) for per-job CPU and memory instrumentation. Metrics data is stored separately from job records.
+Queue Monitor depends on [laravel-queue-metrics](https://github.com/cboxdk/laravel-queue-metrics) for per-job CPU and memory instrumentation. Queue-metrics also provides aggregate persistence (worker heartbeats, throughput, baselines) — but Queue Monitor doesn't need it.
 
-### Redis (default)
+### Disable persistence (simplest setup)
 
-Redis is the default and recommended storage driver. No extra configuration needed if you have a Redis connection:
-
-```env
-QUEUE_METRICS_STORAGE=redis
-QUEUE_METRICS_CONNECTION=default
-```
-
-### Database
-
-For applications without Redis, metrics can be stored in your application database:
+If you only use Queue Monitor (not [queue-autoscale](https://github.com/cboxdk/laravel-queue-autoscale)), disable metrics persistence to skip any storage backend:
 
 ```env
-QUEUE_METRICS_STORAGE=database
+QUEUE_METRICS_PERSISTENCE=false
 ```
 
-Additional configuration in `config/queue-metrics.php`:
+Per-job CPU/memory still works — only aggregate persistence is skipped.
+
+### With persistence enabled (default)
+
+When persistence is on, configure a storage backend in `config/queue-metrics.php`:
 
 ```php
+'persistence' => [
+    'enabled' => env('QUEUE_METRICS_PERSISTENCE', true),
+],
+
 'storage' => [
     'driver' => env('QUEUE_METRICS_STORAGE', 'redis'),
     'connection' => env('QUEUE_METRICS_CONNECTION', 'default'),
@@ -131,7 +130,7 @@ Additional configuration in `config/queue-metrics.php`:
 ],
 ```
 
-> **Performance note:** The database driver is designed for low-scale workloads (< 10 workers). At higher scale, metrics writes compete with your queue jobs for database connections. Use Redis for moderate to high workloads.
+**Redis** is the recommended driver. **Database** is available for low-scale workloads (< 10 workers) without Redis — see the [installation guide](../getting-started/installation) for setup.
 
 For full metrics configuration options, see the [laravel-queue-metrics documentation](https://github.com/cboxdk/laravel-queue-metrics).
 

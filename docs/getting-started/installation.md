@@ -39,22 +39,30 @@ The package will create three tables:
 
 ### 4. Configure Metrics Storage
 
-Queue Monitor depends on [laravel-queue-metrics](https://github.com/cboxdk/laravel-queue-metrics) for per-job CPU and memory instrumentation. Metrics data is stored separately from job records and needs a fast storage backend.
+Queue Monitor depends on [laravel-queue-metrics](https://github.com/cboxdk/laravel-queue-metrics) for per-job CPU and memory instrumentation. By default, queue-metrics also persists aggregate data (worker heartbeats, throughput, baselines) to a storage backend.
 
-#### Redis (default)
+**Queue Monitor only needs the per-job events — not the aggregate persistence.** If you only use Queue Monitor (without [queue-autoscale](https://github.com/cboxdk/laravel-queue-autoscale)), you can disable persistence entirely:
 
-If you already have a Redis connection, no configuration needed — this is the default.
+```env
+QUEUE_METRICS_PERSISTENCE=false
+```
+
+This gives you per-job CPU and memory tracking with zero additional infrastructure. No Redis, no extra database tables. Skip to step 5.
+
+#### With persistence enabled (default)
+
+If you want the full metrics stack (Prometheus export, baselines, worker heartbeats) or use [queue-autoscale](https://github.com/cboxdk/laravel-queue-autoscale), persistence stays enabled. Choose a storage backend:
+
+**Redis (recommended):**
 
 ```env
 QUEUE_METRICS_STORAGE=redis
 QUEUE_METRICS_CONNECTION=default
 ```
 
-Redis is the recommended driver for all production workloads.
+No extra setup needed if you already have a Redis connection.
 
-#### Database
-
-If you don't run Redis, metrics can be stored in your application database:
+**Database** (for low-scale workloads without Redis):
 
 ```env
 QUEUE_METRICS_STORAGE=database
@@ -67,9 +75,7 @@ php artisan vendor:publish --tag="queue-metrics-migrations"
 php artisan migrate
 ```
 
-This creates 4 additional tables (`queue_metrics_keys`, `queue_metrics_hashes`, `queue_metrics_sets`, `queue_metrics_sorted_sets`) used for metrics storage.
-
-> **Performance note:** The database driver is designed for low-scale workloads (< 10 workers). At higher scale, metrics writes compete with your queue jobs for database connections. We recommend `QUEUE_METRICS_MAX_SAMPLES=500` to keep table sizes manageable.
+> **Performance note:** The database driver is for low-scale workloads (< 10 workers). At higher scale, metrics writes compete with your queue jobs for database connections. We recommend `QUEUE_METRICS_MAX_SAMPLES=500`.
 
 For full configuration options, see the [laravel-queue-metrics documentation](https://github.com/cboxdk/laravel-queue-metrics).
 

@@ -5,7 +5,7 @@
 
 **Deep queue monitoring for any Laravel queue driver. Not just Horizon.**
 
-Track every queue job with per-job CPU, memory, payload, exceptions, and retry chains — on `database`, `redis`, `sqs`, `beanstalkd`, or any driver that fires Laravel's queue events. No Horizon required.
+Track every queue job with per-job CPU, memory, payload, exceptions, and retry chains — on `database`, `redis`, `sqs`, `beanstalkd`, or any driver that fires Laravel's queue events. No Redis required. No Horizon required.
 
 ## Why?
 
@@ -59,35 +59,39 @@ That's it. The package automatically starts monitoring all queue jobs.
 
 ### Metrics Storage
 
-Queue Monitor depends on [laravel-queue-metrics](https://github.com/cboxdk/laravel-queue-metrics) for CPU/memory instrumentation. Metrics data needs a fast storage backend — you have two options:
+Queue Monitor depends on [laravel-queue-metrics](https://github.com/cboxdk/laravel-queue-metrics) for per-job CPU/memory instrumentation. By default, queue-metrics also persists aggregate data (worker heartbeats, throughput, baselines) to a storage backend. Queue Monitor only needs the per-job events — not the aggregate persistence.
 
-#### Redis (default, recommended)
+If you only use Queue Monitor (without [queue-autoscale](https://github.com/cboxdk/laravel-queue-autoscale)), you can disable metrics persistence to avoid any storage backend requirement:
 
-Redis is used by default. No extra configuration needed if you already have a Redis connection.
+```env
+QUEUE_METRICS_PERSISTENCE=false
+```
+
+This gives you per-job CPU and memory tracking with zero additional infrastructure. No Redis, no extra tables.
+
+#### With persistence enabled (default)
+
+If you want the full metrics stack (Prometheus export, baselines, worker heartbeats) or use [queue-autoscale](https://github.com/cboxdk/laravel-queue-autoscale), persistence must stay enabled. Two storage options:
+
+**Redis (recommended):**
 
 ```env
 QUEUE_METRICS_STORAGE=redis
 QUEUE_METRICS_CONNECTION=default
 ```
 
-This is the recommended driver for all production workloads. See the [laravel-queue-metrics docs](https://github.com/cboxdk/laravel-queue-metrics) for advanced Redis configuration.
-
-#### Database
-
-If you don't run Redis, metrics can be stored in your application database:
+**Database** (for low-scale workloads without Redis):
 
 ```env
 QUEUE_METRICS_STORAGE=database
 ```
-
-Publish and run the metrics storage migration:
 
 ```bash
 php artisan vendor:publish --tag="queue-metrics-migrations"
 php artisan migrate
 ```
 
-> **Performance note:** The database driver is designed for low-scale workloads (< 10 workers). At higher scale, metrics writes compete with your queue jobs for database connections. We recommend setting `QUEUE_METRICS_MAX_SAMPLES=500` to keep table sizes manageable. See the [laravel-queue-metrics docs](https://github.com/cboxdk/laravel-queue-metrics) for details.
+> **Performance note:** The database driver is for low-scale workloads (< 10 workers). At higher scale, metrics writes compete with your queue jobs for database connections. We recommend `QUEUE_METRICS_MAX_SAMPLES=500`. See the [laravel-queue-metrics docs](https://github.com/cboxdk/laravel-queue-metrics) for details.
 
 ### Optional: Publish views for customization
 

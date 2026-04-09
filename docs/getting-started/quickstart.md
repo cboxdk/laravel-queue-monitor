@@ -20,24 +20,13 @@ That's it! Jobs are now being monitored automatically.
 
 ### Metrics Storage
 
-Queue Monitor uses [laravel-queue-metrics](https://github.com/cboxdk/laravel-queue-metrics) for CPU/memory instrumentation. By default, metrics are stored in **Redis**. If you don't have Redis, you can use the database driver:
+Queue Monitor uses [laravel-queue-metrics](https://github.com/cboxdk/laravel-queue-metrics) for CPU/memory instrumentation. No extra infrastructure is required — disable metrics persistence if you don't have Redis:
 
 ```env
-# Default — uses Redis (recommended)
-QUEUE_METRICS_STORAGE=redis
-
-# Alternative — uses your application database
-QUEUE_METRICS_STORAGE=database
+QUEUE_METRICS_PERSISTENCE=false
 ```
 
-For the database driver, publish and run the metrics migration:
-
-```bash
-php artisan vendor:publish --tag="queue-metrics-migrations"
-php artisan migrate
-```
-
-> **Note:** The database driver is for low-scale workloads (< 10 workers). At higher scale, use Redis. See the [installation guide](installation) for details.
+You still get per-job CPU and memory tracking. If you want the full metrics stack (Prometheus, baselines, worker heartbeats) or use [queue-autoscale](https://github.com/cboxdk/laravel-queue-autoscale), keep persistence enabled and configure a storage backend. See the [installation guide](installation) for details.
 
 ## View Your First Job
 
