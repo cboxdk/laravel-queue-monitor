@@ -23,12 +23,12 @@ it('returns metrics for the dashboard', function () {
     getJson(config('queue-monitor.ui.route_prefix').'/metrics')
         ->assertStatus(200)
         ->assertJsonStructure([
-            'stats' => ['total_jobs', 'failed_jobs', 'success_rate'],
+            'stats' => ['total', 'failed', 'success_rate'],
             'queues',
             'recent_jobs',
             'charts' => ['distribution'],
         ])
-        ->assertJsonPath('stats.total_jobs', 1);
+        ->assertJsonPath('stats.total', 1);
 });
 
 it('redacts sensitive data in dashboard payload', function () {

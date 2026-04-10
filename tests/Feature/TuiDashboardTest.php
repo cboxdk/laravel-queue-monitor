@@ -20,11 +20,11 @@ function tuiViewData(array $overrides = []): array
 {
     return array_merge([
         'stats' => [
-            'total_jobs' => 10,
+            'total' => 10,
             'success_rate' => 90,
             'avg_duration_ms' => 150,
-            'failed_jobs' => 1,
-            'completed_jobs' => 9,
+            'failed' => 1,
+            'completed' => 9,
             'processing' => 0,
             'max_duration_ms' => 500,
             'avg_memory_mb' => 32.5,
@@ -185,8 +185,8 @@ it('dashboard renders with search mode active', function () {
 it('dashboard renders with empty job list', function () {
     $html = view('queue-monitor::tui.dashboard', tuiViewData([
         'stats' => [
-            'total_jobs' => 0, 'success_rate' => 0, 'avg_duration_ms' => 0,
-            'failed_jobs' => 0, 'completed_jobs' => 0, 'processing' => 0,
+            'total' => 0, 'success_rate' => 0, 'avg_duration_ms' => 0,
+            'failed' => 0, 'completed' => 0, 'processing' => 0,
             'max_duration_ms' => 0, 'avg_memory_mb' => 0, 'failure_rate' => 0,
         ],
     ]))->render();
@@ -544,11 +544,11 @@ test('statistics view renders with real factory data', function () {
 test('statistics view shows high failure rate in red', function () {
     $html = view('queue-monitor::tui.dashboard', tuiViewData([
         'stats' => [
-            'total_jobs' => 10,
+            'total' => 10,
             'success_rate' => 40,
             'avg_duration_ms' => 200,
-            'failed_jobs' => 6,
-            'completed_jobs' => 4,
+            'failed' => 6,
+            'completed' => 4,
             'processing' => 0,
             'max_duration_ms' => 1000,
             'avg_memory_mb' => 32.0,
