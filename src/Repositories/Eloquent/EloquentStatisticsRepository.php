@@ -33,6 +33,7 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
                 DB::raw('SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as failed'),
                 DB::raw('SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as timeout'),
                 DB::raw('SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as processing'),
+                DB::raw('SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as queued'),
                 DB::raw('AVG(CASE WHEN duration_ms IS NOT NULL THEN duration_ms END) as avg_duration_ms'),
                 DB::raw('MAX(duration_ms) as max_duration_ms'),
                 DB::raw('AVG(CASE WHEN memory_peak_mb IS NOT NULL THEN memory_peak_mb END) as avg_memory_mb'),
@@ -43,10 +44,11 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
                 JobStatus::FAILED->value,
                 JobStatus::TIMEOUT->value,
                 JobStatus::PROCESSING->value,
+                JobStatus::QUEUED->value,
             ])
             ->first();
 
-        /** @var object{total: int, completed: int, failed: int, timeout: int, processing: int, avg_duration_ms: float|null, max_duration_ms: int|null, avg_memory_mb: float|null, max_memory_mb: float|null}|null $stats */
+        /** @var object{total: int, completed: int, failed: int, timeout: int, processing: int, queued: int, avg_duration_ms: float|null, max_duration_ms: int|null, avg_memory_mb: float|null, max_memory_mb: float|null}|null $stats */
         if ($stats === null) {
             return [
                 'total' => 0,
@@ -59,6 +61,7 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
                 'timeout_jobs' => 0,
                 'processing' => 0,
                 'processing_jobs' => 0,
+                'queue_backlog' => 0,
                 'success_rate' => 0,
                 'failure_rate' => 0,
                 'avg_duration_ms' => null,
@@ -83,6 +86,7 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
             'timeout_jobs' => (int) $stats->timeout,
             'processing' => (int) $stats->processing,
             'processing_jobs' => (int) $stats->processing,
+            'queue_backlog' => (int) $stats->queued,
             'success_rate' => $total > 0 ? round(($completed / $total) * 100, 2) : 0,
             'failure_rate' => $total > 0 ? round(($failed / $total) * 100, 2) : 0,
             'avg_duration_ms' => $stats->avg_duration_ms !== null ? round((float) $stats->avg_duration_ms, 2) : null,

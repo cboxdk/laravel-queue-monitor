@@ -202,7 +202,7 @@ final class InfrastructureService
             : 'TIMESTAMPDIFF(SECOND, COALESCE(available_at, queued_at), started_at)';
 
         $rows = DB::table($prefix.'jobs')
-            ->selectRaw("queue, COUNT(*) as total, {$pickupExpr} as pickup_seconds")
+            ->selectRaw('queue, COUNT(*) as total')
             ->whereNotNull('started_at')
             ->where('created_at', '>=', now()->subHour())
             ->groupBy('queue')
