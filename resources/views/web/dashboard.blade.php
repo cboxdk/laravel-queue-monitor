@@ -651,12 +651,28 @@
                                         <div class="text-[11px] text-gray-500 mt-0.5" x-text="health.checks[name].message"></div>
                                         <template x-if="name === 'stuck_jobs' && health.checks[name].details?.stuck_jobs?.length > 0">
                                             <div class="mt-2 space-y-1.5">
+                                                <div class="flex items-center justify-end gap-2 mb-1">
+                                                    <button @click="resolveAllStuckJobs('retry')" class="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-md hover:bg-amber-100 transition" title="Retry all stuck jobs">
+                                                        <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" /></svg>
+                                                        Retry All
+                                                    </button>
+                                                    <button @click="resolveAllStuckJobs('delete')" class="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-red-700 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 transition" title="Delete all stuck jobs">
+                                                        <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg>
+                                                        Clear All
+                                                    </button>
+                                                </div>
                                                 <template x-for="sj in health.checks[name].details.stuck_jobs" :key="sj.uuid">
                                                     <div class="flex items-center gap-2 text-[11px] bg-red-50 border border-red-100 rounded-lg px-3 py-1.5">
                                                         <span class="font-mono font-medium text-red-800 cursor-pointer hover:underline" x-text="shortClass(sj.job_class)" @click="openJobView(sj.uuid)"></span>
                                                         <span class="text-red-600" x-text="'-> ' + sj.queue"></span>
                                                         <span class="text-red-400" x-text="'on ' + sj.server"></span>
                                                         <span class="text-red-400 ml-auto" x-text="'since ' + formatTime(sj.stuck_since)"></span>
+                                                        <button @click.stop="resolveStuckJob(sj.uuid, 'retry')" class="p-1 text-amber-600 hover:text-amber-800 hover:bg-amber-100 rounded transition" title="Retry this job">
+                                                            <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" /></svg>
+                                                        </button>
+                                                        <button @click.stop="resolveStuckJob(sj.uuid, 'delete')" class="p-1 text-red-600 hover:text-red-800 hover:bg-red-100 rounded transition" title="Delete this job">
+                                                            <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg>
+                                                        </button>
                                                     </div>
                                                 </template>
                                             </div>
@@ -1564,6 +1580,28 @@
                         await fetch(`/${apiBase}/batch/replay`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' }, body: JSON.stringify({ uuids: this.selectedJobs }) });
                         this.selectedJobs = []; this.fetchJobs();
                     } catch (e) { this.error = 'Failed to replay jobs'; console.error('batchReplay error:', e); }
+                },
+
+                async resolveStuckJob(uuid, action) {
+                    if (!uuid) return;
+                    if (action === 'delete' && !confirm('Delete this stuck job? This cannot be undone.')) return;
+                    try {
+                        const apiBase = '{{ config("queue-monitor.api.prefix", "api/queue-monitor") }}';
+                        const res = await fetch(`/${apiBase}/stuck-jobs/resolve`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' }, body: JSON.stringify({ uuids: [uuid], action }) });
+                        if (!res.ok) throw new Error('Request failed');
+                        this.fetchHealth();
+                    } catch (e) { this.error = `Failed to ${action} stuck job`; console.error('resolveStuckJob error:', e); }
+                },
+
+                async resolveAllStuckJobs(action) {
+                    const label = action === 'delete' ? 'delete' : 'retry';
+                    if (!confirm(`${label.charAt(0).toUpperCase() + label.slice(1)} all stuck jobs?`)) return;
+                    try {
+                        const apiBase = '{{ config("queue-monitor.api.prefix", "api/queue-monitor") }}';
+                        const res = await fetch(`/${apiBase}/stuck-jobs/resolve-all`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' }, body: JSON.stringify({ action }) });
+                        if (!res.ok) throw new Error('Request failed');
+                        this.fetchHealth();
+                    } catch (e) { this.error = `Failed to ${label} stuck jobs`; console.error('resolveAllStuckJobs error:', e); }
                 },
 
                 async batchDelete() {

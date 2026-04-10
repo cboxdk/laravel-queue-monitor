@@ -9,6 +9,7 @@ use Cbox\LaravelQueueMonitor\Http\Controllers\JobMonitorController;
 use Cbox\LaravelQueueMonitor\Http\Controllers\JobReplayController;
 use Cbox\LaravelQueueMonitor\Http\Controllers\PruneController;
 use Cbox\LaravelQueueMonitor\Http\Controllers\StatisticsController;
+use Cbox\LaravelQueueMonitor\Http\Controllers\StuckJobController;
 use Cbox\LaravelQueueMonitor\Http\Middleware\EnsureQueueMonitorEnabled;
 use Illuminate\Support\Facades\Route;
 
@@ -54,6 +55,10 @@ Route::prefix(config('queue-monitor.api.prefix', 'api/queue-monitor'))
         // Batch Operations
         Route::post('/batch/replay', [BatchOperationsController::class, 'batchReplay'])->name('batch.replay');
         Route::post('/batch/delete', [BatchOperationsController::class, 'batchDelete'])->name('batch.delete');
+
+        // Stuck Jobs
+        Route::post('/stuck-jobs/resolve', [StuckJobController::class, 'resolve'])->name('stuck-jobs.resolve');
+        Route::post('/stuck-jobs/resolve-all', [StuckJobController::class, 'resolveAll'])->name('stuck-jobs.resolve-all');
 
         // Health & Monitoring
         Route::get('/health', [HealthCheckController::class, 'index'])->name('health');
