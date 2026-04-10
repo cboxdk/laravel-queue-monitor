@@ -24,10 +24,12 @@ class StuckJobController extends Controller
             'uuids.*' => 'required|string',
         ]);
 
-        $result = $this->resolveAction->execute($validated['uuids'], $validated['action']);
-
+        /** @var list<string> $uuids */
+        $uuids = $validated['uuids'];
         /** @var string $action */
         $action = $validated['action'];
+
+        $result = $this->resolveAction->execute($uuids, $action);
 
         return response()->json([
             'message' => match ($action) {
@@ -45,16 +47,17 @@ class StuckJobController extends Controller
             'action' => 'required|in:delete,retry',
         ]);
 
+        /** @var list<string> $stuckJobs */
         $stuckJobs = QueryBuilderHelper::stuck(30)->pluck('uuid')->toArray();
 
         if (empty($stuckJobs)) {
             return response()->json(['message' => 'No stuck jobs found', 'resolved' => 0, 'replayed' => 0, 'errors' => []]);
         }
 
-        $result = $this->resolveAction->execute($stuckJobs, $validated['action']);
-
         /** @var string $action */
         $action = $validated['action'];
+
+        $result = $this->resolveAction->execute($stuckJobs, $action);
 
         return response()->json([
             'message' => match ($action) {
