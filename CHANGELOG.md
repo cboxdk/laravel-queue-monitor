@@ -2,6 +2,21 @@
 
 All notable changes to `laravel-queue-monitor` will be documented in this file.
 
+## v1.3.1 - 2026-04-10
+
+### Bug Fixes
+
+- **MySQL ONLY_FULL_GROUP_BY compatibility**: Remove non-aggregated `pickup_seconds` from grouped SELECT in `getSlaData()` -- MySQL strict mode (default since 5.7.5) rejected the query with error 1055. The expression was dead code.
+- **Queue Backlog always showing 0**: Add `queue_backlog` to global statistics API response so the dashboard card displays the actual count of queued jobs.
+
+### Refactoring
+
+- **Remove duplicate stat keys**: Global statistics no longer returns redundant `_jobs` suffixed aliases (`total_jobs`, `completed_jobs`, `failed_jobs`, `timeout_jobs`, `processing_jobs`). Use the short names (`total`, `completed`, `failed`, `timeout`, `processing`) instead.
+
+### Dependencies
+
+- Bump `dependabot/fetch-metadata` from 2.5.0 to 3.0.0
+
 ## v1.3.0 - 2026-04-09
 
 ### What's Changed
@@ -133,6 +148,7 @@ First stable release of Queue Monitor for Laravel - a comprehensive job monitori
 
 ```bash
 composer require cboxdk/laravel-queue-monitor
+
 
 
 
