@@ -177,7 +177,7 @@
                         <div class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Total Jobs (24h)</div>
                         <template x-if="loading.overview"><div class="h-9 w-20 shimmer rounded"></div></template>
                         <template x-if="!loading.overview">
-                            <div class="text-2xl lg:text-4xl font-bold text-gray-900 tabular-nums" x-text="formatNumber(overview.stats.total_jobs)">0</div>
+                            <div class="text-2xl lg:text-4xl font-bold text-gray-900 tabular-nums" x-text="formatNumber(overview.stats.total)">0</div>
                         </template>
                     </div>
                     <div class="bg-white border border-gray-200/80 border-l-4 border-l-emerald-500 rounded-xl shadow-sm p-4 card-hover">
@@ -1404,7 +1404,7 @@
                     }
                     this.activeTab = tab;
                     this.pushTabState(tab);
-                    if (tab === 'overview' && !this.overview.stats.total_jobs && this.overview.stats.total_jobs !== 0) this.fetchOverview();
+                    if (tab === 'overview' && !this.overview.stats.total && this.overview.stats.total !== 0) this.fetchOverview();
                     else if (tab === 'jobs' && this.jobs.data.length === 0) this.fetchJobs();
                     else if (tab === 'analytics' && Object.keys(this.analytics).length === 0) this.fetchAnalytics();
                     else if (tab === 'health' && Object.keys(this.health).length === 0) this.fetchHealth();

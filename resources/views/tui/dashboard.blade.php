@@ -29,11 +29,11 @@
         {{-- ═══════════ STATS BAR ═══════════ --}}
         <div class="flex px-1 mt-1">
             <span class="text-cyan-400 font-bold mr-1">Jobs:</span>
-            <span class="text-white mr-2">{{ number_format($stats['total_jobs'] ?? 0) }}</span>
+            <span class="text-white mr-2">{{ number_format($stats['total'] ?? 0) }}</span>
             <span class="text-cyan-400 font-bold mr-1">✓</span>
             <span class="{{ ($stats['success_rate'] ?? 0) > 95 ? 'text-green-400' : (($stats['success_rate'] ?? 0) > 80 ? 'text-yellow-400' : 'text-red-400') }} mr-2">{{ number_format($stats['success_rate'] ?? 0, 1) }}%</span>
             <span class="text-cyan-400 font-bold mr-1">✗</span>
-            <span class="text-red-400 mr-2">{{ $stats['failed_jobs'] ?? 0 }}</span>
+            <span class="text-red-400 mr-2">{{ $stats['failed'] ?? 0 }}</span>
             <span class="text-cyan-400 font-bold mr-1">⏱</span>
             <span class="text-blue-400 mr-2">{{ number_format($stats['avg_duration_ms'] ?? 0, 0) }}ms</span>
             <span class="text-cyan-400 font-bold mr-1">⟳</span>
@@ -131,15 +131,15 @@
             <div class="flex flex-col px-1 mt-1">
                 <div class="flex">
                     <span class="text-cyan-400 font-bold w-24">Total Jobs</span>
-                    <span class="text-white font-bold">{{ number_format($stats['total_jobs'] ?? 0) }}</span>
+                    <span class="text-white font-bold">{{ number_format($stats['total'] ?? 0) }}</span>
                 </div>
                 <div class="flex">
                     <span class="text-cyan-400 font-bold w-24">Completed</span>
-                    <span class="text-green-400">{{ number_format($stats['completed_jobs'] ?? 0) }}</span>
+                    <span class="text-green-400">{{ number_format($stats['completed'] ?? 0) }}</span>
                 </div>
                 <div class="flex">
                     <span class="text-cyan-400 font-bold w-24">Failed</span>
-                    <span class="text-red-400">{{ number_format($stats['failed_jobs'] ?? 0) }}</span>
+                    <span class="text-red-400">{{ number_format($stats['failed'] ?? 0) }}</span>
                 </div>
                 <div class="flex">
                     <span class="text-cyan-400 font-bold w-24">Processing</span>

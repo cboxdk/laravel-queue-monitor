@@ -142,8 +142,8 @@ Get aggregated statistics for the entire system.
 ```json
 {
     "data": {
-        "total_jobs": 1000,
-        "failed_jobs": 50,
+        "total": 1000,
+        "failed": 50,
         "success_rate": 95.0,
         "avg_duration_ms": 1200,
         "avg_memory_mb": 14.2

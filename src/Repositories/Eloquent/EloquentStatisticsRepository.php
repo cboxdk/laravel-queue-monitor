@@ -52,15 +52,10 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
         if ($stats === null) {
             return [
                 'total' => 0,
-                'total_jobs' => 0,
                 'completed' => 0,
-                'completed_jobs' => 0,
                 'failed' => 0,
-                'failed_jobs' => 0,
                 'timeout' => 0,
-                'timeout_jobs' => 0,
                 'processing' => 0,
-                'processing_jobs' => 0,
                 'queue_backlog' => 0,
                 'success_rate' => 0,
                 'failure_rate' => 0,
@@ -77,15 +72,10 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
 
         return [
             'total' => $total,
-            'total_jobs' => $total,
             'completed' => $completed,
-            'completed_jobs' => $completed,
             'failed' => $failed,
-            'failed_jobs' => $failed,
             'timeout' => (int) $stats->timeout,
-            'timeout_jobs' => (int) $stats->timeout,
             'processing' => (int) $stats->processing,
-            'processing_jobs' => (int) $stats->processing,
             'queue_backlog' => (int) $stats->queued,
             'success_rate' => $total > 0 ? round(($completed / $total) * 100, 2) : 0,
             'failure_rate' => $total > 0 ? round(($failed / $total) * 100, 2) : 0,
