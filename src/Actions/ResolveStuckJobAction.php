@@ -6,7 +6,6 @@ namespace Cbox\LaravelQueueMonitor\Actions;
 
 use Cbox\LaravelQueueMonitor\Actions\Replay\ReplayJobAction;
 use Cbox\LaravelQueueMonitor\Enums\JobStatus;
-use Cbox\LaravelQueueMonitor\Exceptions\JobNotFoundException;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\JobMonitorRepositoryContract;
 
 final readonly class ResolveStuckJobAction
@@ -30,11 +29,13 @@ final readonly class ResolveStuckJobAction
 
             if ($job === null) {
                 $errors[] = "Job {$uuid} not found";
+
                 continue;
             }
 
             if ($job->status !== JobStatus::PROCESSING) {
                 $errors[] = "Job {$uuid} is not stuck (status: {$job->status->value})";
+
                 continue;
             }
 
