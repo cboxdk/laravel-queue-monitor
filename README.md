@@ -5,13 +5,13 @@
 
 **Deep queue monitoring for any Laravel queue driver. Not just Horizon.**
 
-Track every queue job with per-job CPU, memory, payload, exceptions, and retry chains — on `database`, `redis`, `sqs`, `beanstalkd`, or any driver that fires Laravel's queue events. No Redis required. No Horizon required.
+Track every queue job with per-job CPU, memory, payload, exceptions, and retry chains on `database`, `redis`, `sqs`, `beanstalkd`, or any driver that fires Laravel's queue events. No Redis required. No Horizon required.
 
 ## Why?
 
-Laravel Horizon is great — if you run Redis. But most monitoring tools stop there. If you run database queues, SQS, or anything else, you're flying blind.
+Laravel Horizon works if you run Redis. Most other monitoring tools stop there. If you run database queues, SQS, or anything else, you're flying blind.
 
-Queue Monitor gives you the same depth of insight **regardless of driver**:
+Queue Monitor gives you the same depth of insight on any driver:
 
 - Per-job CPU time and memory usage (via [laravel-queue-metrics](https://github.com/cboxdk/laravel-queue-metrics))
 - Full exception traces with retry chain history
@@ -20,23 +20,23 @@ Queue Monitor gives you the same depth of insight **regardless of driver**:
 - SLA compliance tracking
 - Health checks and alerting
 
-Works with Horizon? Yes — and it enriches the experience with worker supervisor data. But it doesn't need it.
+Works with Horizon and enriches the experience with worker supervisor data, but doesn't need it.
 
 ## Features
 
-- **Driver Agnostic** — `database`, `redis`, `sqs`, `beanstalkd`, any custom driver
-- **Individual Job Tracking** — Every job from dispatch to completion/failure
-- **Per-Job Resource Metrics** — CPU time, peak memory (RSS), file descriptors via process-level instrumentation
-- **Full Retry Chain** — Every attempt preserved with its own exception, duration, and metrics
-- **Job Replay** — Re-dispatch failed jobs from stored payloads
-- **Web Dashboard** — Full-page job detail, drill-down views, deep-linkable URLs
-- **Terminal Dashboard** — k9s-style TUI with keyboard navigation (`php artisan queue-monitor:dashboard`)
-- **Analytics** — Per-queue, per-server, per-job-class breakdowns with p50/p95/p99 percentiles
-- **Infrastructure** — Worker utilization, queue capacity, SLA compliance, [cboxdk/laravel-queue-autoscale](https://github.com/cboxdk/laravel-queue-autoscale) integration
-- **Health Checks** — Stuck job detection, error rate monitoring, queue backlog alerts
-- **REST API** — Paginated, filterable, with payload redaction
-- **Horizon Integration** — Optional: supervisor data, workload metrics, jobs/minute (auto-detected)
-- **Autoscale Integration** — Optional: scaling timeline, SLA breach/recovery events (with [cboxdk/laravel-queue-autoscale](https://github.com/cboxdk/laravel-queue-autoscale))
+- **Driver Agnostic**: `database`, `redis`, `sqs`, `beanstalkd`, any custom driver
+- **Individual Job Tracking**: Every job from dispatch to completion/failure
+- **Per-Job Resource Metrics**: CPU time, peak memory (RSS), file descriptors via process-level instrumentation
+- **Full Retry Chain**: Every attempt preserved with its own exception, duration, and metrics
+- **Job Replay**: Re-dispatch failed jobs from stored payloads
+- **Web Dashboard**: Full-page job detail, drill-down views, deep-linkable URLs
+- **Terminal Dashboard**: k9s-style TUI with keyboard navigation (`php artisan queue-monitor:dashboard`)
+- **Analytics**: Per-queue, per-server, per-job-class breakdowns with p50/p95/p99 percentiles
+- **Infrastructure**: Worker utilization, queue capacity, SLA compliance, [cboxdk/laravel-queue-autoscale](https://github.com/cboxdk/laravel-queue-autoscale) integration
+- **Health Checks**: Stuck job detection, error rate monitoring, queue backlog alerts
+- **REST API**: Paginated, filterable, with payload redaction
+- **Horizon Integration**: Optional supervisor data, workload metrics, jobs/minute (auto-detected)
+- **Autoscale Integration**: Optional scaling timeline, SLA breach/recovery events (with [cboxdk/laravel-queue-autoscale](https://github.com/cboxdk/laravel-queue-autoscale))
 
 ## Requirements
 
@@ -59,9 +59,9 @@ That's it. The package automatically starts monitoring all queue jobs.
 
 ### Metrics Storage
 
-Queue Monitor depends on [laravel-queue-metrics](https://github.com/cboxdk/laravel-queue-metrics) for per-job CPU/memory instrumentation. By default, queue-metrics also persists aggregate data (worker heartbeats, throughput, baselines) to a storage backend. Queue Monitor only needs the per-job events — not the aggregate persistence.
+Queue Monitor depends on [laravel-queue-metrics](https://github.com/cboxdk/laravel-queue-metrics) for per-job CPU/memory instrumentation. By default, queue-metrics also persists aggregate data (worker heartbeats, throughput, baselines) to a storage backend. Queue Monitor only needs the per-job events, not the aggregate persistence.
 
-If you only use Queue Monitor (without [queue-autoscale](https://github.com/cboxdk/laravel-queue-autoscale)), you can disable metrics persistence to avoid any storage backend requirement:
+If you only use Queue Monitor, you can disable metrics persistence to avoid any storage backend requirement:
 
 ```env
 QUEUE_METRICS_PERSISTENCE=false
@@ -69,9 +69,11 @@ QUEUE_METRICS_PERSISTENCE=false
 
 This gives you per-job CPU and memory tracking with zero additional infrastructure. No Redis, no extra tables.
 
+> **Note:** [cboxdk/laravel-queue-autoscale](https://github.com/cboxdk/laravel-queue-autoscale) requires persistence enabled. It reads worker heartbeats, throughput, and baselines from queue-metrics to make scaling decisions.
+
 #### With persistence enabled (default)
 
-If you want the full metrics stack (Prometheus export, baselines, worker heartbeats) or use [queue-autoscale](https://github.com/cboxdk/laravel-queue-autoscale), persistence must stay enabled. Two storage options:
+Keep persistence enabled if you want the full metrics stack (Prometheus export, baselines, worker heartbeats) or use queue-autoscale. Two storage options:
 
 **Redis (recommended):**
 
@@ -91,7 +93,7 @@ php artisan vendor:publish --tag="queue-metrics-migrations"
 php artisan migrate
 ```
 
-> **Performance note:** The database driver is for low-scale workloads (< 10 workers). At higher scale, metrics writes compete with your queue jobs for database connections. We recommend `QUEUE_METRICS_MAX_SAMPLES=500`. See the [laravel-queue-metrics docs](https://github.com/cboxdk/laravel-queue-metrics) for details.
+> **Performance note:** The database driver is for low-scale workloads (< 10 workers). At higher scale, metrics writes compete with your queue jobs for database connections. Set `QUEUE_METRICS_MAX_SAMPLES=500` to keep table sizes manageable. See the [laravel-queue-metrics docs](https://github.com/cboxdk/laravel-queue-metrics) for details.
 
 ### Optional: Publish views for customization
 
@@ -175,7 +177,7 @@ GET  /api/queue-monitor/statistics/queue-health
 
 ### Cbox Ecosystem
 
-Queue Monitor is part of a suite of first-party packages that integrate seamlessly:
+Queue Monitor is part of a suite of first-party packages:
 
 | Package | Purpose |
 |---------|---------|
@@ -184,7 +186,7 @@ Queue Monitor is part of a suite of first-party packages that integrate seamless
 | [cboxdk/laravel-queue-autoscale](https://github.com/cboxdk/laravel-queue-autoscale) | SLA-based predictive autoscaling |
 | [cboxdk/system-metrics](https://github.com/cboxdk/system-metrics) | Low-level system metrics (RSS, CPU) for PHP |
 
-Install any combination — they auto-discover each other via events.
+Install any combination. They auto-discover each other via events.
 
 ## Configuration
 
@@ -249,10 +251,10 @@ The API automatically masks sensitive keys (`password`, `token`, `secret`, etc.)
 
 ## Architecture
 
-- **Action Pattern** — Single-responsibility action classes for all business logic
-- **Repository Pattern** — Data access through contracts with Eloquent implementations
-- **Event-Driven** — Listens to Laravel queue events (driver-agnostic) and queue-metrics events
-- **DTO Pattern** — Strictly-typed data transfer objects throughout
+- **Action Pattern**: Single-responsibility action classes for all business logic
+- **Repository Pattern**: Data access through contracts with Eloquent implementations
+- **Event-Driven**: Listens to Laravel queue events (driver-agnostic) and queue-metrics events
+- **DTO Pattern**: Strictly-typed data transfer objects throughout
 
 ## Testing
 

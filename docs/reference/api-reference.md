@@ -6,7 +6,7 @@ weight: 1
 
 # API Reference
 
-The Queue Monitor for Laravel package exposes a comprehensive REST API for integrating with external dashboards or monitoring tools.
+Queue Monitor exposes a REST API for integrating with external dashboards or monitoring tools.
 
 ## Base URL
 

@@ -1,6 +1,6 @@
 ---
 title: "Testing Guide"
-description: "Write comprehensive tests for queue monitoring with Pest 4 framework"
+description: "Write tests for queue monitoring with Pest 4"
 weight: 4
 ---
 

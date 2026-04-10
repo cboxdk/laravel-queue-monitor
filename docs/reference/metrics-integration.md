@@ -1,12 +1,12 @@
 ---
 title: "Queue-Metrics Integration"
-description: "Seamless integration with laravel-queue-metrics for enhanced resource tracking"
+description: "How Queue Monitor integrates with laravel-queue-metrics for resource tracking"
 weight: 3
 ---
 
 # Queue-Metrics Integration
 
-Queue Monitor for Laravel is built on top of [laravel-queue-metrics](https://github.com/cboxdk/laravel-queue-metrics) and automatically integrates with its event system for enhanced resource tracking.
+Queue Monitor is built on top of [laravel-queue-metrics](https://github.com/cboxdk/laravel-queue-metrics) and subscribes to its event system to capture per-job resource data.
 
 ## How Integration Works
 
@@ -212,7 +212,9 @@ Queue Monitor only needs the instrumentation layer. If you don't use [queue-auto
 ],
 ```
 
-With persistence off: per-job CPU/memory events still fire and Queue Monitor captures them. No storage backend required.
+With persistence off, per-job CPU/memory events still fire and Queue Monitor captures them. No storage backend required.
+
+> **Note:** [cboxdk/laravel-queue-autoscale](https://github.com/cboxdk/laravel-queue-autoscale) requires persistence enabled. It reads worker heartbeats, throughput, and baselines to make scaling decisions.
 
 ### Storage Backend (when persistence is enabled)
 
@@ -231,7 +233,7 @@ With persistence off: per-job CPU/memory events still fire and Queue Monitor cap
 
 ### Metrics Collection
 
-Queue-metrics instruments jobs automatically — no configuration needed beyond persistence and storage settings.
+Queue-metrics instruments jobs automatically. No configuration needed beyond persistence and storage settings.
 
 ### Integration Settings
 

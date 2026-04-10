@@ -100,17 +100,19 @@ You can add custom middleware for authentication:
 
 ## Metrics Storage
 
-Queue Monitor depends on [laravel-queue-metrics](https://github.com/cboxdk/laravel-queue-metrics) for per-job CPU and memory instrumentation. Queue-metrics also provides aggregate persistence (worker heartbeats, throughput, baselines) — but Queue Monitor doesn't need it.
+Queue Monitor depends on [laravel-queue-metrics](https://github.com/cboxdk/laravel-queue-metrics) for per-job CPU and memory instrumentation. Queue-metrics also provides aggregate persistence (worker heartbeats, throughput, baselines), but Queue Monitor doesn't need it.
 
 ### Disable persistence (simplest setup)
 
-If you only use Queue Monitor (not [queue-autoscale](https://github.com/cboxdk/laravel-queue-autoscale)), disable metrics persistence to skip any storage backend:
+If you only use Queue Monitor, disable metrics persistence to skip any storage backend:
 
 ```env
 QUEUE_METRICS_PERSISTENCE=false
 ```
 
-Per-job CPU/memory still works — only aggregate persistence is skipped.
+Per-job CPU/memory still works. Only aggregate persistence is skipped.
+
+> **Note:** [cboxdk/laravel-queue-autoscale](https://github.com/cboxdk/laravel-queue-autoscale) requires persistence enabled. It reads worker heartbeats, throughput, and baselines from queue-metrics to make scaling decisions.
 
 ### With persistence enabled (default)
 
@@ -130,7 +132,7 @@ When persistence is on, configure a storage backend in `config/queue-metrics.php
 ],
 ```
 
-**Redis** is the recommended driver. **Database** is available for low-scale workloads (< 10 workers) without Redis — see the [installation guide](../getting-started/installation) for setup.
+**Redis** is the recommended driver. **Database** is available for low-scale workloads (< 10 workers) without Redis. See the [installation guide](../getting-started/installation) for setup.
 
 For full metrics configuration options, see the [laravel-queue-metrics documentation](https://github.com/cboxdk/laravel-queue-metrics).
 

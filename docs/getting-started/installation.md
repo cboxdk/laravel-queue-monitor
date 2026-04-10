@@ -33,15 +33,15 @@ php artisan migrate
 ```
 
 The package will create three tables:
-- `queue_monitor_jobs` — Stores individual job records
-- `queue_monitor_tags` — Normalized tag storage for analytics
-- `queue_monitor_scaling_events` — Autoscale integration (if used)
+- `queue_monitor_jobs`: Stores individual job records
+- `queue_monitor_tags`: Normalized tag storage for analytics
+- `queue_monitor_scaling_events`: Autoscale integration (if used)
 
 ### 4. Configure Metrics Storage
 
 Queue Monitor depends on [laravel-queue-metrics](https://github.com/cboxdk/laravel-queue-metrics) for per-job CPU and memory instrumentation. By default, queue-metrics also persists aggregate data (worker heartbeats, throughput, baselines) to a storage backend.
 
-**Queue Monitor only needs the per-job events — not the aggregate persistence.** If you only use Queue Monitor (without [queue-autoscale](https://github.com/cboxdk/laravel-queue-autoscale)), you can disable persistence entirely:
+**Queue Monitor only needs the per-job events, not the aggregate persistence.** If you only use Queue Monitor, you can disable persistence entirely:
 
 ```env
 QUEUE_METRICS_PERSISTENCE=false
@@ -49,9 +49,11 @@ QUEUE_METRICS_PERSISTENCE=false
 
 This gives you per-job CPU and memory tracking with zero additional infrastructure. No Redis, no extra database tables. Skip to step 5.
 
+> **Note:** [cboxdk/laravel-queue-autoscale](https://github.com/cboxdk/laravel-queue-autoscale) requires persistence enabled. It reads worker heartbeats, throughput, and baselines from queue-metrics to make scaling decisions. Leave persistence on if you use autoscale.
+
 #### With persistence enabled (default)
 
-If you want the full metrics stack (Prometheus export, baselines, worker heartbeats) or use [queue-autoscale](https://github.com/cboxdk/laravel-queue-autoscale), persistence stays enabled. Choose a storage backend:
+Keep persistence enabled if you want the full metrics stack (Prometheus export, baselines, worker heartbeats) or use queue-autoscale. Choose a storage backend:
 
 **Redis (recommended):**
 
@@ -75,7 +77,7 @@ php artisan vendor:publish --tag="queue-metrics-migrations"
 php artisan migrate
 ```
 
-> **Performance note:** The database driver is for low-scale workloads (< 10 workers). At higher scale, metrics writes compete with your queue jobs for database connections. We recommend `QUEUE_METRICS_MAX_SAMPLES=500`.
+> **Performance note:** The database driver is for low-scale workloads (< 10 workers). At higher scale, metrics writes compete with your queue jobs for database connections. Set `QUEUE_METRICS_MAX_SAMPLES=500` to keep table sizes manageable.
 
 For full configuration options, see the [laravel-queue-metrics documentation](https://github.com/cboxdk/laravel-queue-metrics).
 

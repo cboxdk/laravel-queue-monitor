@@ -1,6 +1,6 @@
 ---
 title: "Quick Start"
-description: "Get started with Queue Monitor for Laravel in 5 minutes with essential examples"
+description: "Get started with Queue Monitor for Laravel in 5 minutes"
 weight: 3
 ---
 
@@ -20,13 +20,13 @@ That's it! Jobs are now being monitored automatically.
 
 ### Metrics Storage
 
-Queue Monitor uses [laravel-queue-metrics](https://github.com/cboxdk/laravel-queue-metrics) for CPU/memory instrumentation. No extra infrastructure is required — disable metrics persistence if you don't have Redis:
+Queue Monitor uses [laravel-queue-metrics](https://github.com/cboxdk/laravel-queue-metrics) for CPU/memory instrumentation. No extra infrastructure is required. Disable metrics persistence if you don't have Redis:
 
 ```env
 QUEUE_METRICS_PERSISTENCE=false
 ```
 
-You still get per-job CPU and memory tracking. If you want the full metrics stack (Prometheus, baselines, worker heartbeats) or use [queue-autoscale](https://github.com/cboxdk/laravel-queue-autoscale), keep persistence enabled and configure a storage backend. See the [installation guide](installation) for details.
+You still get per-job CPU and memory tracking. Keep persistence enabled if you want the full metrics stack (Prometheus, baselines, worker heartbeats) or use [queue-autoscale](https://github.com/cboxdk/laravel-queue-autoscale), which requires persistence to read worker heartbeats and baselines. See the [installation guide](installation) for details.
 
 ## View Your First Job
 

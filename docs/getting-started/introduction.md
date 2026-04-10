@@ -6,34 +6,34 @@ weight: 1
 
 # Introduction
 
-**Queue Monitor for Laravel** is a production-ready package for monitoring individual queue jobs in Laravel applications. Unlike aggregate metrics packages, Queue Monitor tracks every single job from queue to completion, stores payloads for replay, and provides comprehensive analytics.
+Queue Monitor for Laravel tracks individual queue jobs with payload storage, replay, and analytics. Unlike aggregate metrics tools, it records every single job from queue to completion.
 
 ## What Makes It Different
 
 ### Individual Job Tracking
-Most queue monitoring solutions provide aggregate metrics (jobs per minute, average duration). Queue Monitor tracks **every individual job** with complete lifecycle visibility.
+Most queue monitoring tools provide aggregate metrics (jobs per minute, average duration). Queue Monitor tracks every individual job with full lifecycle visibility.
 
 ### Job Replay
-Failed jobs can be replayed from stored payloads - perfect for development debugging and production recovery scenarios.
+Failed jobs can be replayed from stored payloads. Useful for debugging and recovery.
 
 ### Worker & Server Tracking
-Know exactly which server and worker processed each job, with automatic Horizon vs queue:work detection.
+Know exactly which server and worker processed each job. Horizon vs queue:work is detected automatically.
 
 ### Resource Metrics
-Track CPU time, memory usage, and file descriptors for each job (via integration with laravel-queue-metrics).
+Track CPU time, memory usage, and file descriptors per job via [laravel-queue-metrics](https://github.com/cboxdk/laravel-queue-metrics).
 
 ## Key Features
 
-- **Individual Job Records** - Every job tracked with unique UUID
-- **Payload Storage** - Full job payload saved for replay
-- **Retry Chain Tracking** - Complete visibility into retry attempts
-- **Server Identification** - Track which server/worker processed each job
-- **Resource Metrics** - CPU, memory, duration for each job
-- **Tag Organization** - Categorize jobs with custom tags
-- **Comprehensive API** - 14 REST endpoints for dashboards
-- **Job Replay** - Re-dispatch jobs from stored payloads
-- **Failure Analytics** - Pattern detection and trend analysis
-- **Queue Health** - Real-time health scoring per queue
+- **Individual Job Records**: Every job tracked with unique UUID
+- **Payload Storage**: Full job payload saved for replay
+- **Retry Chain Tracking**: Full visibility into retry attempts
+- **Server Identification**: Track which server/worker processed each job
+- **Resource Metrics**: CPU, memory, duration per job
+- **Tag Organization**: Categorize jobs with custom tags
+- **REST API**: 14 endpoints for dashboards and integrations
+- **Job Replay**: Re-dispatch jobs from stored payloads
+- **Failure Analytics**: Pattern detection and trend analysis
+- **Queue Health**: Real-time health scoring per queue
 
 ## Quick Example
 
@@ -67,13 +67,10 @@ echo "Average Duration: {$stats['avg_duration_ms']}ms\n";
 
 ## Architecture
 
-Built on solid architectural patterns:
-
-- **Action Pattern** - All business logic in single-responsibility actions
-- **DTO Pattern** - Type-safe data transfer objects
-- **Repository Pattern** - Clean data access layer
-- **Event-Driven** - Loosely coupled via events
-- **SOLID Principles** - Maintainable and extensible
+- **Action Pattern**: All business logic in single-responsibility actions
+- **DTO Pattern**: Type-safe data transfer objects
+- **Repository Pattern**: Data access through contracts
+- **Event-Driven**: Subscribes to Laravel queue events and queue-metrics events
 
 ## Requirements
 
