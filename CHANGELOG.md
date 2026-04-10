@@ -2,6 +2,14 @@
 
 All notable changes to `laravel-queue-monitor` will be documented in this file.
 
+## v1.4.0 - 2026-04-10
+
+### What's Changed
+
+* feat: add resolve actions for stuck jobs on health page by @sylvesterdamgaard in https://github.com/cboxdk/laravel-queue-monitor/pull/12
+
+**Full Changelog**: https://github.com/cboxdk/laravel-queue-monitor/compare/v1.3.1...v1.4.0
+
 ## v1.3.1 - 2026-04-10
 
 ### Bug Fixes
@@ -148,6 +156,7 @@ First stable release of Queue Monitor for Laravel - a comprehensive job monitori
 
 ```bash
 composer require cboxdk/laravel-queue-monitor
+
 
 
 
