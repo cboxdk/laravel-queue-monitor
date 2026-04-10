@@ -26,10 +26,14 @@ class StuckJobController extends Controller
 
         $result = $this->resolveAction->execute($validated['uuids'], $validated['action']);
 
+        /** @var string $action */
+        $action = $validated['action'];
+
         return response()->json([
-            'message' => match ($validated['action']) {
+            'message' => match ($action) {
                 'delete' => "{$result['resolved']} stuck job(s) deleted",
                 'retry' => "{$result['resolved']} stuck job(s) resolved, {$result['replayed']} retried",
+                default => "{$result['resolved']} stuck job(s) resolved",
             },
             ...$result,
         ]);
@@ -49,10 +53,14 @@ class StuckJobController extends Controller
 
         $result = $this->resolveAction->execute($stuckJobs, $validated['action']);
 
+        /** @var string $action */
+        $action = $validated['action'];
+
         return response()->json([
-            'message' => match ($validated['action']) {
+            'message' => match ($action) {
                 'delete' => "{$result['resolved']} stuck job(s) deleted",
                 'retry' => "{$result['resolved']} stuck job(s) resolved, {$result['replayed']} retried",
+                default => "{$result['resolved']} stuck job(s) resolved",
             },
             ...$result,
         ]);

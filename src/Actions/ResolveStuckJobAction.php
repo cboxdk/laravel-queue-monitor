@@ -16,6 +16,7 @@ final readonly class ResolveStuckJobAction
     ) {}
 
     /**
+     * @param  list<string>  $uuids
      * @return array{resolved: int, replayed: int, errors: list<string>}
      */
     public function execute(array $uuids, string $action): array
