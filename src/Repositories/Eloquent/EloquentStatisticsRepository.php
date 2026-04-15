@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\StatisticsRepositoryContract;
+use Illuminate\Contracts\Cache\LockProvider;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -491,7 +492,7 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
 
         // Use atomic lock to prevent cache stampede — only one process computes at a time.
         // Others wait up to 30s for the lock holder to finish, then get the cached result.
-        if ($cache instanceof \Illuminate\Contracts\Cache\LockProvider) {
+        if ($cache instanceof LockProvider) {
             $lockKey = $fullKey.':lock';
 
             return $cache->lock($lockKey, 15)->block(30, function () use ($cache, $fullKey, $effectiveTtl, $callback) {
