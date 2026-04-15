@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\StatisticsRepositoryContract;
+use Illuminate\Contracts\Cache\LockProvider;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -491,19 +492,27 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
 
         // Use atomic lock to prevent cache stampede — only one process computes at a time.
         // Others wait up to 30s for the lock holder to finish, then get the cached result.
-        $lockKey = $fullKey.':lock';
+        if ($cache instanceof LockProvider) {
+            $lockKey = $fullKey.':lock';
 
-        return $cache->lock($lockKey, 15)->block(30, function () use ($cache, $fullKey, $effectiveTtl, $callback) {
-            // Double-check after acquiring lock (another process may have filled it)
-            $cached = $cache->get($fullKey);
-            if ($cached !== null) {
-                return $cached;
-            }
+            return $cache->lock($lockKey, 15)->block(30, function () use ($cache, $fullKey, $effectiveTtl, $callback) {
+                // Double-check after acquiring lock (another process may have filled it)
+                $cached = $cache->get($fullKey);
+                if ($cached !== null) {
+                    return $cached;
+                }
 
-            $value = $callback();
-            $cache->put($fullKey, $value, $effectiveTtl);
+                $value = $callback();
+                $cache->put($fullKey, $value, $effectiveTtl);
 
-            return $value;
-        });
+                return $value;
+            });
+        }
+
+        // Fallback for cache stores that don't support locking (e.g. array, file on some drivers)
+        $value = $callback();
+        $cache->put($fullKey, $value, $effectiveTtl);
+
+        return $value;
     }
 }
