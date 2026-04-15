@@ -12,6 +12,7 @@ class PruneJobsCommand extends Command
 {
     public $signature = 'queue-monitor:prune
                         {--days= : Number of days to retain}
+                        {--max-rows= : Maximum rows to keep (deletes oldest first)}
                         {--statuses=* : Job statuses to prune}';
 
     public $description = 'Prune old queue monitor job records';
@@ -19,6 +20,7 @@ class PruneJobsCommand extends Command
     public function handle(PruneJobsAction $action): int
     {
         $days = $this->option('days') !== null ? (int) $this->option('days') : null;
+        $maxRows = $this->option('max-rows') !== null ? (int) $this->option('max-rows') : null;
         /** @var array<string> $rawStatuses */
         $rawStatuses = $this->option('statuses');
 
@@ -34,7 +36,7 @@ class PruneJobsCommand extends Command
 
         $this->info('Pruning queue monitor jobs...');
 
-        $deleted = $action->execute($days, $statuses);
+        $deleted = $action->execute($days, $statuses, $maxRows);
 
         $this->info("Pruned {$deleted} job record(s).");
 

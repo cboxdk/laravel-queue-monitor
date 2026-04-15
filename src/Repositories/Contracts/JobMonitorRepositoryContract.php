@@ -59,11 +59,19 @@ interface JobMonitorRepositoryContract
     public function getRetryChain(string $uuid): Collection;
 
     /**
-     * Prune old job records
+     * Prune old job records by age
      *
      * @param  array<JobStatus>  $statuses
      */
     public function prune(int $days, array $statuses = []): int;
+
+    /**
+     * Prune oldest rows when table exceeds max row count.
+     * Deletes oldest prunable rows until the table is at or below the limit.
+     *
+     * @param  array<JobStatus>  $statuses
+     */
+    public function pruneByMaxRows(int $maxRows, array $statuses = []): int;
 
     /**
      * Delete a job monitor record

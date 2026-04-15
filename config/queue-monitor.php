@@ -74,12 +74,19 @@ return [
     | Data Retention
     |--------------------------------------------------------------------------
     |
-    | Configure automatic cleanup of old job records.
+    | Configure automatic cleanup of old job records. Both time-based and
+    | row-count limits are enforced — whichever triggers first wins.
+    | This prevents unbounded table growth in high-throughput environments.
     |
     */
     'retention' => [
         // Number of days to retain job records (applies to statuses below)
-        'days' => 30,
+        'days' => 7,
+
+        // Maximum number of rows to keep in the jobs table.
+        // When exceeded, oldest prunable rows are deleted first.
+        // Set to null to disable row-count pruning (time-based only).
+        'max_rows' => env('QUEUE_MONITOR_MAX_ROWS', 500_000),
 
         // Which statuses to prune (empty array = prune all statuses)
         // Failed and timeout jobs are included to prevent unbounded growth
@@ -114,9 +121,21 @@ return [
     'cache' => [
         'enabled' => env('QUEUE_MONITOR_CACHE_ENABLED', true),
         'store' => env('QUEUE_MONITOR_CACHE_STORE'),
-        'ttl' => env('QUEUE_MONITOR_CACHE_TTL', 60), // seconds
+        'ttl' => env('QUEUE_MONITOR_CACHE_TTL', 300), // seconds
         'prefix' => 'queue_monitor_',
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Metrics Time Window
+    |--------------------------------------------------------------------------
+    |
+    | Limit dashboard statistics queries to recent data instead of scanning
+    | the entire table. Prevents slow aggregation on high-throughput systems.
+    | Value in hours. Set to null for all-time stats (not recommended).
+    |
+    */
+    'metrics_window_hours' => env('QUEUE_MONITOR_METRICS_WINDOW_HOURS', 24),
 
     /*
     |--------------------------------------------------------------------------

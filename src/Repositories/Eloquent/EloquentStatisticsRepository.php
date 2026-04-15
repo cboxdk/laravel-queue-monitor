@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\StatisticsRepositoryContract;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
@@ -26,7 +27,7 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
         /** @var string $prefix */
         $prefix = config('queue-monitor.database.table_prefix', 'queue_monitor_');
 
-        $stats = DB::table($prefix.'jobs')
+        $query = DB::table($prefix.'jobs')
             ->select([
                 DB::raw('COUNT(*) as total'),
                 DB::raw('SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as completed'),
@@ -45,8 +46,11 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
                 JobStatus::TIMEOUT->value,
                 JobStatus::PROCESSING->value,
                 JobStatus::QUEUED->value,
-            ])
-            ->first();
+            ]);
+
+        $this->applyMetricsWindow($query);
+
+        $stats = $query->first();
 
         /** @var object{total: int, completed: int, failed: int, timeout: int, processing: int, queued: int, avg_duration_ms: float|null, max_duration_ms: int|null, avg_memory_mb: float|null, max_memory_mb: float|null}|null $stats */
         if ($stats === null) {
@@ -119,6 +123,8 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
             ])
             ->groupBy('server_name');
 
+        $this->applyMetricsWindow($query);
+
         if ($serverName !== null) {
             $query->where('server_name', $serverName);
         }
@@ -176,6 +182,8 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
                 JobStatus::PROCESSING->value,
             ])
             ->groupBy('queue', 'connection');
+
+        $this->applyMetricsWindow($query);
 
         if ($queue !== null) {
             $query->where('queue', $queue);
@@ -236,6 +244,8 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
             ->groupBy('job_class')
             ->orderByDesc(DB::raw('COUNT(*)'));
 
+        $this->applyMetricsWindow($query);
+
         if ($jobClass !== null) {
             $query->where('job_class', $jobClass);
         }
@@ -272,15 +282,19 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
         /** @var string $prefix */
         $prefix = config('queue-monitor.database.table_prefix', 'queue_monitor_');
 
-        /** @var array<int, array<string, mixed>> $exceptionStats */
-        $exceptionStats = DB::table($prefix.'jobs')
+        $query = DB::table($prefix.'jobs')
             ->select([
                 'exception_class',
                 DB::raw('COUNT(*) as count'),
                 DB::raw('COUNT(DISTINCT job_class) as affected_job_classes'),
             ])
             ->whereNotNull('exception_class')
-            ->groupBy('exception_class')
+            ->groupBy('exception_class');
+
+        $this->applyMetricsWindow($query);
+
+        /** @var array<int, array<string, mixed>> $exceptionStats */
+        $exceptionStats = $query
             ->orderByDesc('count')
             ->limit(10)
             ->get()
@@ -423,7 +437,24 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
     }
 
     /**
-     * Cache a value with configurable TTL
+     * Apply the configured metrics time window to limit aggregation queries
+     * to recent data, preventing full-table scans on high-throughput systems.
+     */
+    private function applyMetricsWindow(Builder $query): void
+    {
+        /** @var int|null $hours */
+        $hours = config('queue-monitor.metrics_window_hours');
+
+        if ($hours !== null && $hours > 0) {
+            $query->where('created_at', '>=', now()->subHours($hours));
+        }
+    }
+
+    /**
+     * Cache a value with configurable TTL and atomic lock to prevent cache stampede.
+     *
+     * When multiple concurrent requests try to compute the same expensive statistic,
+     * only one process does the actual computation. Others wait for the result.
      *
      * @template T
      *
@@ -447,12 +478,32 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
         $cachePrefix = config('queue-monitor.cache.prefix', 'queue_monitor:');
 
         /** @var int $cacheTtl */
-        $cacheTtl = config('queue-monitor.cache.ttl', 60);
+        $cacheTtl = config('queue-monitor.cache.ttl', 300);
 
-        return $cache->remember(
-            $cachePrefix.$key,
-            $ttl ?? $cacheTtl,
-            $callback
-        );
+        $fullKey = $cachePrefix.$key;
+        $effectiveTtl = $ttl ?? $cacheTtl;
+
+        // Return cached value if available
+        $cached = $cache->get($fullKey);
+        if ($cached !== null) {
+            return $cached;
+        }
+
+        // Use atomic lock to prevent cache stampede — only one process computes at a time.
+        // Others wait up to 30s for the lock holder to finish, then get the cached result.
+        $lockKey = $fullKey.':lock';
+
+        return $cache->lock($lockKey, 15)->block(30, function () use ($cache, $fullKey, $effectiveTtl, $callback) {
+            // Double-check after acquiring lock (another process may have filled it)
+            $cached = $cache->get($fullKey);
+            if ($cached !== null) {
+                return $cached;
+            }
+
+            $value = $callback();
+            $cache->put($fullKey, $value, $effectiveTtl);
+
+            return $value;
+        });
     }
 }

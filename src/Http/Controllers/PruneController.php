@@ -23,14 +23,17 @@ class PruneController extends Controller
     {
         $validated = $request->validate([
             'days' => 'sometimes|integer|min:1',
+            'max_rows' => 'sometimes|integer|min:1',
             'statuses' => 'sometimes|array',
             'statuses.*' => 'string',
         ]);
 
         $daysValue = $validated['days'] ?? null;
+        $maxRowsValue = $validated['max_rows'] ?? null;
         $statusesValue = $validated['statuses'] ?? null;
 
-        $days = is_int($daysValue) ? $daysValue : null;
+        $days = $daysValue !== null ? (int) $daysValue : null;
+        $maxRows = $maxRowsValue !== null ? (int) $maxRowsValue : null;
         /** @var array<JobStatus>|null $statuses */
         $statuses = null;
 
@@ -42,7 +45,7 @@ class PruneController extends Controller
             );
         }
 
-        $deleted = $this->pruneAction->execute($days, $statuses);
+        $deleted = $this->pruneAction->execute($days, $statuses, $maxRows);
 
         return response()->json([
             'message' => 'Jobs pruned successfully',

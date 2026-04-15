@@ -14,22 +14,36 @@ final readonly class PruneJobsAction
     ) {}
 
     /**
-     * Prune old job records
+     * Prune old job records using both time-based and row-count limits.
+     * Both strategies run when configured — whichever triggers first wins.
      *
      * @param  array<JobStatus>|null  $statuses
      */
-    public function execute(?int $days = null, ?array $statuses = null): int
+    public function execute(?int $days = null, ?array $statuses = null, ?int $maxRows = null): int
     {
         if (! config('queue-monitor.enabled', true)) {
             return 0;
         }
 
-        /** @var int $configDays */
-        $configDays = config('queue-monitor.retention.days', 30);
-        $retentionDays = $days ?? $configDays;
         $pruneStatuses = $statuses ?? $this->getConfiguredPruneStatuses();
+        $totalDeleted = 0;
 
-        return $this->repository->prune($retentionDays, $pruneStatuses);
+        // Time-based pruning
+        /** @var int $configDays */
+        $configDays = config('queue-monitor.retention.days', 7);
+        $retentionDays = $days ?? $configDays;
+        $totalDeleted += $this->repository->prune($retentionDays, $pruneStatuses);
+
+        // Row-count pruning (safety net for high-throughput systems)
+        /** @var int|null $configMaxRows */
+        $configMaxRows = config('queue-monitor.retention.max_rows');
+        $effectiveMaxRows = $maxRows ?? $configMaxRows;
+
+        if ($effectiveMaxRows !== null && $effectiveMaxRows > 0) {
+            $totalDeleted += $this->repository->pruneByMaxRows($effectiveMaxRows, $pruneStatuses);
+        }
+
+        return $totalDeleted;
     }
 
     /**

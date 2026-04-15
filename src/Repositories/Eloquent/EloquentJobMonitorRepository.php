@@ -192,6 +192,56 @@ final class EloquentJobMonitorRepository implements JobMonitorRepositoryContract
         return $totalDeleted;
     }
 
+    /**
+     * @param  array<JobStatus>  $statuses
+     */
+    public function pruneByMaxRows(int $maxRows, array $statuses = []): int
+    {
+        $currentCount = JobMonitor::count();
+
+        if ($currentCount <= $maxRows) {
+            return 0;
+        }
+
+        $excess = $currentCount - $maxRows;
+
+        $query = JobMonitor::orderBy('created_at');
+
+        if (! empty($statuses)) {
+            $statusValues = array_map(
+                fn (JobStatus $status) => $status->value,
+                $statuses
+            );
+            $query->whereIn('status', $statusValues);
+        }
+
+        $totalDeleted = 0;
+        /** @var int $chunkSize */
+        $chunkSize = config('queue-monitor.batch.chunk_size', 1000);
+
+        do {
+            $limit = min($chunkSize, $excess - $totalDeleted);
+
+            $ids = $query->clone()
+                ->limit($limit)
+                ->pluck('id');
+
+            if ($ids->isEmpty()) {
+                break;
+            }
+
+            /** @var int $deleted */
+            $deleted = JobMonitor::whereIn('id', $ids)->delete();
+            $totalDeleted += $deleted;
+
+            if ($deleted >= $chunkSize) {
+                usleep(10000); // 10ms
+            }
+        } while ($totalDeleted < $excess && $ids->count() >= $limit);
+
+        return $totalDeleted;
+    }
+
     public function delete(string $uuid): bool
     {
         $job = $this->findByUuid($uuid);

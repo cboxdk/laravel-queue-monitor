@@ -8,7 +8,6 @@ use Cbox\LaravelQueueMonitor\Models\JobMonitor;
 use Illuminate\Support\Str;
 
 test('prune command removes old jobs', function () {
-    // Create old job and manually update created_at using query builder (bypasses Eloquent timestamp)
     $old = JobMonitor::create([
         'uuid' => Str::uuid()->toString(),
         'job_class' => 'App\\Jobs\\TestJob',
@@ -23,7 +22,6 @@ test('prune command removes old jobs', function () {
         'queued_at' => now(),
     ]);
 
-    // Update created_at directly using query builder to bypass Eloquent timestamp handling
     JobMonitor::where('id', $old->id)->update(['created_at' => now()->subDays(40)]);
     $old->refresh();
 
@@ -47,4 +45,18 @@ test('prune command removes old jobs', function () {
 
     expect(JobMonitor::find($old->id))->toBeNull();
     expect(JobMonitor::find($recent->id))->not->toBeNull();
+});
+
+test('prune command accepts max-rows option', function () {
+    config()->set('queue-monitor.retention.max_rows', null);
+
+    JobMonitor::factory()->count(10)->create([
+        'status' => JobStatus::COMPLETED,
+    ]);
+
+    $this->artisan('queue-monitor:prune', ['--days' => 0, '--max-rows' => 3])
+        ->expectsOutputToContain('Pruned')
+        ->assertSuccessful();
+
+    expect(JobMonitor::count())->toBe(3);
 });
