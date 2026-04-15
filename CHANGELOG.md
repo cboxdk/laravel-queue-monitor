@@ -2,6 +2,14 @@
 
 All notable changes to `laravel-queue-monitor` will be documented in this file.
 
+## v1.5.0 - 2026-04-15
+
+### What's Changed
+
+* feat: color-coded CPU/memory utilization metrics by @sylvesterdamgaard in https://github.com/cboxdk/laravel-queue-monitor/pull/13
+
+**Full Changelog**: https://github.com/cboxdk/laravel-queue-monitor/compare/v1.4.0...v1.5.0
+
 ## v1.4.0 - 2026-04-10
 
 ### What's Changed
@@ -156,6 +164,7 @@ First stable release of Queue Monitor for Laravel - a comprehensive job monitori
 
 ```bash
 composer require cboxdk/laravel-queue-monitor
+
 
 
 
