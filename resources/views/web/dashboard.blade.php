@@ -255,8 +255,8 @@
                                                     </td>
                                                     <td class="px-4 py-2.5 whitespace-nowrap text-sm text-brand hover:underline drill-arrow" x-text="job.queue" @click.stop="openDrillDown('queue', job.queue)"></td>
                                                     <td class="px-4 py-2.5 whitespace-nowrap text-sm text-gray-500 text-right font-mono tabular-nums" x-text="formatDuration(job.duration_ms)"></td>
-                                                    <td class="px-4 py-2.5 whitespace-nowrap text-sm text-gray-500 text-right font-mono tabular-nums" x-text="formatCpu(job.cpu_time_ms, job.duration_ms)"></td>
-                                                    <td class="px-4 py-2.5 whitespace-nowrap text-sm text-gray-500 text-right font-mono tabular-nums" x-text="formatMemoryShort(job.memory_peak_mb, job.worker_memory_limit_mb)"></td>
+                                                    <td class="px-4 py-2.5 whitespace-nowrap text-sm text-right font-mono tabular-nums" :class="cpuColor(job.cpu_time_ms, job.duration_ms)" x-text="formatCpu(job.cpu_time_ms, job.duration_ms)"></td>
+                                                    <td class="px-4 py-2.5 whitespace-nowrap text-sm text-right font-mono tabular-nums" :class="memoryColor(job.memory_peak_mb, job.worker_memory_limit_mb)" x-text="formatMemoryShort(job.memory_peak_mb, job.worker_memory_limit_mb)"></td>
                                                     <td class="px-4 py-2.5 whitespace-nowrap text-[11px] text-gray-400 text-right" x-text="job.queued_at"></td>
                                                     <td class="px-4 py-2.5 whitespace-nowrap text-right">
                                                         <button x-show="job.is_failed" @click.stop="replayJob(job.uuid)" class="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-medium text-amber-700 bg-amber-50 rounded-md hover:bg-amber-100 border border-amber-200 transition">
@@ -503,8 +503,8 @@
                                             </td>
                                             <td class="px-4 py-2.5 whitespace-nowrap text-sm text-brand hover:underline drill-arrow" x-text="job.queue" @click.stop="openDrillDown('queue', job.queue)"></td>
                                             <td class="px-4 py-2.5 whitespace-nowrap text-sm text-gray-500 text-right font-mono tabular-nums" x-text="formatDuration(job.duration_ms)"></td>
-                                            <td class="px-4 py-2.5 whitespace-nowrap text-sm text-gray-500 text-right font-mono tabular-nums" x-text="formatCpu(job.cpu_time_ms, job.duration_ms)"></td>
-                                            <td class="px-4 py-2.5 whitespace-nowrap text-sm text-gray-500 text-right font-mono tabular-nums" x-text="formatMemoryShort(job.memory_peak_mb, job.worker_memory_limit_mb)"></td>
+                                            <td class="px-4 py-2.5 whitespace-nowrap text-sm text-right font-mono tabular-nums" :class="cpuColor(job.cpu_time_ms, job.duration_ms)" x-text="formatCpu(job.cpu_time_ms, job.duration_ms)"></td>
+                                            <td class="px-4 py-2.5 whitespace-nowrap text-sm text-right font-mono tabular-nums" :class="memoryColor(job.memory_peak_mb, job.worker_memory_limit_mb)" x-text="formatMemoryShort(job.memory_peak_mb, job.worker_memory_limit_mb)"></td>
                                             <td class="px-4 py-2.5 whitespace-nowrap text-[11px] text-brand hover:underline drill-arrow font-mono truncate max-w-[120px]" x-text="job.server" @click.stop="openDrillDown('server', job.server)"></td>
                                             <td class="px-4 py-2.5 whitespace-nowrap text-center">
                                                 <span x-show="job.attempt <= 1" class="text-sm text-gray-400">1</span>
@@ -1332,6 +1332,12 @@
                 throughputChart: null,
                 distributionChart: null,
 
+                // Metric color thresholds (configurable via queue-monitor.ui)
+                cpuWarning: {{ config('queue-monitor.ui.cpu_thresholds.warning', 50) }},
+                cpuCritical: {{ config('queue-monitor.ui.cpu_thresholds.critical', 80) }},
+                memWarning: {{ config('queue-monitor.ui.memory_thresholds.warning', 60) }},
+                memCritical: {{ config('queue-monitor.ui.memory_thresholds.critical', 80) }},
+
                 // URLs
                 dashboardUrl: '{{ route("queue-monitor.dashboard") }}',
                 jobViewUrlBase: '{{ route("queue-monitor.job.view", ["uuid" => "__PH__"]) }}'.replace('__PH__', ''),
@@ -1823,6 +1829,14 @@
                     return pct < 1 ? '<1%' : Math.round(pct) + '%';
                 },
 
+                cpuColor(cpuTimeMs, durationMs) {
+                    if (cpuTimeMs == null || durationMs == null || durationMs === 0) return 'text-gray-500';
+                    const pct = (cpuTimeMs / durationMs) * 100;
+                    if (pct >= this.cpuCritical) return 'text-red-600';
+                    if (pct >= this.cpuWarning) return 'text-amber-600';
+                    return 'text-emerald-600';
+                },
+
                 formatMemory(peakMb, limitMb) {
                     if (peakMb == null) return '-';
                     const peak = parseFloat(peakMb).toFixed(0);
@@ -1831,6 +1845,14 @@
                         return peak + ' / ' + parseFloat(limitMb).toFixed(0) + ' MB (' + pct + '%)';
                     }
                     return peak + ' MB';
+                },
+
+                memoryColor(peakMb, limitMb) {
+                    if (peakMb == null || limitMb == null || limitMb <= 0) return 'text-gray-500';
+                    const pct = (peakMb / limitMb) * 100;
+                    if (pct >= this.memCritical) return 'text-red-600';
+                    if (pct >= this.memWarning) return 'text-amber-600';
+                    return 'text-emerald-600';
                 },
 
                 formatMemoryShort(peakMb, limitMb) {

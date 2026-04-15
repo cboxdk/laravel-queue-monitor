@@ -182,6 +182,17 @@ return [
         'middleware' => ['web'],
         'per_page' => 35,
         'refresh_interval' => 3000, // ms
+
+        // Color thresholds for CPU and memory utilization in the job list.
+        // Values are percentages. Below 'warning' = green, warning–critical = amber, above 'critical' = red.
+        'cpu_thresholds' => [
+            'warning' => 50,
+            'critical' => 80,
+        ],
+        'memory_thresholds' => [
+            'warning' => 60,
+            'critical' => 80,
+        ],
     ],
 
     /*
