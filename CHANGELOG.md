@@ -2,6 +2,26 @@
 
 All notable changes to `laravel-queue-monitor` will be documented in this file.
 
+## v1.5.1 - 2026-04-22
+
+### Fixes
+
+- **Dashboard cache invalidation**: Refresh cached dashboard statistics and queue filters when jobs are created, updated, deleted, pruned, or enriched with queue-metrics data.
+- **Metrics freshness**: Scope dashboard cache keys with a versioned cache service so overview widgets and available queue filters stop serving stale values after queue activity.
+- **Exception tracking updates**: Bust dashboard caches when `JobExceptionOccurred` stores exception details, so failed attempts are reflected immediately in the UI.
+- **CI compatibility**: Fix listener tests to resolve `JobExceptionOccurredListener` through the container after constructor dependency injection was added.
+
+### Documentation
+
+- Add a dedicated authentication and access control guide for protecting the dashboard and API.
+- Clarify that `LaravelQueueMonitor::auth()` can be registered from `AuthServiceProvider` or any other application service provider.
+
+### Dependencies
+
+- Bump `dependabot/fetch-metadata` from `3.0.0` to `3.1.0`
+
+**Full Changelog**: https://github.com/cboxdk/laravel-queue-monitor/compare/v1.5.0...v1.5.1
+
 ## v1.5.0 - 2026-04-15
 
 ### What's Changed
