@@ -18,6 +18,24 @@ php artisan migrate
 
 That's it! Jobs are now being monitored automatically.
 
+## Access Control
+
+Before you use the dashboard or API outside local development, read the [Authentication & Access Control](../guides/authentication) guide.
+
+Queue Monitor allows access in the `local` environment by default. In non-local environments, access is blocked unless you explicitly authorize it with `LaravelQueueMonitor::auth(...)`.
+
+For staging and production, you should also add framework auth middleware:
+
+```php
+'ui' => [
+    'middleware' => ['web', 'auth'],
+],
+
+'api' => [
+    'middleware' => ['api', 'auth:sanctum'],
+],
+```
+
 ### Metrics Storage
 
 Queue Monitor uses [laravel-queue-metrics](https://github.com/cboxdk/laravel-queue-metrics) for CPU/memory instrumentation. No extra infrastructure is required. Disable metrics persistence if you don't have Redis:
@@ -95,6 +113,8 @@ curl -X POST http://localhost/api/queue-monitor/jobs/{uuid}/replay
 curl http://localhost/api/queue-monitor/statistics
 ```
 
+Do not expose these endpoints in production without authentication and an explicit `LaravelQueueMonitor::auth(...)` rule. See [Authentication & Access Control](../guides/authentication).
+
 ## Filter Jobs
 
 ```php
@@ -168,6 +188,7 @@ php artisan queue-monitor:prune --days=30 --statuses=completed
 
 - [Facade Usage](../guides/facade-usage) - Learn all facade methods
 - [Job Replay](../guides/job-replay) - Master the replay system
+- [Authentication & Access Control](../guides/authentication) - Secure the dashboard and REST API
 - [API Reference](../reference/api-reference) - Explore all endpoints
 - [Advanced Usage](../advanced/advanced-usage) - Custom monitoring and dashboards
 - [Configuration](../guides/configuration) - Customize behavior

@@ -82,6 +82,7 @@ echo "Success Rate: {$stats['success_rate']}%\n";
 - [Introduction](getting-started/introduction) - Package overview and key features
 - [Installation](getting-started/installation) - Setup in 5 minutes
 - [Quick Start](getting-started/quickstart) - Common usage patterns
+- [Authentication & Access Control](guides/authentication) - Secure the dashboard and REST API
 - [Configuration](guides/configuration) - Customize behavior
 
 ### Core Features

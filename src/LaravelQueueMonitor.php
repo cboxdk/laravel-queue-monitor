@@ -40,7 +40,8 @@ final class LaravelQueueMonitor
     /**
      * Register the callback used to authorize access to the dashboard and API.
      *
-     * Usage in AuthServiceProvider::boot():
+     * Usage in the boot() method of AuthServiceProvider
+     * or another application service provider:
      *   LaravelQueueMonitor::auth(function ($request) {
      *       return $request->user()?->isAdmin();
      *   });

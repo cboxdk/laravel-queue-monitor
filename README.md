@@ -227,7 +227,8 @@ return [
 ### Dashboard Authentication
 
 ```php
-// In AuthServiceProvider or a service provider
+// In the boot() method of AuthServiceProvider
+// or another application service provider
 use Cbox\LaravelQueueMonitor\LaravelQueueMonitor;
 
 LaravelQueueMonitor::auth(function ($request) {
