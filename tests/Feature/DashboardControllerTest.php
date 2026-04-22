@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Cbox\LaravelQueueMonitor\Models\JobMonitor;
 use Cbox\LaravelQueueMonitor\Models\ScalingEvent;
+use Cbox\LaravelQueueMonitor\Repositories\Contracts\JobMonitorRepositoryContract;
 
 use function Pest\Laravel\getJson;
 
@@ -48,6 +49,25 @@ test('jobs endpoint supports search', function () {
 
     $response->assertOk();
     expect($response->json('data'))->toHaveCount(1);
+});
+
+test('jobs endpoint refreshes available queues after repository update', function () {
+    config()->set('queue-monitor.cache.enabled', true);
+
+    $job = JobMonitor::factory()->create(['queue' => 'alpha']);
+
+    $first = getJson(route('queue-monitor.dashboard.jobs'));
+    $first->assertOk();
+    expect($first->json('meta.available_queues'))->toContain('alpha');
+
+    app(JobMonitorRepositoryContract::class)->update($job->uuid, [
+        'queue' => 'beta',
+    ]);
+
+    $second = getJson(route('queue-monitor.dashboard.jobs'));
+    $second->assertOk();
+    expect($second->json('meta.available_queues'))->toContain('beta');
+    expect($second->json('meta.available_queues'))->not->toContain('alpha');
 });
 
 test('job detail endpoint returns full job with payload and retry chain', function () {

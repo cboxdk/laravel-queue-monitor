@@ -2,9 +2,12 @@
 
 declare(strict_types=1);
 
+use Cbox\LaravelQueueMonitor\DataTransferObjects\JobMonitorData;
 use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\Models\JobMonitor;
+use Cbox\LaravelQueueMonitor\Repositories\Contracts\JobMonitorRepositoryContract;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\StatisticsRepositoryContract;
+use Illuminate\Support\Str;
 
 beforeEach(function () {
     // Disable cache for deterministic test results
@@ -142,4 +145,73 @@ test('global statistics returns empty result when no data exists', function () {
     expect($stats['completed'])->toBe(0);
     expect($stats['success_rate'])->toBe(0);
     expect($stats['avg_duration_ms'])->toBeNull();
+});
+
+test('global statistics cache is invalidated after repository create', function () {
+    config()->set('queue-monitor.cache.enabled', true);
+
+    $statsRepository = app(StatisticsRepositoryContract::class);
+    $jobRepository = app(JobMonitorRepositoryContract::class);
+
+    expect($statsRepository->getGlobalStatistics()['total'])->toBe(0);
+
+    $now = now();
+
+    $jobRepository->create(new JobMonitorData(
+        id: null,
+        uuid: (string) Str::uuid(),
+        jobId: 'job-1',
+        jobClass: 'App\\Jobs\\FreshJob',
+        displayName: 'FreshJob',
+        connection: 'sync',
+        queue: 'default',
+        payload: null,
+        status: JobStatus::QUEUED,
+        attempt: 1,
+        maxAttempts: 1,
+        retriedFromId: null,
+        serverName: 'test-server',
+        workerId: 'worker-1',
+        workerType: 'queue_work',
+        cpuTimeMs: null,
+        memoryPeakMb: null,
+        fileDescriptors: null,
+        durationMs: null,
+        exception: null,
+        tags: null,
+        queuedAt: $now,
+        availableAt: null,
+        startedAt: null,
+        completedAt: null,
+        createdAt: $now,
+        updatedAt: $now,
+    ));
+
+    $stats = $statsRepository->getGlobalStatistics();
+
+    expect($stats['total'])->toBe(1);
+    expect($stats['queue_backlog'])->toBe(1);
+});
+
+test('global statistics cache is invalidated after repository update', function () {
+    config()->set('queue-monitor.cache.enabled', true);
+
+    $job = JobMonitor::factory()->create([
+        'status' => JobStatus::COMPLETED,
+    ]);
+
+    $statsRepository = app(StatisticsRepositoryContract::class);
+    $jobRepository = app(JobMonitorRepositoryContract::class);
+
+    $initial = $statsRepository->getGlobalStatistics();
+    expect($initial['failed'])->toBe(0);
+
+    $jobRepository->update($job->uuid, [
+        'status' => JobStatus::FAILED,
+    ]);
+
+    $updated = $statsRepository->getGlobalStatistics();
+
+    expect($updated['failed'])->toBe(1);
+    expect($updated['completed'])->toBe(0);
 });

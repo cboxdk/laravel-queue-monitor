@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\StatisticsRepositoryContract;
+use Cbox\LaravelQueueMonitor\Services\DashboardCacheService;
 use Illuminate\Contracts\Cache\LockProvider;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\Cache;
@@ -15,6 +16,10 @@ use Illuminate\Support\Facades\DB;
 
 final readonly class EloquentStatisticsRepository implements StatisticsRepositoryContract
 {
+    public function __construct(
+        private DashboardCacheService $dashboardCache,
+    ) {}
+
     public function getGlobalStatistics(): array
     {
         return $this->remember('global_statistics', fn () => $this->computeGlobalStatistics());
@@ -468,6 +473,9 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
             return $callback();
         }
 
+        /** @var int $cacheTtl */
+        $cacheTtl = config('queue-monitor.cache.ttl', 300);
+
         /** @var string|null $cacheStore */
         $cacheStore = config('queue-monitor.cache.store');
 
@@ -475,13 +483,7 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
             ? Cache::store($cacheStore)
             : Cache::store();
 
-        /** @var string $cachePrefix */
-        $cachePrefix = config('queue-monitor.cache.prefix', 'queue_monitor:');
-
-        /** @var int $cacheTtl */
-        $cacheTtl = config('queue-monitor.cache.ttl', 300);
-
-        $fullKey = $cachePrefix.$key;
+        $fullKey = $this->dashboardCache->scopedKey($key);
         $effectiveTtl = $ttl ?? $cacheTtl;
 
         // Return cached value if available

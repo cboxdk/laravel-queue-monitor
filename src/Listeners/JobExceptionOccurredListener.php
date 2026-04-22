@@ -6,6 +6,7 @@ namespace Cbox\LaravelQueueMonitor\Listeners;
 
 use Cbox\LaravelQueueMonitor\DataTransferObjects\ExceptionData;
 use Cbox\LaravelQueueMonitor\Models\JobMonitor;
+use Cbox\LaravelQueueMonitor\Services\DashboardCacheService;
 use Illuminate\Queue\Events\JobExceptionOccurred;
 
 /**
@@ -17,6 +18,10 @@ use Illuminate\Queue\Events\JobExceptionOccurred;
  */
 final class JobExceptionOccurredListener
 {
+    public function __construct(
+        private readonly DashboardCacheService $dashboardCache,
+    ) {}
+
     public function handle(JobExceptionOccurred $event): void
     {
         if (! config('queue-monitor.enabled', true)) {
@@ -49,6 +54,7 @@ final class JobExceptionOccurredListener
                 'exception_message' => $exceptionData->message,
                 'exception_trace' => $exceptionData->trace,
             ]);
+            $this->dashboardCache->bust();
         } catch (\Throwable $e) {
             report($e);
         }

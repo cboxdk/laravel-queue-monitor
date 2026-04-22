@@ -1466,7 +1466,11 @@
 
                 async fetchWithRetry(url, options = {}, retries = 0) {
                     try {
-                        const response = await fetch(url, options);
+                        const response = await fetch(url, {
+                            cache: 'no-store',
+                            headers: { 'Accept': 'application/json', ...(options.headers || {}) },
+                            ...options,
+                        });
                         if (!response.ok) throw new Error(`HTTP ${response.status}`);
                         this.error = null;
                         this.retryCount = 0;

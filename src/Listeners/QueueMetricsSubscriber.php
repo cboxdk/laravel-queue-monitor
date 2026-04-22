@@ -7,6 +7,7 @@ namespace Cbox\LaravelQueueMonitor\Listeners;
 use Cbox\LaravelQueueMetrics\Events\JobMetricsCompleted;
 use Cbox\LaravelQueueMetrics\Events\JobMetricsFailed;
 use Cbox\LaravelQueueMonitor\Models\JobMonitor;
+use Cbox\LaravelQueueMonitor\Services\DashboardCacheService;
 use Illuminate\Events\Dispatcher;
 
 /**
@@ -17,6 +18,10 @@ use Illuminate\Events\Dispatcher;
  */
 final class QueueMetricsSubscriber
 {
+    public function __construct(
+        private readonly DashboardCacheService $dashboardCache,
+    ) {}
+
     public function handleJobMetricsCompleted(JobMetricsCompleted $event): void
     {
         $this->updateJobMetrics($event->jobId, $event->cpuTimeMs, $event->memoryMb, $event->workerMemoryLimitMb);
@@ -69,6 +74,7 @@ final class QueueMetricsSubscriber
                 $data['worker_memory_limit_mb'] = round($workerMemoryLimitMb, 2);
             }
             $monitor->update($data);
+            $this->dashboardCache->bust();
         } catch (\Throwable $e) {
             report($e);
         }

@@ -11,6 +11,7 @@ use Cbox\LaravelQueueMonitor\Repositories\Contracts\JobMonitorRepositoryContract
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\StatisticsRepositoryContract;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\TagRepositoryContract;
 use Cbox\LaravelQueueMonitor\Services\AlertingService;
+use Cbox\LaravelQueueMonitor\Services\DashboardCacheService;
 use Cbox\LaravelQueueMonitor\Utilities\PayloadRedactor;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -29,6 +30,7 @@ class DashboardMetricsController extends Controller
         private readonly JobMonitorRepositoryContract $jobRepository,
         private readonly StatisticsRepositoryContract $statsRepository,
         private readonly TagRepositoryContract $tagRepository,
+        private readonly DashboardCacheService $dashboardCache,
     ) {}
 
     /**
@@ -78,7 +80,7 @@ class DashboardMetricsController extends Controller
         $data = $jobs->map(fn ($job) => JobMonitorTransformer::toListArray($job));
 
         // Provide distinct queue names for the filter dropdown (cached to avoid full table scan)
-        $availableQueues = Cache::remember('queue_monitor:available_queues', 60, fn () => JobMonitor::query()
+        $availableQueues = Cache::remember($this->dashboardCache->scopedKey('available_queues'), 60, fn () => JobMonitor::query()
             ->distinct()
             ->whereNotNull('queue')
             ->pluck('queue')

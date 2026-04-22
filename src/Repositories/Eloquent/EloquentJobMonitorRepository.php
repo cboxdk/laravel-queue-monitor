@@ -10,14 +10,20 @@ use Cbox\LaravelQueueMonitor\DataTransferObjects\JobMonitorData;
 use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\Models\JobMonitor;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\JobMonitorRepositoryContract;
+use Cbox\LaravelQueueMonitor\Services\DashboardCacheService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 final class EloquentJobMonitorRepository implements JobMonitorRepositoryContract
 {
+    public function __construct(
+        private readonly DashboardCacheService $dashboardCache,
+    ) {}
+
     public function create(JobMonitorData $data): JobMonitor
     {
-        return JobMonitor::create([
+        $job = JobMonitor::create([
             'uuid' => $data->uuid,
             'job_id' => $data->jobId,
             'job_class' => $data->jobClass,
@@ -45,6 +51,10 @@ final class EloquentJobMonitorRepository implements JobMonitorRepositoryContract
             'started_at' => $data->startedAt,
             'completed_at' => $data->completedAt,
         ]);
+
+        $this->invalidateDashboardCaches();
+
+        return $job;
     }
 
     public function update(string $uuid, array $data): JobMonitor
@@ -56,6 +66,7 @@ final class EloquentJobMonitorRepository implements JobMonitorRepositoryContract
         }
 
         $job->update($data);
+        $this->invalidateDashboardCaches();
 
         /** @var JobMonitor */
         return $job->fresh();
@@ -189,6 +200,10 @@ final class EloquentJobMonitorRepository implements JobMonitorRepositoryContract
             }
         } while ($ids->count() >= $chunkSize);
 
+        if ($totalDeleted > 0) {
+            $this->invalidateDashboardCaches();
+        }
+
         return $totalDeleted;
     }
 
@@ -239,6 +254,10 @@ final class EloquentJobMonitorRepository implements JobMonitorRepositoryContract
             }
         } while ($totalDeleted < $excess && $ids->count() >= $limit);
 
+        if ($totalDeleted > 0) {
+            $this->invalidateDashboardCaches();
+        }
+
         return $totalDeleted;
     }
 
@@ -250,7 +269,13 @@ final class EloquentJobMonitorRepository implements JobMonitorRepositoryContract
             return false;
         }
 
-        return (bool) $job->delete();
+        $deleted = (bool) $job->delete();
+
+        if ($deleted) {
+            $this->invalidateDashboardCaches();
+        }
+
+        return $deleted;
     }
 
     public function getByQueue(string $queue, ?string $connection = null, int $limit = 100): Collection
@@ -377,5 +402,16 @@ final class EloquentJobMonitorRepository implements JobMonitorRepositoryContract
                     ->orWhere('uuid', 'like', "%{$filters->search}%");
             });
         }
+    }
+
+    private function invalidateDashboardCaches(): void
+    {
+        if (DB::transactionLevel() > 0) {
+            DB::afterCommit(fn () => $this->dashboardCache->bust());
+
+            return;
+        }
+
+        $this->dashboardCache->bust();
     }
 }
