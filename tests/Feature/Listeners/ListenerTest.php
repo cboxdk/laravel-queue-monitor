@@ -39,7 +39,7 @@ test('listeners skip when monitoring is disabled', function () {
 test('job exception occurred listener skips when disabled', function () {
     config()->set('queue-monitor.enabled', false);
 
-    $listener = new JobExceptionOccurredListener;
+    $listener = app(JobExceptionOccurredListener::class);
 
     // Should return early without error
     $listener->handle(new JobExceptionOccurred('redis', new class
@@ -56,7 +56,7 @@ test('job exception occurred listener skips when disabled', function () {
 test('job exception occurred listener captures exception on processing job', function () {
     $job = JobMonitor::factory()->processing()->create(['job_id' => 'test-job-123']);
 
-    $listener = new JobExceptionOccurredListener;
+    $listener = app(JobExceptionOccurredListener::class);
 
     $mockQueueJob = new class
     {
@@ -84,7 +84,7 @@ test('job exception occurred listener does not overwrite existing exception', fu
         'exception_message' => 'Original message',
     ]);
 
-    $listener = new JobExceptionOccurredListener;
+    $listener = app(JobExceptionOccurredListener::class);
 
     $mockQueueJob = new class
     {
