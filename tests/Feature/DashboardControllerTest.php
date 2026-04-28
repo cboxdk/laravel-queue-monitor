@@ -281,7 +281,8 @@ test('infrastructure endpoint includes scaling history when table exists', funct
         'sla_breach_risk' => true,
     ]);
 
-    $response = getJson(route('queue-monitor.dashboard.infrastructure'));
+    // Full scaling history is exposed via the autoscale endpoint (infrastructure only exposes utilization)
+    $response = getJson(route('queue-monitor.dashboard.autoscale'));
     $response->assertOk();
 
     expect($response->json('scaling.has_autoscale'))->toBeTrue();
