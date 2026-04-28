@@ -1950,8 +1950,7 @@
                     if (!uuid) return;
                     this.confirmDelete = null;
                     try {
-                        const apiBase = '{{ config("queue-monitor.api.prefix", "api/queue-monitor") }}';
-                        await fetch(`/${apiBase}/jobs/${uuid}`, { method: 'DELETE', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' } });
+                        await fetch(this.dashboardUrl + '/jobs/' + uuid, { method: 'DELETE', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' } });
                         if (this.jobView) this.closeJobView();
                         if (this.activeTab === 'overview') this.fetchOverview();
                         if (this.activeTab === 'jobs') this.fetchJobs();
@@ -1970,8 +1969,7 @@
                     if (!uuid) return;
                     if (action === 'delete' && !confirm('Delete this stuck job? This cannot be undone.')) return;
                     try {
-                        const apiBase = '{{ config("queue-monitor.api.prefix", "api/queue-monitor") }}';
-                        const res = await fetch(`/${apiBase}/stuck-jobs/resolve`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' }, body: JSON.stringify({ uuids: [uuid], action }) });
+                        const res = await fetch(this.dashboardUrl + '/stuck-jobs/resolve', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' }, body: JSON.stringify({ uuids: [uuid], action }) });
                         if (!res.ok) throw new Error('Request failed');
                         this.fetchHealth();
                     } catch (e) { this.error = `Failed to ${action} stuck job`; console.error('resolveStuckJob error:', e); }
@@ -1981,8 +1979,7 @@
                     const label = action === 'delete' ? 'delete' : 'retry';
                     if (!confirm(`${label.charAt(0).toUpperCase() + label.slice(1)} all stuck jobs?`)) return;
                     try {
-                        const apiBase = '{{ config("queue-monitor.api.prefix", "api/queue-monitor") }}';
-                        const res = await fetch(`/${apiBase}/stuck-jobs/resolve-all`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' }, body: JSON.stringify({ action }) });
+                        const res = await fetch(this.dashboardUrl + '/stuck-jobs/resolve-all', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' }, body: JSON.stringify({ action }) });
                         if (!res.ok) throw new Error('Request failed');
                         this.fetchHealth();
                     } catch (e) { this.error = `Failed to ${label} stuck jobs`; console.error('resolveAllStuckJobs error:', e); }
@@ -1992,8 +1989,7 @@
                     if (this.selectedJobs.length === 0) return;
                     if (!confirm(`Delete ${this.selectedJobs.length} job(s)? This cannot be undone.`)) return;
                     try {
-                        const apiBase = '{{ config("queue-monitor.api.prefix", "api/queue-monitor") }}';
-                        await fetch(`/${apiBase}/batch/delete`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' }, body: JSON.stringify({ uuids: this.selectedJobs }) });
+                        await fetch(this.dashboardUrl + '/batch/delete', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' }, body: JSON.stringify({ uuids: this.selectedJobs }) });
                         this.selectedJobs = []; this.fetchJobs();
                     } catch (e) { this.error = 'Failed to delete jobs'; console.error('batchDelete error:', e); }
                 },

@@ -5,7 +5,9 @@ use Cbox\LaravelQueueMonitor\Http\Controllers\DashboardController;
 use Cbox\LaravelQueueMonitor\Http\Controllers\DashboardDrillDownController;
 use Cbox\LaravelQueueMonitor\Http\Controllers\DashboardHealthController;
 use Cbox\LaravelQueueMonitor\Http\Controllers\DashboardMetricsController;
+use Cbox\LaravelQueueMonitor\Http\Controllers\JobMonitorController;
 use Cbox\LaravelQueueMonitor\Http\Controllers\JobReplayController;
+use Cbox\LaravelQueueMonitor\Http\Controllers\StuckJobController;
 use Cbox\LaravelQueueMonitor\Http\Middleware\EnsureQueueMonitorEnabled;
 use Illuminate\Support\Facades\Route;
 
@@ -33,7 +35,11 @@ Route::prefix(config('queue-monitor.ui.route_prefix'))
         Route::get('/drill-down', [DashboardDrillDownController::class, 'drillDown'])->name('queue-monitor.dashboard.drill-down');
         Route::get('/jobs/{uuid}/payload', [DashboardMetricsController::class, 'payload'])->name('queue-monitor.job.payload');
 
-        // Dashboard actions (POST via web middleware so auth/session works)
+        // Dashboard actions (web middleware so auth/session works)
         Route::post('/jobs/{uuid}/replay', JobReplayController::class)->name('queue-monitor.dashboard.job.replay');
+        Route::delete('/jobs/{uuid}', [JobMonitorController::class, 'destroy'])->name('queue-monitor.dashboard.job.destroy');
         Route::post('/batch/replay', [BatchOperationsController::class, 'batchReplay'])->name('queue-monitor.dashboard.batch.replay');
+        Route::post('/batch/delete', [BatchOperationsController::class, 'batchDelete'])->name('queue-monitor.dashboard.batch.delete');
+        Route::post('/stuck-jobs/resolve', [StuckJobController::class, 'resolve'])->name('queue-monitor.dashboard.stuck-jobs.resolve');
+        Route::post('/stuck-jobs/resolve-all', [StuckJobController::class, 'resolveAll'])->name('queue-monitor.dashboard.stuck-jobs.resolve-all');
     });
