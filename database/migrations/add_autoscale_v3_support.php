@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -16,24 +15,15 @@ return new class extends Migration
         /** @var string $prefix */
         $prefix = config('queue-monitor.database.table_prefix', 'queue_monitor_');
 
-        // Add 'debounced' to the status enum on the jobs table
-        if (Schema::connection($connection)->hasTable($prefix.'jobs')
-            && Schema::connection($connection)->hasColumn($prefix.'jobs', 'status')) {
-            Schema::connection($connection)->table($prefix.'jobs', function (Blueprint $table): void {
-                $table->enum('status', JobStatus::values())->change();
-            });
-        }
-
         // Extend scaling_events with v3 SLA severity data
-        if (Schema::connection($connection)->hasTable($prefix.'scaling_events')
-            && ! Schema::connection($connection)->hasColumn($prefix.'scaling_events', 'breach_seconds')) {
+        if (Schema::connection($connection)->hasTable($prefix.'scaling_events')) {
             Schema::connection($connection)->table($prefix.'scaling_events', function (Blueprint $table): void {
-                $table->integer('breach_seconds')->nullable();
-                $table->decimal('breach_percentage', 8, 2)->nullable();
-                $table->integer('margin_seconds')->nullable();
-                $table->decimal('margin_percentage', 8, 2)->nullable();
-                $table->integer('pending')->nullable();
-                $table->integer('active_workers')->nullable();
+                $table->integer('breach_seconds')->nullable()->after('sla_breach_risk');
+                $table->decimal('breach_percentage', 8, 2)->nullable()->after('breach_seconds');
+                $table->integer('margin_seconds')->nullable()->after('breach_percentage');
+                $table->decimal('margin_percentage', 8, 2)->nullable()->after('margin_seconds');
+                $table->integer('pending')->nullable()->after('margin_percentage');
+                $table->integer('active_workers')->nullable()->after('pending');
             });
         }
 
