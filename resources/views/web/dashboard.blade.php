@@ -725,6 +725,134 @@
                 <template x-if="!loading.infrastructure">
                     <div class="space-y-6">
 
+                        {{-- Cluster Status Banner (v3 only) --}}
+                        <template x-if="infrastructure.cluster?.has_cluster">
+                            <div class="bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-200/80 rounded-xl shadow-sm overflow-hidden">
+                                <div class="px-5 py-4 border-b border-indigo-100/60">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center gap-2">
+                                            <div class="h-2 w-2 rounded-full bg-indigo-500 animate-pulse"></div>
+                                            <h4 class="text-sm font-semibold text-indigo-900">Cluster Orchestration</h4>
+                                            <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold bg-indigo-100 text-indigo-700" x-text="'v' + (infrastructure.cluster?.autoscale_version ?? '3')"></span>
+                                        </div>
+                                        <span class="text-[10px] text-indigo-400" x-text="'Cluster: ' + (infrastructure.cluster?.topology?.cluster_id ?? 'unknown')"></span>
+                                    </div>
+                                </div>
+                                <div class="p-5">
+                                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                                        <div>
+                                            <div class="text-[10px] font-bold text-indigo-400 uppercase tracking-wider mb-1">Leader</div>
+                                            <div class="text-sm font-semibold text-indigo-900 truncate" x-text="infrastructure.cluster?.topology?.leader_id ?? 'electing...'"></div>
+                                        </div>
+                                        <div>
+                                            <div class="text-[10px] font-bold text-indigo-400 uppercase tracking-wider mb-1">Hosts</div>
+                                            <div class="flex items-baseline gap-1">
+                                                <span class="text-2xl font-bold tabular-nums" :class="(infrastructure.cluster?.scaling_signal?.current_hosts ?? 0) >= (infrastructure.cluster?.scaling_signal?.recommended_hosts ?? 1) ? 'text-emerald-600' : (infrastructure.cluster?.scaling_signal?.current_hosts ?? 0) >= (infrastructure.cluster?.scaling_signal?.recommended_hosts ?? 1) * 0.6 ? 'text-amber-600' : 'text-red-600'" x-text="infrastructure.cluster?.scaling_signal?.current_hosts ?? infrastructure.cluster?.topology?.host_count ?? 0"></span>
+                                                <span class="text-sm text-gray-400">/ <span x-text="infrastructure.cluster?.scaling_signal?.recommended_hosts ?? '?'"></span> recommended</span>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div class="text-[10px] font-bold text-indigo-400 uppercase tracking-wider mb-1">Capacity</div>
+                                            <div class="text-sm text-gray-700"><span class="font-semibold" x-text="infrastructure.cluster?.scaling_signal?.current_capacity ?? '-'"></span> workers <span class="text-gray-400">/ <span x-text="infrastructure.cluster?.scaling_signal?.required_workers ?? '-'"></span> required</span></div>
+                                        </div>
+                                        <div>
+                                            <div class="text-[10px] font-bold text-indigo-400 uppercase tracking-wider mb-1">Action</div>
+                                            <div>
+                                                <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-bold" :class="{
+                                                    'bg-emerald-100 text-emerald-700': infrastructure.cluster?.scaling_signal?.action === 'scale_up',
+                                                    'bg-blue-100 text-blue-700': infrastructure.cluster?.scaling_signal?.action === 'scale_down',
+                                                    'bg-gray-100 text-gray-600': infrastructure.cluster?.scaling_signal?.action === 'hold' || !infrastructure.cluster?.scaling_signal?.action
+                                                }" x-text="(infrastructure.cluster?.scaling_signal?.action ?? 'hold').replace('_', ' ').toUpperCase()"></span>
+                                            </div>
+                                            <p class="text-[10px] text-gray-400 mt-0.5 truncate" x-text="infrastructure.cluster?.scaling_signal?.reason ?? ''"></p>
+                                        </div>
+                                    </div>
+                                    <div class="mt-4 pt-3 border-t border-indigo-100/60" x-show="(infrastructure.cluster?.topology?.active_managers ?? []).length > 0">
+                                        <div class="text-[10px] font-bold text-indigo-400 uppercase tracking-wider mb-2">Active Managers</div>
+                                        <div class="flex flex-wrap gap-1.5">
+                                            <template x-for="mgr in (infrastructure.cluster?.topology?.active_managers ?? [])" :key="mgr.manager_id">
+                                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] rounded-md border" :class="mgr.manager_id === infrastructure.cluster?.topology?.leader_id ? 'bg-indigo-100 border-indigo-300 text-indigo-800 font-semibold' : 'bg-white border-gray-200 text-gray-700'">
+                                                    <span x-show="mgr.manager_id === infrastructure.cluster?.topology?.leader_id" class="text-[10px]" title="Leader">&#9733;</span>
+                                                    <span x-text="mgr.host ?? mgr.manager_id"></span>
+                                                </span>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+
+                        {{-- Scaling Signal Sparkline (v3 only) --}}
+                        <template x-if="infrastructure.cluster?.has_cluster && (infrastructure.cluster?.signal_history ?? []).length > 1">
+                            <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm overflow-hidden">
+                                <div class="px-5 py-4 border-b border-gray-100">
+                                    <h4 class="text-sm font-semibold text-gray-900">Host Scaling Trend <span class="text-[11px] font-normal text-gray-400">(Last Hour)</span></h4>
+                                </div>
+                                <div class="p-5">
+                                    <svg class="w-full h-24" viewBox="0 0 400 80" preserveAspectRatio="none" x-data="{
+                                        points() {
+                                            const history = infrastructure.cluster?.signal_history ?? [];
+                                            if (history.length < 2) return { current: '', recommended: '' };
+                                            const maxVal = Math.max(...history.map(h => Math.max(h.current_hosts ?? 0, h.recommended_hosts ?? 0)), 1);
+                                            const step = 400 / (history.length - 1);
+                                            let currentPath = '';
+                                            let recommendedPath = '';
+                                            history.forEach((h, i) => {
+                                                const x = i * step;
+                                                const yC = 75 - ((h.current_hosts ?? 0) / maxVal) * 70;
+                                                const yR = 75 - ((h.recommended_hosts ?? 0) / maxVal) * 70;
+                                                currentPath += (i === 0 ? 'M' : 'L') + x + ',' + yC;
+                                                recommendedPath += (i === 0 ? 'M' : 'L') + x + ',' + yR;
+                                            });
+                                            return { current: currentPath, recommended: recommendedPath };
+                                        }
+                                    }">
+                                        <path :d="points().recommended" fill="none" stroke="#c7d2fe" stroke-width="2" stroke-dasharray="6,4" />
+                                        <path :d="points().current" fill="none" stroke="#6366f1" stroke-width="2.5" />
+                                    </svg>
+                                    <div class="flex items-center gap-4 mt-2">
+                                        <div class="flex items-center gap-1.5"><span class="h-0.5 w-4 bg-indigo-500 rounded"></span><span class="text-[10px] text-gray-500">Current Hosts</span></div>
+                                        <div class="flex items-center gap-1.5"><span class="h-0.5 w-4 bg-indigo-200 rounded" style="background: repeating-linear-gradient(90deg, #c7d2fe 0, #c7d2fe 4px, transparent 4px, transparent 8px)"></span><span class="text-[10px] text-gray-500">Recommended</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+
+                        {{-- Cluster Event Timeline (v3 only) --}}
+                        <template x-if="infrastructure.cluster?.has_cluster && ((infrastructure.cluster?.leader_history ?? []).length > 0 || (infrastructure.cluster?.manager_events ?? []).length > 0)">
+                            <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm overflow-hidden">
+                                <div class="px-5 py-4 border-b border-gray-100"><h4 class="text-sm font-semibold text-gray-900">Cluster Events</h4></div>
+                                <div class="max-h-64 overflow-y-auto custom-scroll divide-y divide-gray-50">
+                                    <template x-for="(evt, idx) in (infrastructure.cluster?.manager_events ?? [])" :key="'mgr-' + idx">
+                                        <div class="flex items-start gap-3 px-5 py-3 hover:bg-gray-50/60 transition-colors">
+                                            <div class="mt-1.5 flex-shrink-0"><span class="block h-2.5 w-2.5 rounded-full" :class="evt.event_type === 'manager_started' ? 'bg-emerald-500' : 'bg-red-400'"></span></div>
+                                            <div class="flex-1 min-w-0">
+                                                <div class="flex items-center gap-2 flex-wrap">
+                                                    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold" :class="evt.event_type === 'manager_started' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'" x-text="evt.event_type === 'manager_started' ? 'STARTED' : 'STOPPED'"></span>
+                                                    <span class="text-sm font-medium text-gray-900" x-text="evt.host ?? evt.manager_id"></span>
+                                                    <span x-show="evt.reason" class="text-[11px] text-gray-500" x-text="evt.reason"></span>
+                                                    <span x-show="evt.meta?.uptime_seconds" class="text-[10px] text-gray-400" x-text="'uptime: ' + Math.round(evt.meta.uptime_seconds / 60) + 'm'"></span>
+                                                </div>
+                                            </div>
+                                            <div class="flex-shrink-0"><span class="text-[10px] text-gray-400" x-text="evt.time_human"></span></div>
+                                        </div>
+                                    </template>
+                                    <template x-for="(evt, idx) in (infrastructure.cluster?.leader_history ?? [])" :key="'ldr-' + idx">
+                                        <div class="flex items-start gap-3 px-5 py-3 hover:bg-gray-50/60 transition-colors">
+                                            <div class="mt-1.5 flex-shrink-0"><span class="block h-2.5 w-2.5 rounded-full bg-indigo-500"></span></div>
+                                            <div class="flex-1 min-w-0">
+                                                <div class="flex items-center gap-2 flex-wrap">
+                                                    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold bg-indigo-50 text-indigo-700">LEADER CHANGE</span>
+                                                    <span class="text-[11px] text-gray-500" x-text="(evt.previous_leader_id ?? '?') + ' &rarr; ' + (evt.leader_id ?? '?')"></span>
+                                                </div>
+                                            </div>
+                                            <div class="flex-shrink-0"><span class="text-[10px] text-gray-400" x-text="evt.time_human"></span></div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+
                         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                             <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm p-8 flex flex-col items-center justify-center">
                                 <div class="relative">
@@ -855,6 +983,7 @@
                                         </div>
                                         <div class="w-full bg-gray-100 rounded-full h-2"><div class="h-2 rounded-full transition-all duration-500" :class="sla.compliance >= 99 ? 'bg-emerald-500' : sla.compliance >= 95 ? 'bg-amber-500' : 'bg-red-500'" :style="'width: ' + sla.compliance + '%'"></div></div>
                                         <div x-show="sla.breached > 0" class="mt-1.5 text-[10px] text-red-500 font-semibold" x-text="sla.breached + ' breached'"></div>
+                                        <div x-show="infrastructure.scaling?.breach_severity" class="mt-1.5 text-[10px] text-red-400" x-text="'avg ' + (infrastructure.scaling?.breach_severity?.avg_breach_seconds ?? 0) + 's over · max ' + (infrastructure.scaling?.breach_severity?.max_breach_percentage ?? 0) + '% over'"></div>
                                     </div>
                                 </template>
                             </div>
