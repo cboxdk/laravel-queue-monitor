@@ -88,9 +88,12 @@ class ScalingEventListener
     {
         try {
             $data = [
-                'connection' => property_exists($event, 'connection') ? $event->connection : null,
-                'queue' => property_exists($event, 'queue') ? $event->queue : null,
+                'connection' => property_exists($event, 'connection') ? $event->connection : 'unknown',
+                'queue' => property_exists($event, 'queue') ? $event->queue : 'unknown',
                 'action' => 'sla_recovered',
+                'current_workers' => 0,
+                'target_workers' => 0,
+                'reason' => 'SLA recovered',
             ];
 
             // v3 style: has margin methods and direct properties
@@ -109,10 +112,10 @@ class ScalingEventListener
 
             // v2 fallback
             if (property_exists($event, 'workersScaled')) {
-                $data['current_workers'] = $data['current_workers'] ?? $event->workersScaled;
-                $data['target_workers'] = $data['target_workers'] ?? $event->workersScaled;
+                $data['current_workers'] = $data['current_workers'] ?: $event->workersScaled;
+                $data['target_workers'] = $data['target_workers'] ?: $event->workersScaled;
             }
-            if (property_exists($event, 'recoveryTime') && ! isset($data['reason'])) {
+            if (property_exists($event, 'recoveryTime') && $data['reason'] === 'SLA recovered') {
                 $data['reason'] = "SLA recovered after {$event->recoveryTime}s";
             }
 
@@ -139,12 +142,12 @@ class ScalingEventListener
             $decision = property_exists($event, 'decision') ? $event->decision : $event;
 
             ScalingEvent::create([
-                'connection' => property_exists($decision, 'connection') ? $decision->connection : null,
-                'queue' => property_exists($decision, 'queue') ? $decision->queue : null,
+                'connection' => property_exists($decision, 'connection') ? $decision->connection : 'unknown',
+                'queue' => property_exists($decision, 'queue') ? $decision->queue : 'unknown',
                 'action' => property_exists($decision, 'action') && is_callable([$decision, 'action']) ? $decision->action() : 'sla_breach_predicted',
-                'current_workers' => property_exists($decision, 'currentWorkers') ? $decision->currentWorkers : null,
-                'target_workers' => property_exists($decision, 'targetWorkers') ? $decision->targetWorkers : null,
-                'reason' => property_exists($decision, 'reason') ? $decision->reason : null,
+                'current_workers' => property_exists($decision, 'currentWorkers') ? $decision->currentWorkers : 0,
+                'target_workers' => property_exists($decision, 'targetWorkers') ? $decision->targetWorkers : 0,
+                'reason' => property_exists($decision, 'reason') ? $decision->reason : 'SLA breach predicted',
                 'predicted_pickup_time' => property_exists($decision, 'predictedPickupTime') ? $decision->predictedPickupTime : null,
                 'sla_target' => property_exists($decision, 'slaTarget') ? $decision->slaTarget : null,
                 'sla_breach_risk' => true,

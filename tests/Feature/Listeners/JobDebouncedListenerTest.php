@@ -45,5 +45,5 @@ test('debounced listener never throws', function () {
     $listener = new JobDebouncedListener;
     $listener->handle($event);
 
-    expect(true)->toBeTrue();
+    expect(JobMonitor::count())->toBe(0);
 });

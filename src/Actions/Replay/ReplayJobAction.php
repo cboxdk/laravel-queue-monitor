@@ -59,13 +59,13 @@ final readonly class ReplayJobAction
             throw JobReplayException::invalidPayload($uuid);
         }
 
-        Queue::connection($jobMonitor->connection)
+        $queueJobId = Queue::connection($jobMonitor->connection)
             ->pushRaw($payloadJson, $jobMonitor->queue);
 
         return new JobReplayData(
             originalUuid: $uuid,
             newUuid: $newUuid,
-            newJobId: $newId,
+            newJobId: is_string($queueJobId) ? $queueJobId : $newId,
             queue: $jobMonitor->queue,
             connection: $jobMonitor->connection,
             replayedAt: now(),

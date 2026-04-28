@@ -56,9 +56,10 @@ class DashboardHealthController extends Controller
             'worker_types' => $this->infrastructureService->getWorkerTypeBreakdown(),
             'queues' => $this->infrastructureService->getQueueInfraData(),
             'sla' => $this->infrastructureService->getSlaData(),
-            'scaling' => [
-                'utilization' => $this->infrastructureService->getScalingData()['utilization'] ?? [],
-            ],
+            'scaling' => array_intersect_key(
+                $this->infrastructureService->getScalingData(),
+                array_flip(['utilization', 'breach_severity']),
+            ),
             'capacity' => $this->infrastructureService->getCapacityData(),
             'cluster' => $this->infrastructureService->getClusterData(),
         ];
@@ -80,7 +81,7 @@ class DashboardHealthController extends Controller
             'cluster' => $cluster,
             'live' => $live,
             'sla' => $this->infrastructureService->getSlaData(),
-            'available' => ($scaling['has_autoscale'] ?? false) || ($cluster['has_cluster'] ?? false) || $live !== null,
+            'available' => ($scaling['has_autoscale'] ?? false) || (is_array($cluster) && ($cluster['has_cluster'] ?? false)) || $live !== null,
         ]);
     }
 }

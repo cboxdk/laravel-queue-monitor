@@ -373,7 +373,7 @@
                     <div class="flex flex-wrap gap-3 items-center">
                         <div class="relative flex-1 min-w-[200px]">
                             <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>
-                            <input type="text" x-model.debounce.300ms="filters.search" @input="resetPaginationAndFetch()" placeholder="Search jobs..." class="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition">
+                            <input type="text" x-model="filters.search" @input.debounce.300ms="resetPaginationAndFetch()" placeholder="Search jobs..." class="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition">
                         </div>
                         <div class="relative" x-data="{ open: false }">
                             <button @click="open = !open" class="flex items-center gap-2 px-3 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 transition">
@@ -421,11 +421,11 @@
                     <div x-show="filters.showAdvanced" x-transition class="mt-4 pt-4 border-t border-gray-100 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
                         <div>
                             <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Job Class</label>
-                            <input type="text" x-model.debounce.300ms="filters.jobClass" @input="resetPaginationAndFetch()" placeholder="e.g. SendEmail" class="w-full px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand">
+                            <input type="text" x-model="filters.jobClass" @input.debounce.300ms="resetPaginationAndFetch()" placeholder="e.g. SendEmail" class="w-full px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand">
                         </div>
                         <div>
                             <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Server</label>
-                            <input type="text" x-model.debounce.300ms="filters.server" @input="resetPaginationAndFetch()" placeholder="hostname" class="w-full px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand">
+                            <input type="text" x-model="filters.server" @input.debounce.300ms="resetPaginationAndFetch()" placeholder="hostname" class="w-full px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand">
                         </div>
                         <div>
                             <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Attempts</label>
@@ -831,7 +831,7 @@
                                                     <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold" :class="evt.event_type === 'manager_started' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'" x-text="evt.event_type === 'manager_started' ? 'STARTED' : 'STOPPED'"></span>
                                                     <span class="text-sm font-medium text-gray-900" x-text="evt.host ?? evt.manager_id"></span>
                                                     <span x-show="evt.reason" class="text-[11px] text-gray-500" x-text="evt.reason"></span>
-                                                    <span x-show="evt.meta?.uptime_seconds" class="text-[10px] text-gray-400" x-text="'uptime: ' + Math.round(evt.meta.uptime_seconds / 60) + 'm'"></span>
+                                                    <span x-show="evt.meta?.uptime_seconds" class="text-[10px] text-gray-400" x-text="'uptime: ' + Math.round(evt.meta?.uptime_seconds / 60) + 'm'"></span>
                                                 </div>
                                             </div>
                                             <div class="flex-shrink-0"><span class="text-[10px] text-gray-400" x-text="evt.time_human"></span></div>
@@ -843,7 +843,7 @@
                                             <div class="flex-1 min-w-0">
                                                 <div class="flex items-center gap-2 flex-wrap">
                                                     <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold bg-indigo-50 text-indigo-700">LEADER CHANGE</span>
-                                                    <span class="text-[11px] text-gray-500" x-text="(evt.previous_leader_id ?? '?') + ' &rarr; ' + (evt.leader_id ?? '?')"></span>
+                                                    <span class="text-[11px] text-gray-500" x-text="(evt.previous_leader_id ?? '?') + ' → ' + (evt.leader_id ?? '?')"></span>
                                                 </div>
                                             </div>
                                             <div class="flex-shrink-0"><span class="text-[10px] text-gray-400" x-text="evt.time_human"></span></div>
@@ -1288,7 +1288,7 @@
                                             <div class="px-5 py-3 flex items-center justify-between">
                                                 <div class="flex items-center gap-3 min-w-0">
                                                     <span class="text-sm font-medium text-gray-900 truncate" x-text="sla.queue"></span>
-                                                    <span class="text-[10px] text-gray-400" x-text="sla.target + 's target'"></span>
+                                                    <span class="text-[10px] text-gray-400" x-text="sla.target_seconds + 's target'"></span>
                                                 </div>
                                                 <div class="flex items-center gap-3">
                                                     <div class="w-24 bg-gray-100 rounded-full h-1.5">
@@ -1327,7 +1327,7 @@
                                             <div class="mt-1.5 flex-shrink-0"><span class="block h-2.5 w-2.5 rounded-full" :class="{ 'bg-emerald-500': event.action === 'scale_up', 'bg-blue-500': event.action === 'scale_down', 'bg-red-500': event.action === 'sla_breach', 'bg-emerald-400': event.action === 'sla_recovered', 'bg-orange-500': event.action === 'sla_breach_predicted', 'bg-gray-400': event.action === 'hold' }"></span></div>
                                             <div class="flex-1 min-w-0">
                                                 <div class="flex items-center gap-2 flex-wrap">
-                                                    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold" :class="{ 'bg-emerald-50 text-emerald-700': event.action === 'scale_up', 'bg-blue-50 text-blue-700': event.action === 'scale_down', 'bg-red-50 text-red-700': event.action === 'sla_breach', 'bg-emerald-50 text-emerald-600': event.action === 'sla_recovered', 'bg-orange-50 text-orange-700': event.action === 'sla_breach_predicted', 'bg-gray-100 text-gray-600': event.action === 'hold' }" x-text="event.action.replace('_', ' ').toUpperCase()"></span>
+                                                    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold" :class="{ 'bg-emerald-50 text-emerald-700': event.action === 'scale_up', 'bg-blue-50 text-blue-700': event.action === 'scale_down', 'bg-red-50 text-red-700': event.action === 'sla_breach', 'bg-emerald-50 text-emerald-600': event.action === 'sla_recovered', 'bg-orange-50 text-orange-700': event.action === 'sla_breach_predicted', 'bg-gray-100 text-gray-600': event.action === 'hold' }" x-text="event.action.replace(/_/g, ' ').toUpperCase()"></span>
                                                     <span class="text-[11px] text-gray-500" x-text="event.queue"></span>
                                                     <span class="text-[11px] font-medium text-gray-700" x-text="event.current_workers + ' → ' + event.target_workers + ' workers'"></span>
                                                 </div>
@@ -1380,7 +1380,7 @@
                                                     <div class="flex items-center gap-3 mt-0.5">
                                                         <span x-show="evt.reason" class="text-[10px] text-gray-500" x-text="evt.reason"></span>
                                                         <span x-show="evt.meta?.uptime_seconds" class="text-[10px] text-gray-400" x-text="'uptime: ' + Math.round((evt.meta?.uptime_seconds ?? 0) / 60) + 'm'"></span>
-                                                        <span x-show="evt.meta?.worker_count" class="text-[10px] text-gray-400" x-text="evt.meta.worker_count + ' workers'"></span>
+                                                        <span x-show="evt.meta?.worker_count" class="text-[10px] text-gray-400" x-text="(evt.meta?.worker_count ?? 0) + ' workers'"></span>
                                                     </div>
                                                 </div>
                                                 <div class="flex-shrink-0"><span class="text-[10px] text-gray-400" x-text="evt.time_human"></span></div>
@@ -2177,6 +2177,7 @@
                     if (type === 'server') this.filters.server = value;
                     if (type === 'job_class') this.filters.jobClass = value;
                     this.navigateTo('jobs');
+                    this.syncFiltersToUrl();
                     this.$nextTick(() => this.fetchJobs());
                 },
 
@@ -2186,6 +2187,7 @@
                     this.pagination.offset = 0;
                     this.selectedJobs = [];
                     this.navigateTo('jobs');
+                    this.syncFiltersToUrl();
                     this.$nextTick(() => this.fetchJobs());
                 },
 

@@ -90,8 +90,7 @@ final class InfrastructureService
                 SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as completed,
                 SUM(CASE WHEN status IN (?, ?) THEN 1 ELSE 0 END) as failed,
                 AVG(CASE WHEN duration_ms IS NOT NULL THEN duration_ms END) as avg_duration_ms,
-                COUNT(DISTINCT worker_id) as unique_workers')
-            ->addBinding([
+                COUNT(DISTINCT worker_id) as unique_workers', [
                 JobStatus::COMPLETED->value,
                 JobStatus::FAILED->value,
                 JobStatus::TIMEOUT->value,
@@ -351,6 +350,7 @@ final class InfrastructureService
                 ];
 
                 // Breach severity stats
+                $breachSeverity = null;
                 /** @var object{avg_breach_seconds: float|null, max_breach_percentage: float|null}|null $breachData */
                 $breachData = DB::connection($dbConnection)
                     ->table($prefix.'scaling_events')

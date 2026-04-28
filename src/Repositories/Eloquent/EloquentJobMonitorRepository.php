@@ -398,6 +398,7 @@ final class EloquentJobMonitorRepository implements JobMonitorRepositoryContract
             $query->where(function ($q) use ($filters) {
                 $q->where('job_class', 'like', "%{$filters->search}%")
                     ->orWhere('display_name', 'like', "%{$filters->search}%")
+                    ->orWhere('exception_class', 'like', "%{$filters->search}%")
                     ->orWhere('exception_message', 'like', "%{$filters->search}%")
                     ->orWhere('uuid', 'like', "%{$filters->search}%");
             });

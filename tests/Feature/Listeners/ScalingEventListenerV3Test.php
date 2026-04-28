@@ -147,11 +147,18 @@ test('handleSlaBreachPredicted stores as scaling event', function () {
     $event = new stdClass;
     $event->decision = $decision;
 
-    // Must not throw — listener catches all exceptions
     $listener->handleSlaBreachPredicted($event);
 
-    // May or may not insert depending on constraints, but must not crash
-    expect(true)->toBeTrue();
+    expect(ScalingEvent::count())->toBe(1);
+
+    $scaling = ScalingEvent::first();
+    expect($scaling->action)->toBe('sla_breach_predicted');
+    expect($scaling->connection)->toBe('redis');
+    expect($scaling->queue)->toBe('default');
+    expect($scaling->current_workers)->toBe(2);
+    expect($scaling->target_workers)->toBe(4);
+    expect($scaling->reason)->toBe('Predicted breach in 30s');
+    expect($scaling->sla_breach_risk)->toBeTrue();
 });
 
 // ── handleManagerStarted ──────────────────────────────────────────────────────
