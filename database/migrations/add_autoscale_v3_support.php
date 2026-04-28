@@ -16,7 +16,8 @@ return new class extends Migration
         $prefix = config('queue-monitor.database.table_prefix', 'queue_monitor_');
 
         // Extend scaling_events with v3 SLA severity data
-        if (Schema::connection($connection)->hasTable($prefix.'scaling_events')) {
+        if (Schema::connection($connection)->hasTable($prefix.'scaling_events') &&
+            ! Schema::connection($connection)->hasColumn($prefix.'scaling_events', 'breach_seconds')) {
             Schema::connection($connection)->table($prefix.'scaling_events', function (Blueprint $table): void {
                 $table->integer('breach_seconds')->nullable()->after('sla_breach_risk');
                 $table->decimal('breach_percentage', 8, 2)->nullable()->after('breach_seconds');
