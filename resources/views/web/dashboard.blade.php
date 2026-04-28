@@ -135,7 +135,7 @@
         <nav class="bg-white/95 backdrop-blur-sm border-b border-gray-200/80">
             <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex gap-0 overflow-x-auto" role="tablist">
-                    <template x-for="tab in [{id:'overview',label:'Overview',icon:'chart'},{id:'jobs',label:'Jobs',icon:'list'},{id:'analytics',label:'Analytics',icon:'pie'},{id:'health',label:'Health',icon:'heart'},{id:'infrastructure',label:'Infrastructure',icon:'server'}]" :key="tab.id">
+                    <template x-for="tab in [{id:'overview',label:'Overview',icon:'chart'},{id:'jobs',label:'Jobs',icon:'list'},{id:'analytics',label:'Analytics',icon:'pie'},{id:'health',label:'Health',icon:'heart'},{id:'infrastructure',label:'Infrastructure',icon:'server'},{id:'autoscale',label:'Autoscale',icon:'scale'}]" :key="tab.id">
                         <button @click="navigateTo(tab.id)" role="tab"
                                 :aria-selected="activeTab === tab.id"
                                 class="relative flex items-center gap-2 px-5 py-3 text-sm font-medium whitespace-nowrap transition-colors border-b-2"
@@ -154,6 +154,9 @@
                             </template>
                             <template x-if="tab.icon === 'server'">
                                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M5.25 14.25h13.5m-13.5 0a3 3 0 01-3-3m3 3a3 3 0 100 6h13.5a3 3 0 100-6m-16.5-3a3 3 0 013-3h13.5a3 3 0 013 3m-19.5 0a4.5 4.5 0 01.9-2.7L5.737 5.1a3.375 3.375 0 012.7-1.35h7.126c1.062 0 2.062.5 2.7 1.35l2.587 3.45a4.5 4.5 0 01.9 2.7m0 0a3 3 0 01-3 3m0 3h.008v.008h-.008v-.008zm0-6h.008v.008h-.008v-.008zm-3 6h.008v.008h-.008v-.008zm0-6h.008v.008h-.008v-.008z" /></svg>
+                            </template>
+                            <template x-if="tab.icon === 'scale'">
+                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7.5L7.5 3m0 0L12 7.5M7.5 3v13.5m13.5 0L16.5 21m0 0L12 16.5m4.5 4.5V7.5" /></svg>
                             </template>
                             <span x-text="tab.label"></span>
                         </button>
@@ -721,113 +724,6 @@
                 <template x-if="!loading.infrastructure">
                     <div class="space-y-6">
 
-                        {{-- Cluster Status Banner (v3 only) --}}
-                        <template x-if="infrastructure.cluster?.has_cluster">
-                            <div class="bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-200/80 rounded-xl shadow-sm overflow-hidden">
-                                <div class="px-5 py-4 border-b border-indigo-100/60">
-                                    <div class="flex items-center justify-between">
-                                        <div class="flex items-center gap-2">
-                                            <div class="h-2 w-2 rounded-full bg-indigo-500 animate-pulse"></div>
-                                            <h4 class="text-sm font-semibold text-indigo-900">Cluster Orchestration</h4>
-                                            <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold bg-indigo-100 text-indigo-700" x-text="'v' + (infrastructure.cluster?.autoscale_version ?? '3')"></span>
-                                        </div>
-                                        <span class="text-[10px] text-indigo-400" x-text="'Cluster: ' + (infrastructure.cluster?.topology?.cluster_id ?? 'unknown')"></span>
-                                    </div>
-                                </div>
-                                <div class="p-5">
-                                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                                        <div>
-                                            <div class="text-[10px] font-bold text-indigo-400 uppercase tracking-wider mb-1">Leader</div>
-                                            <div class="text-sm font-semibold text-indigo-900 truncate" x-text="infrastructure.cluster?.topology?.leader_id ?? 'electing...'"></div>
-                                        </div>
-                                        <div>
-                                            <div class="text-[10px] font-bold text-indigo-400 uppercase tracking-wider mb-1">Hosts</div>
-                                            <div class="flex items-baseline gap-1">
-                                                <span class="text-2xl font-bold tabular-nums" :class="(infrastructure.cluster?.scaling_signal?.current_hosts ?? 0) >= (infrastructure.cluster?.scaling_signal?.recommended_hosts ?? 1) ? 'text-emerald-600' : (infrastructure.cluster?.scaling_signal?.current_hosts ?? 0) >= (infrastructure.cluster?.scaling_signal?.recommended_hosts ?? 1) * 0.6 ? 'text-amber-600' : 'text-red-600'" x-text="infrastructure.cluster?.scaling_signal?.current_hosts ?? infrastructure.cluster?.topology?.host_count ?? 0"></span>
-                                                <span class="text-sm text-gray-400">/ <span x-text="infrastructure.cluster?.scaling_signal?.recommended_hosts ?? '?'"></span> recommended</span>
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <div class="text-[10px] font-bold text-indigo-400 uppercase tracking-wider mb-1">Capacity</div>
-                                            <div class="text-sm text-gray-700"><span class="font-semibold" x-text="infrastructure.cluster?.scaling_signal?.current_capacity ?? '-'"></span> workers <span class="text-gray-400">/ <span x-text="infrastructure.cluster?.scaling_signal?.required_workers ?? '-'"></span> required</span></div>
-                                        </div>
-                                        <div>
-                                            <div class="text-[10px] font-bold text-indigo-400 uppercase tracking-wider mb-1">Action</div>
-                                            <div>
-                                                <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-bold" :class="{ 'bg-emerald-100 text-emerald-700': infrastructure.cluster?.scaling_signal?.action === 'scale_up', 'bg-blue-100 text-blue-700': infrastructure.cluster?.scaling_signal?.action === 'scale_down', 'bg-gray-100 text-gray-600': infrastructure.cluster?.scaling_signal?.action === 'hold' || !infrastructure.cluster?.scaling_signal?.action }" x-text="(infrastructure.cluster?.scaling_signal?.action ?? 'hold').replace('_', ' ').toUpperCase()"></span>
-                                            </div>
-                                            <p class="text-[10px] text-gray-400 mt-0.5 truncate" x-text="infrastructure.cluster?.scaling_signal?.reason ?? ''"></p>
-                                        </div>
-                                    </div>
-                                    <div class="mt-4 pt-3 border-t border-indigo-100/60" x-show="(infrastructure.cluster?.topology?.active_managers ?? []).length > 0">
-                                        <div class="text-[10px] font-bold text-indigo-400 uppercase tracking-wider mb-2">Active Managers</div>
-                                        <div class="flex flex-wrap gap-1.5">
-                                            <template x-for="mgr in (infrastructure.cluster?.topology?.active_managers ?? [])" :key="mgr.manager_id">
-                                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] rounded-md border" :class="mgr.manager_id === infrastructure.cluster?.topology?.leader_id ? 'bg-indigo-100 border-indigo-300 text-indigo-800 font-semibold' : 'bg-white border-gray-200 text-gray-700'">
-                                                    <span x-show="mgr.manager_id === infrastructure.cluster?.topology?.leader_id" class="text-[10px]" title="Leader">&#9733;</span>
-                                                    <span x-text="mgr.host ?? mgr.manager_id"></span>
-                                                </span>
-                                            </template>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </template>
-
-                        {{-- Scaling Signal Sparkline (v3 only) --}}
-                        <template x-if="infrastructure.cluster?.has_cluster && (infrastructure.cluster?.signal_history ?? []).length > 1">
-                            <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm overflow-hidden">
-                                <div class="px-5 py-4 border-b border-gray-100">
-                                    <h4 class="text-sm font-semibold text-gray-900">Host Scaling Trend <span class="text-[11px] font-normal text-gray-400">(Last Hour)</span></h4>
-                                </div>
-                                <div class="p-5">
-                                    <svg class="w-full h-24" viewBox="0 0 400 80" preserveAspectRatio="none" x-data="{ points() { const history = infrastructure.cluster?.signal_history ?? []; if (history.length < 2) return { current: '', recommended: '' }; const maxVal = Math.max(...history.map(h => Math.max(h.current_hosts ?? 0, h.recommended_hosts ?? 0)), 1); const step = 400 / (history.length - 1); let currentPath = ''; let recommendedPath = ''; history.forEach((h, i) => { const x = i * step; const yC = 75 - ((h.current_hosts ?? 0) / maxVal) * 70; const yR = 75 - ((h.recommended_hosts ?? 0) / maxVal) * 70; currentPath += (i === 0 ? 'M' : 'L') + x + ',' + yC; recommendedPath += (i === 0 ? 'M' : 'L') + x + ',' + yR; }); return { current: currentPath, recommended: recommendedPath }; } }">
-                                        <path :d="points().recommended" fill="none" stroke="#c7d2fe" stroke-width="2" stroke-dasharray="6,4" />
-                                        <path :d="points().current" fill="none" stroke="#6366f1" stroke-width="2.5" />
-                                    </svg>
-                                    <div class="flex items-center gap-4 mt-2">
-                                        <div class="flex items-center gap-1.5"><span class="h-0.5 w-4 bg-indigo-500 rounded"></span><span class="text-[10px] text-gray-500">Current Hosts</span></div>
-                                        <div class="flex items-center gap-1.5"><span class="h-0.5 w-4 bg-indigo-200 rounded" style="background: repeating-linear-gradient(90deg, #c7d2fe 0, #c7d2fe 4px, transparent 4px, transparent 8px)"></span><span class="text-[10px] text-gray-500">Recommended</span></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </template>
-
-                        {{-- Cluster Event Timeline (v3 only) --}}
-                        <template x-if="infrastructure.cluster?.has_cluster && ((infrastructure.cluster?.leader_history ?? []).length > 0 || (infrastructure.cluster?.manager_events ?? []).length > 0)">
-                            <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm overflow-hidden">
-                                <div class="px-5 py-4 border-b border-gray-100"><h4 class="text-sm font-semibold text-gray-900">Cluster Events</h4></div>
-                                <div class="max-h-64 overflow-y-auto custom-scroll divide-y divide-gray-50">
-                                    <template x-for="(evt, idx) in (infrastructure.cluster?.manager_events ?? [])" :key="'mgr-' + idx">
-                                        <div class="flex items-start gap-3 px-5 py-3 hover:bg-gray-50/60 transition-colors">
-                                            <div class="mt-1.5 flex-shrink-0"><span class="block h-2.5 w-2.5 rounded-full" :class="evt.event_type === 'manager_started' ? 'bg-emerald-500' : 'bg-red-400'"></span></div>
-                                            <div class="flex-1 min-w-0">
-                                                <div class="flex items-center gap-2 flex-wrap">
-                                                    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold" :class="evt.event_type === 'manager_started' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'" x-text="evt.event_type === 'manager_started' ? 'STARTED' : 'STOPPED'"></span>
-                                                    <span class="text-sm font-medium text-gray-900" x-text="evt.host ?? evt.manager_id"></span>
-                                                    <span x-show="evt.reason" class="text-[11px] text-gray-500" x-text="evt.reason"></span>
-                                                    <span x-show="evt.meta?.uptime_seconds" class="text-[10px] text-gray-400" x-text="'uptime: ' + Math.round((evt.meta?.uptime_seconds ?? 0) / 60) + 'm'"></span>
-                                                </div>
-                                            </div>
-                                            <div class="flex-shrink-0"><span class="text-[10px] text-gray-400" x-text="evt.time_human"></span></div>
-                                        </div>
-                                    </template>
-                                    <template x-for="(evt, idx) in (infrastructure.cluster?.leader_history ?? [])" :key="'ldr-' + idx">
-                                        <div class="flex items-start gap-3 px-5 py-3 hover:bg-gray-50/60 transition-colors">
-                                            <div class="mt-1.5 flex-shrink-0"><span class="block h-2.5 w-2.5 rounded-full bg-indigo-500"></span></div>
-                                            <div class="flex-1 min-w-0">
-                                                <div class="flex items-center gap-2 flex-wrap">
-                                                    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold bg-indigo-50 text-indigo-700">LEADER CHANGE</span>
-                                                    <span class="text-[11px] text-gray-500" x-text="(evt.previous_leader_id ?? '?') + ' → ' + (evt.leader_id ?? '?')"></span>
-                                                </div>
-                                            </div>
-                                            <div class="flex-shrink-0"><span class="text-[10px] text-gray-400" x-text="evt.time_human"></span></div>
-                                        </div>
-                                    </template>
-                                </div>
-                            </div>
-                        </template>
-
                         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                             <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm p-8 flex flex-col items-center justify-center">
                                 <div class="relative">
@@ -958,7 +854,6 @@
                                         </div>
                                         <div class="w-full bg-gray-100 rounded-full h-2"><div class="h-2 rounded-full transition-all duration-500" :class="sla.compliance >= 99 ? 'bg-emerald-500' : sla.compliance >= 95 ? 'bg-amber-500' : 'bg-red-500'" :style="'width: ' + sla.compliance + '%'"></div></div>
                                         <div x-show="sla.breached > 0" class="mt-1.5 text-[10px] text-red-500 font-semibold" x-text="sla.breached + ' breached'"></div>
-                                        <div x-show="infrastructure.scaling?.breach_severity" class="mt-1 text-[10px] text-red-400" x-text="'avg ' + (infrastructure.scaling?.breach_severity?.avg_breach_seconds ?? 0) + 's over · max ' + (infrastructure.scaling?.breach_severity?.max_breach_percentage ?? 0) + '% over'"></div>
                                     </div>
                                 </template>
                             </div>
@@ -967,13 +862,12 @@
                         {{-- Autoscale Activity --}}
                         <div x-show="infrastructure.scaling?.has_autoscale">
                                 <div class="mb-3"><h4 class="text-sm font-semibold text-gray-900">Autoscale Activity <span class="text-[11px] font-normal text-gray-400">(Last Hour)</span></h4></div>
-                                <div class="grid grid-cols-2 lg:grid-cols-6 gap-4 mb-4 stagger-in">
+                                <div class="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-4 stagger-in">
                                     <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm p-4"><div class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Total Decisions</div><div class="text-2xl font-bold text-gray-900 tabular-nums" x-text="infrastructure.scaling?.summary?.total_decisions ?? 0"></div></div>
                                     <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm p-4"><div class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Scale Ups</div><div class="text-2xl font-bold text-emerald-600 tabular-nums" x-text="infrastructure.scaling?.summary?.scale_ups ?? 0"></div></div>
                                     <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm p-4"><div class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Scale Downs</div><div class="text-2xl font-bold text-blue-600 tabular-nums" x-text="infrastructure.scaling?.summary?.scale_downs ?? 0"></div></div>
                                     <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm p-4"><div class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">SLA Breaches</div><div class="text-2xl font-bold tabular-nums" :class="(infrastructure.scaling?.summary?.sla_breaches ?? 0) > 0 ? 'text-red-600' : 'text-gray-900'" x-text="infrastructure.scaling?.summary?.sla_breaches ?? 0"></div></div>
                                     <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm p-4"><div class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">SLA Recoveries</div><div class="text-2xl font-bold text-emerald-600 tabular-nums" x-text="infrastructure.scaling?.summary?.sla_recoveries ?? 0"></div></div>
-                                    <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm p-4"><div class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">SLA Predictions</div><div class="text-2xl font-bold text-orange-600 tabular-nums" x-text="infrastructure.scaling?.summary?.sla_breach_predictions ?? 0"></div></div>
                                 </div>
                                 <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm overflow-hidden">
                                     <div class="px-5 py-4 border-b border-gray-100"><h4 class="text-sm font-semibold text-gray-900">Scaling Timeline</h4></div>
@@ -1023,6 +917,228 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </template>
+            </div>
+
+            {{-- ==================== AUTOSCALE TAB ==================== --}}
+            <div x-show="activeTab === 'autoscale'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0">
+                <template x-if="loading.autoscale">
+                    <div class="flex items-center justify-center py-16"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-brand"></div></div>
+                </template>
+                <template x-if="!loading.autoscale">
+                    <div class="space-y-6">
+
+                        {{-- Not Available State --}}
+                        <template x-if="!autoscale.available">
+                            <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm p-12 text-center">
+                                <svg class="h-12 w-12 text-gray-300 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7.5L7.5 3m0 0L12 7.5M7.5 3v13.5m13.5 0L16.5 21m0 0L12 16.5m4.5 4.5V7.5" /></svg>
+                                <h3 class="text-sm font-semibold text-gray-900 mb-1">No Autoscale Data</h3>
+                                <p class="text-sm text-gray-500">Install <code class="text-xs bg-gray-100 px-1.5 py-0.5 rounded">cboxdk/laravel-queue-autoscale</code> to enable autoscaling and cluster orchestration monitoring.</p>
+                            </div>
+                        </template>
+
+                        {{-- Cluster Topology Banner --}}
+                        <template x-if="autoscale.available && autoscale.cluster?.has_cluster">
+                            <div class="bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-200/80 rounded-xl shadow-sm overflow-hidden">
+                                <div class="px-5 py-4 border-b border-indigo-100/60">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center gap-2">
+                                            <div class="h-2 w-2 rounded-full bg-indigo-500 animate-pulse"></div>
+                                            <h4 class="text-sm font-semibold text-indigo-900">Cluster Topology</h4>
+                                            <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold bg-indigo-100 text-indigo-700" x-text="'v' + (autoscale.cluster?.autoscale_version ?? '3')"></span>
+                                        </div>
+                                        <span class="text-[10px] text-indigo-400" x-text="'Cluster: ' + (autoscale.cluster?.topology?.cluster_id ?? 'unknown')"></span>
+                                    </div>
+                                </div>
+                                <div class="p-5">
+                                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                                        <div>
+                                            <div class="text-[10px] font-bold text-indigo-400 uppercase tracking-wider mb-1">Leader</div>
+                                            <div class="text-sm font-semibold text-indigo-900 truncate" x-text="autoscale.cluster?.topology?.leader_id ?? 'electing...'"></div>
+                                        </div>
+                                        <div>
+                                            <div class="text-[10px] font-bold text-indigo-400 uppercase tracking-wider mb-1">Hosts</div>
+                                            <div class="flex items-baseline gap-1">
+                                                <span class="text-2xl font-bold tabular-nums" :class="(autoscale.cluster?.scaling_signal?.current_hosts ?? 0) >= (autoscale.cluster?.scaling_signal?.recommended_hosts ?? 1) ? 'text-emerald-600' : (autoscale.cluster?.scaling_signal?.current_hosts ?? 0) >= (autoscale.cluster?.scaling_signal?.recommended_hosts ?? 1) * 0.6 ? 'text-amber-600' : 'text-red-600'" x-text="autoscale.cluster?.scaling_signal?.current_hosts ?? autoscale.cluster?.topology?.host_count ?? 0"></span>
+                                                <span class="text-sm text-gray-400">/ <span x-text="autoscale.cluster?.scaling_signal?.recommended_hosts ?? '?'"></span> recommended</span>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div class="text-[10px] font-bold text-indigo-400 uppercase tracking-wider mb-1">Capacity</div>
+                                            <div class="text-sm text-gray-700"><span class="font-semibold" x-text="autoscale.cluster?.scaling_signal?.current_capacity ?? '-'"></span> workers <span class="text-gray-400">/ <span x-text="autoscale.cluster?.scaling_signal?.required_workers ?? '-'"></span> required</span></div>
+                                        </div>
+                                        <div>
+                                            <div class="text-[10px] font-bold text-indigo-400 uppercase tracking-wider mb-1">Action</div>
+                                            <div>
+                                                <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-bold" :class="{ 'bg-emerald-100 text-emerald-700': autoscale.cluster?.scaling_signal?.action === 'scale_up', 'bg-blue-100 text-blue-700': autoscale.cluster?.scaling_signal?.action === 'scale_down', 'bg-gray-100 text-gray-600': autoscale.cluster?.scaling_signal?.action === 'hold' || !autoscale.cluster?.scaling_signal?.action }" x-text="(autoscale.cluster?.scaling_signal?.action ?? 'hold').replace('_', ' ').toUpperCase()"></span>
+                                            </div>
+                                            <p class="text-[10px] text-gray-400 mt-0.5 truncate" x-text="autoscale.cluster?.scaling_signal?.reason ?? ''"></p>
+                                        </div>
+                                    </div>
+                                    <div class="mt-4 pt-3 border-t border-indigo-100/60" x-show="(autoscale.cluster?.topology?.active_managers ?? []).length > 0">
+                                        <div class="text-[10px] font-bold text-indigo-400 uppercase tracking-wider mb-2">Active Managers</div>
+                                        <div class="flex flex-wrap gap-1.5">
+                                            <template x-for="mgr in (autoscale.cluster?.topology?.active_managers ?? [])" :key="mgr.manager_id">
+                                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] rounded-md border" :class="mgr.manager_id === autoscale.cluster?.topology?.leader_id ? 'bg-indigo-100 border-indigo-300 text-indigo-800 font-semibold' : 'bg-white border-gray-200 text-gray-700'">
+                                                    <span x-show="mgr.manager_id === autoscale.cluster?.topology?.leader_id" class="text-[10px]" title="Leader">&#9733;</span>
+                                                    <span x-text="mgr.host ?? mgr.manager_id"></span>
+                                                </span>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+
+                        {{-- Scaling Stats Cards --}}
+                        <template x-if="autoscale.available">
+                            <div class="grid grid-cols-2 lg:grid-cols-6 gap-4 stagger-in">
+                                <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm p-4"><div class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Total Decisions</div><div class="text-2xl font-bold text-gray-900 tabular-nums" x-text="autoscale.scaling?.summary?.total_decisions ?? 0"></div></div>
+                                <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm p-4"><div class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Scale Ups</div><div class="text-2xl font-bold text-emerald-600 tabular-nums" x-text="autoscale.scaling?.summary?.scale_ups ?? 0"></div></div>
+                                <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm p-4"><div class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Scale Downs</div><div class="text-2xl font-bold text-blue-600 tabular-nums" x-text="autoscale.scaling?.summary?.scale_downs ?? 0"></div></div>
+                                <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm p-4"><div class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">SLA Breaches</div><div class="text-2xl font-bold text-red-600 tabular-nums" x-text="autoscale.scaling?.summary?.sla_breaches ?? 0"></div></div>
+                                <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm p-4"><div class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">SLA Recoveries</div><div class="text-2xl font-bold text-emerald-600 tabular-nums" x-text="autoscale.scaling?.summary?.sla_recoveries ?? 0"></div></div>
+                                <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm p-4"><div class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Predictions</div><div class="text-2xl font-bold text-orange-600 tabular-nums" x-text="autoscale.scaling?.summary?.sla_breach_predictions ?? 0"></div></div>
+                            </div>
+                        </template>
+
+                        {{-- SLA Compliance + Breach Severity --}}
+                        <template x-if="autoscale.available && (autoscale.sla?.per_queue || []).length > 0">
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm overflow-hidden">
+                                    <div class="px-5 py-4 border-b border-gray-100"><h4 class="text-sm font-semibold text-gray-900">SLA Compliance by Queue</h4></div>
+                                    <div class="divide-y divide-gray-50">
+                                        <template x-for="(sla, idx) in (autoscale.sla?.per_queue ?? [])" :key="'sla-q-' + idx">
+                                            <div class="px-5 py-3 flex items-center justify-between">
+                                                <div class="flex items-center gap-3 min-w-0">
+                                                    <span class="text-sm font-medium text-gray-900 truncate" x-text="sla.queue"></span>
+                                                    <span class="text-[10px] text-gray-400" x-text="sla.target + 's target'"></span>
+                                                </div>
+                                                <div class="flex items-center gap-3">
+                                                    <div class="w-24 bg-gray-100 rounded-full h-1.5">
+                                                        <div class="h-1.5 rounded-full transition-all duration-500" :class="sla.compliance >= 99 ? 'bg-emerald-500' : sla.compliance >= 95 ? 'bg-amber-500' : 'bg-red-500'" :style="'width: ' + Math.min(sla.compliance, 100) + '%'"></div>
+                                                    </div>
+                                                    <span class="text-sm font-bold tabular-nums w-14 text-right" :class="sla.compliance >= 99 ? 'text-emerald-600' : sla.compliance >= 95 ? 'text-amber-600' : 'text-red-600'" x-text="sla.compliance.toFixed(1) + '%'"></span>
+                                                    <span x-show="sla.breached > 0" class="text-[10px] text-red-500 font-semibold" x-text="sla.breached + ' breached'"></span>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                                <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm overflow-hidden" x-show="autoscale.scaling?.breach_severity">
+                                    <div class="px-5 py-4 border-b border-gray-100"><h4 class="text-sm font-semibold text-gray-900">Breach Severity <span class="text-[11px] font-normal text-gray-400">(Last Hour)</span></h4></div>
+                                    <div class="p-5 space-y-4">
+                                        <div>
+                                            <div class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Avg Breach Duration</div>
+                                            <div class="text-2xl font-bold text-red-600 tabular-nums"><span x-text="autoscale.scaling?.breach_severity?.avg_breach_seconds ?? 0"></span><span class="text-sm font-normal text-gray-400">s over SLA</span></div>
+                                        </div>
+                                        <div>
+                                            <div class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Max Breach %</div>
+                                            <div class="text-2xl font-bold text-red-600 tabular-nums"><span x-text="autoscale.scaling?.breach_severity?.max_breach_percentage ?? 0"></span><span class="text-sm font-normal text-gray-400">% over target</span></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+
+                        {{-- Host Scaling Trend (Sparkline) --}}
+                        <template x-if="autoscale.available && autoscale.cluster?.has_cluster && (autoscale.cluster?.signal_history ?? []).length > 1">
+                            <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm overflow-hidden">
+                                <div class="px-5 py-4 border-b border-gray-100">
+                                    <h4 class="text-sm font-semibold text-gray-900">Host Scaling Trend <span class="text-[11px] font-normal text-gray-400">(Last Hour)</span></h4>
+                                </div>
+                                <div class="p-5">
+                                    <svg class="w-full h-32" viewBox="0 0 400 100" preserveAspectRatio="none" x-data="{ points() { const history = autoscale.cluster?.signal_history ?? []; if (history.length < 2) return { current: '', recommended: '', area: '' }; const maxVal = Math.max(...history.map(h => Math.max(h.current_hosts ?? 0, h.recommended_hosts ?? 0)), 1); const step = 400 / (history.length - 1); let currentPath = ''; let recommendedPath = ''; let areaPath = ''; history.forEach((h, i) => { const x = i * step; const yC = 90 - ((h.current_hosts ?? 0) / maxVal) * 80; const yR = 90 - ((h.recommended_hosts ?? 0) / maxVal) * 80; currentPath += (i === 0 ? 'M' : 'L') + x + ',' + yC; recommendedPath += (i === 0 ? 'M' : 'L') + x + ',' + yR; areaPath += (i === 0 ? 'M' : 'L') + x + ',' + yC; }); areaPath += 'L400,90L0,90Z'; return { current: currentPath, recommended: recommendedPath, area: areaPath }; } }">
+                                        <path :d="points().area" fill="#eef2ff" opacity="0.5" />
+                                        <path :d="points().recommended" fill="none" stroke="#c7d2fe" stroke-width="2" stroke-dasharray="6,4" />
+                                        <path :d="points().current" fill="none" stroke="#6366f1" stroke-width="2.5" />
+                                    </svg>
+                                    <div class="flex items-center gap-6 mt-3">
+                                        <div class="flex items-center gap-1.5"><span class="h-0.5 w-5 bg-indigo-500 rounded"></span><span class="text-[11px] text-gray-600">Current Hosts</span></div>
+                                        <div class="flex items-center gap-1.5"><span class="h-0.5 w-5 bg-indigo-200 rounded" style="background: repeating-linear-gradient(90deg, #c7d2fe 0, #c7d2fe 4px, transparent 4px, transparent 8px)"></span><span class="text-[11px] text-gray-600">Recommended</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+
+                        {{-- Scaling Decision Timeline --}}
+                        <template x-if="autoscale.available && (autoscale.scaling?.history ?? []).length > 0">
+                            <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm overflow-hidden">
+                                <div class="px-5 py-4 border-b border-gray-100"><h4 class="text-sm font-semibold text-gray-900">Scaling Decisions <span class="text-[11px] font-normal text-gray-400">(Last Hour)</span></h4></div>
+                                <div class="max-h-80 overflow-y-auto custom-scroll divide-y divide-gray-50">
+                                    <template x-for="(event, idx) in (autoscale.scaling?.history ?? [])" :key="'as-ev-' + idx">
+                                        <div class="flex items-start gap-3 px-5 py-3 hover:bg-gray-50/60 transition-colors">
+                                            <div class="mt-1.5 flex-shrink-0"><span class="block h-2.5 w-2.5 rounded-full" :class="{ 'bg-emerald-500': event.action === 'scale_up', 'bg-blue-500': event.action === 'scale_down', 'bg-red-500': event.action === 'sla_breach', 'bg-emerald-400': event.action === 'sla_recovered', 'bg-orange-500': event.action === 'sla_breach_predicted', 'bg-gray-400': event.action === 'hold' }"></span></div>
+                                            <div class="flex-1 min-w-0">
+                                                <div class="flex items-center gap-2 flex-wrap">
+                                                    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold" :class="{ 'bg-emerald-50 text-emerald-700': event.action === 'scale_up', 'bg-blue-50 text-blue-700': event.action === 'scale_down', 'bg-red-50 text-red-700': event.action === 'sla_breach', 'bg-emerald-50 text-emerald-600': event.action === 'sla_recovered', 'bg-orange-50 text-orange-700': event.action === 'sla_breach_predicted', 'bg-gray-100 text-gray-600': event.action === 'hold' }" x-text="event.action.replace('_', ' ').toUpperCase()"></span>
+                                                    <span class="text-[11px] text-gray-500" x-text="event.queue"></span>
+                                                    <span class="text-[11px] font-medium text-gray-700" x-text="event.current_workers + ' → ' + event.target_workers + ' workers'"></span>
+                                                </div>
+                                                <p class="text-[11px] text-gray-400 mt-0.5 truncate" x-text="event.reason"></p>
+                                            </div>
+                                            <div class="flex-shrink-0"><span class="text-[10px] text-gray-400" x-text="event.time_human"></span></div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+
+                        {{-- Cluster Events (Leader Changes + Manager Lifecycle) --}}
+                        <template x-if="autoscale.available && autoscale.cluster?.has_cluster && ((autoscale.cluster?.leader_history ?? []).length > 0 || (autoscale.cluster?.manager_events ?? []).length > 0)">
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                {{-- Leader Election History --}}
+                                <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm overflow-hidden">
+                                    <div class="px-5 py-4 border-b border-gray-100"><h4 class="text-sm font-semibold text-gray-900">Leader Election History</h4></div>
+                                    <div class="max-h-64 overflow-y-auto custom-scroll divide-y divide-gray-50">
+                                        <template x-for="(evt, idx) in (autoscale.cluster?.leader_history ?? [])" :key="'as-ldr-' + idx">
+                                            <div class="flex items-start gap-3 px-5 py-3 hover:bg-gray-50/60 transition-colors">
+                                                <div class="mt-1.5 flex-shrink-0"><span class="block h-2.5 w-2.5 rounded-full bg-indigo-500"></span></div>
+                                                <div class="flex-1 min-w-0">
+                                                    <div class="flex items-center gap-2 flex-wrap">
+                                                        <span class="text-sm font-medium text-gray-900" x-text="evt.leader_id ?? '?'"></span>
+                                                        <span class="text-[10px] text-gray-400" x-text="'from ' + (evt.previous_leader_id ?? '?')"></span>
+                                                    </div>
+                                                    <p class="text-[10px] text-gray-400 mt-0.5" x-text="'Observed by: ' + (evt.observed_by ?? 'unknown')"></p>
+                                                </div>
+                                                <div class="flex-shrink-0"><span class="text-[10px] text-gray-400" x-text="evt.time_human"></span></div>
+                                            </div>
+                                        </template>
+                                        <template x-if="(autoscale.cluster?.leader_history ?? []).length === 0">
+                                            <div class="px-5 py-6 text-center text-[11px] text-gray-400">No leader changes in the last 24 hours</div>
+                                        </template>
+                                    </div>
+                                </div>
+                                {{-- Manager Lifecycle --}}
+                                <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm overflow-hidden">
+                                    <div class="px-5 py-4 border-b border-gray-100"><h4 class="text-sm font-semibold text-gray-900">Manager Lifecycle</h4></div>
+                                    <div class="max-h-64 overflow-y-auto custom-scroll divide-y divide-gray-50">
+                                        <template x-for="(evt, idx) in (autoscale.cluster?.manager_events ?? [])" :key="'as-mgr-' + idx">
+                                            <div class="flex items-start gap-3 px-5 py-3 hover:bg-gray-50/60 transition-colors">
+                                                <div class="mt-1.5 flex-shrink-0"><span class="block h-2.5 w-2.5 rounded-full" :class="evt.event_type === 'manager_started' ? 'bg-emerald-500' : 'bg-red-400'"></span></div>
+                                                <div class="flex-1 min-w-0">
+                                                    <div class="flex items-center gap-2 flex-wrap">
+                                                        <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold" :class="evt.event_type === 'manager_started' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'" x-text="evt.event_type === 'manager_started' ? 'STARTED' : 'STOPPED'"></span>
+                                                        <span class="text-sm font-medium text-gray-900" x-text="evt.host ?? evt.manager_id"></span>
+                                                    </div>
+                                                    <div class="flex items-center gap-3 mt-0.5">
+                                                        <span x-show="evt.reason" class="text-[10px] text-gray-500" x-text="evt.reason"></span>
+                                                        <span x-show="evt.meta?.uptime_seconds" class="text-[10px] text-gray-400" x-text="'uptime: ' + Math.round((evt.meta?.uptime_seconds ?? 0) / 60) + 'm'"></span>
+                                                        <span x-show="evt.meta?.worker_count" class="text-[10px] text-gray-400" x-text="evt.meta.worker_count + ' workers'"></span>
+                                                    </div>
+                                                </div>
+                                                <div class="flex-shrink-0"><span class="text-[10px] text-gray-400" x-text="evt.time_human"></span></div>
+                                            </div>
+                                        </template>
+                                        <template x-if="(autoscale.cluster?.manager_events ?? []).length === 0">
+                                            <div class="px-5 py-6 text-center text-[11px] text-gray-400">No manager events in the last 24 hours</div>
+                                        </template>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+
                     </div>
                 </template>
             </div>
@@ -1413,6 +1529,7 @@
                 analytics: {},
                 health: {},
                 infrastructure: {},
+                autoscale: {},
 
                 // Jobs tab state
                 filters: { search: '', statuses: [], queue: '', dateFrom: '', dateTo: '', showAdvanced: false, jobClass: '', server: '', minAttempts: '', minDuration: '' },
@@ -1424,7 +1541,7 @@
                 // Auto-refresh
                 refreshInterval: null,
                 isLive: true,
-                loading: { overview: true, jobs: false, analytics: false, health: false, infrastructure: false, detail: false },
+                loading: { overview: true, jobs: false, analytics: false, health: false, infrastructure: false, autoscale: false, detail: false },
                 error: null,
                 retryCount: 0,
                 maxRetries: 3,
@@ -1541,6 +1658,7 @@
                     else if (tab === 'analytics' && Object.keys(this.analytics).length === 0) this.fetchAnalytics();
                     else if (tab === 'health' && Object.keys(this.health).length === 0) this.fetchHealth();
                     else if (tab === 'infrastructure' && Object.keys(this.infrastructure).length === 0) this.fetchInfrastructure();
+                    else if (tab === 'autoscale' && Object.keys(this.autoscale).length === 0) this.fetchAutoscale();
                     this.$nextTick(() => {
                         if (tab === 'overview') this.initThroughputChart();
                         if (tab === 'analytics') this.initDistributionChart();
@@ -1665,6 +1783,11 @@
                 async fetchInfrastructure() {
                     if (Object.keys(this.infrastructure).length === 0) this.loading.infrastructure = true;
                     try { this.infrastructure = await this.fetchWithRetry('{{ route("queue-monitor.dashboard.infrastructure") }}'); } catch (e) { console.error('fetchInfrastructure error:', e); } finally { this.loading.infrastructure = false; }
+                },
+
+                async fetchAutoscale() {
+                    if (Object.keys(this.autoscale).length === 0) this.loading.autoscale = true;
+                    try { this.autoscale = await this.fetchWithRetry('{{ route("queue-monitor.dashboard.autoscale") }}'); } catch (e) { console.error('fetchAutoscale error:', e); } finally { this.loading.autoscale = false; }
                 },
 
                 // ========== ACTIONS ==========

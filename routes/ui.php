@@ -27,6 +27,7 @@ Route::prefix(config('queue-monitor.ui.route_prefix'))
         Route::get('/analytics', [DashboardMetricsController::class, 'analytics'])->name('queue-monitor.dashboard.analytics');
         Route::get('/health', [DashboardHealthController::class, 'health'])->name('queue-monitor.dashboard.health');
         Route::get('/infrastructure', [DashboardHealthController::class, 'infrastructure'])->name('queue-monitor.dashboard.infrastructure');
+        Route::get('/autoscale', [DashboardHealthController::class, 'autoscale'])->name('queue-monitor.dashboard.autoscale');
         Route::get('/drill-down', [DashboardDrillDownController::class, 'drillDown'])->name('queue-monitor.dashboard.drill-down');
         Route::get('/jobs/{uuid}/payload', [DashboardMetricsController::class, 'payload'])->name('queue-monitor.job.payload');
     });

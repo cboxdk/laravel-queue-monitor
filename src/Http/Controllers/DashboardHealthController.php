@@ -58,9 +58,25 @@ class DashboardHealthController extends Controller
             'sla' => $this->infrastructureService->getSlaData(),
             'scaling' => $this->infrastructureService->getScalingData(),
             'capacity' => $this->infrastructureService->getCapacityData(),
-            'cluster' => $this->infrastructureService->getClusterData(),
+            'autoscale_version' => $this->infrastructureService->detectAutoscaleVersion(),
         ];
 
         return response()->json($data);
+    }
+
+    /**
+     * Autoscale tab: cluster orchestration, scaling signals, leader election
+     */
+    public function autoscale(): JsonResponse
+    {
+        $scaling = $this->infrastructureService->getScalingData();
+        $cluster = $this->infrastructureService->getClusterData();
+
+        return response()->json([
+            'scaling' => $scaling,
+            'cluster' => $cluster,
+            'sla' => $this->infrastructureService->getSlaData(),
+            'available' => ($scaling['has_autoscale'] ?? false) || ($cluster['has_cluster'] ?? false),
+        ]);
     }
 }
