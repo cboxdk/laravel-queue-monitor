@@ -71,12 +71,14 @@ class DashboardHealthController extends Controller
     {
         $scaling = $this->infrastructureService->getScalingData();
         $cluster = $this->infrastructureService->getClusterData();
+        $live = $this->infrastructureService->getLiveClusterState();
 
         return response()->json([
             'scaling' => $scaling,
             'cluster' => $cluster,
+            'live' => $live,
             'sla' => $this->infrastructureService->getSlaData(),
-            'available' => ($scaling['has_autoscale'] ?? false) || ($cluster['has_cluster'] ?? false),
+            'available' => ($scaling['has_autoscale'] ?? false) || ($cluster['has_cluster'] ?? false) || $live !== null,
         ]);
     }
 }

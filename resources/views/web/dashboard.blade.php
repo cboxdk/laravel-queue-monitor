@@ -1003,6 +1003,155 @@
                             </div>
                         </template>
 
+                        {{-- Live Hosts Table --}}
+                        <template x-if="autoscale.live && (autoscale.live?.hosts ?? []).length > 0">
+                            <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm overflow-hidden">
+                                <div class="px-5 py-4 border-b border-gray-100">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center gap-2">
+                                            <h4 class="text-sm font-semibold text-gray-900">Hosts</h4>
+                                            <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold bg-emerald-50 text-emerald-700">LIVE</span>
+                                        </div>
+                                        <div class="flex items-center gap-3 text-[11px] text-gray-400">
+                                            <span><span class="font-semibold text-gray-700" x-text="autoscale.live?.total_workers ?? 0"></span> / <span x-text="autoscale.live?.total_worker_capacity ?? 0"></span> workers</span>
+                                            <span><span class="font-semibold" :class="(autoscale.live?.utilization_percent ?? 0) > 85 ? 'text-red-600' : (autoscale.live?.utilization_percent ?? 0) > 60 ? 'text-amber-600' : 'text-gray-700'" x-text="Math.round(autoscale.live?.utilization_percent ?? 0) + '%'"></span> utilization</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="overflow-x-auto">
+                                    <table class="min-w-full text-sm">
+                                        <thead>
+                                            <tr class="bg-gray-50/80 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                                                <th class="px-4 py-2.5 text-left">Host</th>
+                                                <th class="px-4 py-2.5 text-right">Workers</th>
+                                                <th class="px-4 py-2.5 text-left">CPU</th>
+                                                <th class="px-4 py-2.5 text-left">Memory</th>
+                                                <th class="px-4 py-2.5 text-left">Limiter</th>
+                                                <th class="px-4 py-2.5 text-left">Queues</th>
+                                                <th class="px-4 py-2.5 text-right">Seen</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-gray-50">
+                                            <template x-for="host in (autoscale.live?.hosts ?? [])" :key="host.manager_id">
+                                                <tr class="hover:bg-gray-50/60 transition-colors">
+                                                    <td class="px-4 py-2.5 whitespace-nowrap">
+                                                        <div class="flex items-center gap-2">
+                                                            <span x-show="host.is_leader" class="text-[10px] text-indigo-500" title="Leader">&#9733;</span>
+                                                            <span class="font-medium text-gray-900" x-text="host.host ?? host.manager_id"></span>
+                                                            <span x-show="host.is_leader" class="inline-flex items-center rounded-full px-1.5 py-0.5 text-[9px] font-bold bg-indigo-50 text-indigo-600">LEADER</span>
+                                                        </div>
+                                                        <div class="text-[10px] text-gray-400 mt-0.5" x-show="host.package_version" x-text="'v' + host.package_version"></div>
+                                                    </td>
+                                                    <td class="px-4 py-2.5 text-right whitespace-nowrap">
+                                                        <div class="flex items-center justify-end gap-2">
+                                                            <div class="w-16 bg-gray-100 rounded-full h-1.5">
+                                                                <div class="h-1.5 rounded-full transition-all" :class="host.max_workers > 0 && (host.total_workers / host.max_workers) > 0.85 ? 'bg-red-500' : (host.max_workers > 0 && (host.total_workers / host.max_workers) > 0.6) ? 'bg-amber-500' : 'bg-emerald-500'" :style="'width: ' + (host.max_workers > 0 ? Math.min(host.total_workers / host.max_workers * 100, 100) : 0) + '%'"></div>
+                                                            </div>
+                                                            <span class="font-semibold tabular-nums text-gray-900" x-text="host.total_workers"></span>
+                                                            <span class="text-gray-400">/</span>
+                                                            <span class="tabular-nums text-gray-500" x-text="host.max_workers"></span>
+                                                        </div>
+                                                        <div class="text-[10px] text-gray-400 mt-0.5 text-right" x-text="host.available_worker_capacity + ' available'"></div>
+                                                    </td>
+                                                    <td class="px-4 py-2.5 whitespace-nowrap">
+                                                        <div class="flex items-center gap-2">
+                                                            <div class="w-12 bg-gray-100 rounded-full h-1.5">
+                                                                <div class="h-1.5 rounded-full transition-all" :class="(host.cpu_percent ?? 0) > 85 ? 'bg-red-500' : (host.cpu_percent ?? 0) > 60 ? 'bg-amber-500' : 'bg-emerald-500'" :style="'width: ' + Math.min(host.cpu_percent ?? 0, 100) + '%'"></div>
+                                                            </div>
+                                                            <span class="tabular-nums font-medium" :class="(host.cpu_percent ?? 0) > 85 ? 'text-red-600' : (host.cpu_percent ?? 0) > 60 ? 'text-amber-600' : 'text-gray-700'" x-text="Math.round(host.cpu_percent ?? 0) + '%'"></span>
+                                                        </div>
+                                                    </td>
+                                                    <td class="px-4 py-2.5 whitespace-nowrap">
+                                                        <div class="flex items-center gap-2">
+                                                            <div class="w-12 bg-gray-100 rounded-full h-1.5">
+                                                                <div class="h-1.5 rounded-full transition-all" :class="(host.memory_percent ?? 0) > 85 ? 'bg-red-500' : (host.memory_percent ?? 0) > 60 ? 'bg-amber-500' : 'bg-emerald-500'" :style="'width: ' + Math.min(host.memory_percent ?? 0, 100) + '%'"></div>
+                                                            </div>
+                                                            <span class="tabular-nums font-medium" :class="(host.memory_percent ?? 0) > 85 ? 'text-red-600' : (host.memory_percent ?? 0) > 60 ? 'text-amber-600' : 'text-gray-700'" x-text="Math.round(host.memory_percent ?? 0) + '%'"></span>
+                                                        </div>
+                                                        <div class="text-[10px] text-gray-400 mt-0.5" x-text="Math.round(host.memory_used_mb ?? 0) + ' / ' + Math.round(host.memory_total_mb ?? 0) + ' MB'"></div>
+                                                    </td>
+                                                    <td class="px-4 py-2.5 whitespace-nowrap">
+                                                        <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold" :class="{ 'bg-blue-50 text-blue-700': host.capacity_limiter === 'cpu', 'bg-purple-50 text-purple-700': host.capacity_limiter === 'memory', 'bg-gray-100 text-gray-600': host.capacity_limiter === 'config' || !host.capacity_limiter }" x-text="(host.capacity_limiter ?? 'config').toUpperCase()"></span>
+                                                    </td>
+                                                    <td class="px-4 py-2.5">
+                                                        <div class="flex flex-wrap gap-1">
+                                                            <template x-for="(count, queue) in (host.queue_workers ?? {})" :key="queue">
+                                                                <span class="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] rounded bg-gray-50 border border-gray-100 text-gray-600"><span x-text="queue.split(':').pop()"></span><span class="font-bold text-gray-800" x-text="count"></span></span>
+                                                            </template>
+                                                        </div>
+                                                    </td>
+                                                    <td class="px-4 py-2.5 text-right whitespace-nowrap">
+                                                        <span class="text-[11px] text-gray-400" x-text="host.last_seen_human ?? '-'"></span>
+                                                    </td>
+                                                </tr>
+                                            </template>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </template>
+
+                        {{-- Workloads Table --}}
+                        <template x-if="autoscale.live && (autoscale.live?.workloads ?? []).length > 0">
+                            <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm overflow-hidden">
+                                <div class="px-5 py-4 border-b border-gray-100">
+                                    <h4 class="text-sm font-semibold text-gray-900">Workloads</h4>
+                                </div>
+                                <div class="overflow-x-auto">
+                                    <table class="min-w-full text-sm">
+                                        <thead>
+                                            <tr class="bg-gray-50/80 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                                                <th class="px-4 py-2.5 text-left">Queue</th>
+                                                <th class="px-4 py-2.5 text-right">Workers</th>
+                                                <th class="px-4 py-2.5 text-right">Pending</th>
+                                                <th class="px-4 py-2.5 text-right">Jobs/min</th>
+                                                <th class="px-4 py-2.5 text-right">Oldest Job</th>
+                                                <th class="px-4 py-2.5 text-right">SLA</th>
+                                                <th class="px-4 py-2.5 text-right">Utilization</th>
+                                                <th class="px-4 py-2.5 text-left">Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-gray-50">
+                                            <template x-for="(wl, idx) in (autoscale.live?.workloads ?? [])" :key="'wl-' + idx">
+                                                <tr class="hover:bg-gray-50/60 transition-colors">
+                                                    <td class="px-4 py-2.5 whitespace-nowrap">
+                                                        <div class="flex items-center gap-2">
+                                                            <span class="font-medium text-gray-900" x-text="wl.name"></span>
+                                                            <span class="text-[10px] text-gray-400" x-text="wl.connection"></span>
+                                                            <span x-show="wl.type === 'group'" class="inline-flex items-center rounded-full px-1.5 py-0.5 text-[9px] font-bold bg-violet-50 text-violet-600">GROUP</span>
+                                                        </div>
+                                                    </td>
+                                                    <td class="px-4 py-2.5 text-right whitespace-nowrap tabular-nums">
+                                                        <span class="font-semibold text-gray-900" x-text="wl.current_workers"></span>
+                                                        <span class="text-gray-400"> / </span>
+                                                        <span class="text-gray-500" x-text="wl.target_workers"></span>
+                                                        <div class="text-[10px] text-gray-400" x-text="wl.worker_min + '–' + wl.worker_max + ' range'"></div>
+                                                    </td>
+                                                    <td class="px-4 py-2.5 text-right whitespace-nowrap tabular-nums" :class="(wl.pending ?? 0) > 0 ? 'font-semibold text-amber-600' : 'text-gray-500'" x-text="wl.pending"></td>
+                                                    <td class="px-4 py-2.5 text-right whitespace-nowrap tabular-nums text-gray-700" x-text="(wl.throughput_per_minute ?? 0).toFixed(1)"></td>
+                                                    <td class="px-4 py-2.5 text-right whitespace-nowrap">
+                                                        <span class="tabular-nums font-medium" :class="{ 'text-red-600': wl.oldest_job_age_status === 'breached', 'text-amber-600': wl.oldest_job_age_status === 'warning', 'text-gray-700': wl.oldest_job_age_status === 'normal' }" x-text="(wl.oldest_job_age ?? 0) + 's'"></span>
+                                                    </td>
+                                                    <td class="px-4 py-2.5 text-right whitespace-nowrap tabular-nums text-gray-500" x-text="(wl.sla_target_seconds ?? '-') + 's'"></td>
+                                                    <td class="px-4 py-2.5 text-right whitespace-nowrap">
+                                                        <div class="flex items-center justify-end gap-2">
+                                                            <div class="w-12 bg-gray-100 rounded-full h-1.5">
+                                                                <div class="h-1.5 rounded-full transition-all" :class="(wl.utilization_percent ?? 0) > 85 ? 'bg-red-500' : (wl.utilization_percent ?? 0) > 60 ? 'bg-amber-500' : 'bg-emerald-500'" :style="'width: ' + Math.min(wl.utilization_percent ?? 0, 100) + '%'"></div>
+                                                            </div>
+                                                            <span class="tabular-nums font-medium text-gray-700" x-text="Math.round(wl.utilization_percent ?? 0) + '%'"></span>
+                                                        </div>
+                                                    </td>
+                                                    <td class="px-4 py-2.5 whitespace-nowrap">
+                                                        <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold" :class="{ 'bg-emerald-50 text-emerald-700': wl.action === 'scale_up', 'bg-blue-50 text-blue-700': wl.action === 'scale_down', 'bg-gray-100 text-gray-600': wl.action === 'hold' }" x-text="(wl.action ?? 'hold').replace('_', ' ').toUpperCase()"></span>
+                                                    </td>
+                                                </tr>
+                                            </template>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </template>
+
                         {{-- SLA Compliance + Breach Severity --}}
                         <template x-if="autoscale.available && (autoscale.sla?.per_queue || []).length > 0">
                             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
