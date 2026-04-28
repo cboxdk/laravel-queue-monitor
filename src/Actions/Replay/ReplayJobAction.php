@@ -43,22 +43,29 @@ final readonly class ReplayJobAction
             throw JobReplayException::payloadNotStored($uuid);
         }
 
-        // Dispatch job to original queue
-        $payloadJson = json_encode($payload);
+        // Build fresh payload with new identity so the job isn't deduplicated
+        $newUuid = Str::uuid()->toString();
+        $newId = Str::uuid()->toString();
+
+        /** @var array<string, mixed> $freshPayload */
+        $freshPayload = $payload;
+        $freshPayload['uuid'] = $newUuid;
+        $freshPayload['id'] = $newId;
+        $freshPayload['attempts'] = 0;
+
+        $payloadJson = json_encode($freshPayload);
 
         if ($payloadJson === false) {
             throw JobReplayException::invalidPayload($uuid);
         }
 
-        $newJobId = Queue::connection($jobMonitor->connection)
+        Queue::connection($jobMonitor->connection)
             ->pushRaw($payloadJson, $jobMonitor->queue);
-
-        $newUuid = Str::uuid()->toString();
 
         return new JobReplayData(
             originalUuid: $uuid,
             newUuid: $newUuid,
-            newJobId: is_string($newJobId) ? $newJobId : null,
+            newJobId: $newId,
             queue: $jobMonitor->queue,
             connection: $jobMonitor->connection,
             replayedAt: now(),
