@@ -1950,7 +1950,8 @@
                     if (!uuid) return;
                     this.confirmDelete = null;
                     try {
-                        await fetch(this.dashboardUrl + '/jobs/' + uuid, { method: 'DELETE', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' } });
+                        const res = await fetch(this.dashboardUrl + '/jobs/' + uuid + '/delete', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' } });
+                        if (!res.ok) { const err = await res.json().catch(() => ({})); this.error = err.message || 'Failed to delete job (HTTP ' + res.status + ')'; return; }
                         if (this.jobView) this.closeJobView();
                         if (this.activeTab === 'overview') this.fetchOverview();
                         if (this.activeTab === 'jobs') this.fetchJobs();

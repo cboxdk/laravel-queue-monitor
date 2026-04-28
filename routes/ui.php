@@ -37,7 +37,7 @@ Route::prefix(config('queue-monitor.ui.route_prefix'))
 
         // Dashboard actions (web middleware so auth/session works)
         Route::post('/jobs/{uuid}/replay', JobReplayController::class)->name('queue-monitor.dashboard.job.replay');
-        Route::delete('/jobs/{uuid}', [JobMonitorController::class, 'destroy'])->name('queue-monitor.dashboard.job.destroy');
+        Route::post('/jobs/{uuid}/delete', [JobMonitorController::class, 'destroy'])->name('queue-monitor.dashboard.job.destroy');
         Route::post('/batch/replay', [BatchOperationsController::class, 'batchReplay'])->name('queue-monitor.dashboard.batch.replay');
         Route::post('/batch/delete', [BatchOperationsController::class, 'batchDelete'])->name('queue-monitor.dashboard.batch.delete');
         Route::post('/stuck-jobs/resolve', [StuckJobController::class, 'resolve'])->name('queue-monitor.dashboard.stuck-jobs.resolve');
