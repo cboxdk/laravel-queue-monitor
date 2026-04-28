@@ -1851,6 +1851,15 @@
                         if (['jobs', 'analytics', 'health', 'infrastructure', 'autoscale'].includes(hash)) {
                             this.navigateTo(hash);
                         }
+
+                        // Restore filters from URL query params
+                        if (this.restoreFiltersFromUrl()) {
+                            // Switch to jobs tab if filters are present but we're not there yet
+                            if (this.activeTab !== 'jobs') {
+                                this.navigateTo('jobs');
+                            }
+                            this.fetchJobs();
+                        }
                     }
 
                     // Handle browser back/forward
@@ -1871,6 +1880,10 @@
                             this.jobView = null; this.jobDetail = null;
                             this.drillDown = null; this.drillDownData = null;
                             if (e.state?.tab) this.activeTab = e.state.tab;
+                            // Restore filters from URL on back/forward
+                            this.filters = { search: '', statuses: [], queue: '', dateFrom: '', dateTo: '', showAdvanced: false, jobClass: '', server: '', minAttempts: '', minDuration: '' };
+                            this.restoreFiltersFromUrl();
+                            if (this.activeTab === 'jobs') this.fetchJobs();
                         }
                     });
 
@@ -1927,7 +1940,8 @@
 
                 pushTabState(tab) {
                     const hash = tab === 'overview' ? '' : '#' + tab;
-                    history.pushState({ tab }, '', this.dashboardUrl + hash);
+                    const qs = window.location.search;
+                    history.pushState({ tab }, '', this.dashboardUrl + qs + hash);
                 },
 
                 openJobView(uuid, pushHistory = true) {
@@ -2210,21 +2224,73 @@
 
                 clearFilters() {
                     this.filters = { search: '', statuses: [], queue: '', dateFrom: '', dateTo: '', showAdvanced: false, jobClass: '', server: '', minAttempts: '', minDuration: '' };
+                    this.syncFiltersToUrl();
                     this.resetPaginationAndFetch();
                 },
 
-                resetPaginationAndFetch() { this.pagination.offset = 0; this.selectedJobs = []; this.fetchJobs(); },
+                resetPaginationAndFetch() { this.pagination.offset = 0; this.selectedJobs = []; this.syncFiltersToUrl(); this.fetchJobs(); },
 
                 toggleSort(field) {
                     if (this.sorting.field === field) this.sorting.direction = this.sorting.direction === 'asc' ? 'desc' : 'asc';
                     else { this.sorting.field = field; this.sorting.direction = 'desc'; }
+                    this.syncFiltersToUrl();
                     this.fetchJobs();
+                },
+
+                // ========== URL FILTER PERSISTENCE ==========
+
+                syncFiltersToUrl() {
+                    const params = new URLSearchParams();
+                    if (this.filters.search) params.set('search', this.filters.search);
+                    this.filters.statuses.forEach(s => params.append('status', s));
+                    if (this.filters.queue) params.set('queue', this.filters.queue);
+                    if (this.filters.dateFrom) params.set('from', this.filters.dateFrom);
+                    if (this.filters.dateTo) params.set('to', this.filters.dateTo);
+                    if (this.filters.jobClass) params.set('class', this.filters.jobClass);
+                    if (this.filters.server) params.set('server', this.filters.server);
+                    if (this.filters.minAttempts) params.set('attempts', this.filters.minAttempts);
+                    if (this.filters.minDuration) params.set('duration', this.filters.minDuration);
+                    if (this.sorting.field !== 'queued_at') params.set('sort', this.sorting.field);
+                    if (this.sorting.direction !== 'desc') params.set('dir', this.sorting.direction);
+                    if (this.pagination.offset > 0) params.set('offset', this.pagination.offset);
+
+                    const hash = this.activeTab === 'overview' ? '' : '#' + this.activeTab;
+                    const qs = params.toString();
+                    const url = this.dashboardUrl + (qs ? '?' + qs : '') + hash;
+                    history.replaceState({ tab: this.activeTab, filters: true }, '', url);
+                },
+
+                restoreFiltersFromUrl() {
+                    const params = new URLSearchParams(window.location.search);
+                    if (!params.toString()) return false;
+
+                    let restored = false;
+                    if (params.has('search')) { this.filters.search = params.get('search'); restored = true; }
+                    const statuses = params.getAll('status');
+                    if (statuses.length > 0) { this.filters.statuses = statuses; restored = true; }
+                    if (params.has('queue')) { this.filters.queue = params.get('queue'); restored = true; }
+                    if (params.has('from')) { this.filters.dateFrom = params.get('from'); restored = true; }
+                    if (params.has('to')) { this.filters.dateTo = params.get('to'); restored = true; }
+                    if (params.has('class')) { this.filters.jobClass = params.get('class'); restored = true; }
+                    if (params.has('server')) { this.filters.server = params.get('server'); restored = true; }
+                    if (params.has('attempts')) { this.filters.minAttempts = params.get('attempts'); restored = true; }
+                    if (params.has('duration')) { this.filters.minDuration = params.get('duration'); restored = true; }
+                    if (params.has('sort')) { this.sorting.field = params.get('sort'); restored = true; }
+                    if (params.has('dir')) { this.sorting.direction = params.get('dir'); restored = true; }
+                    if (params.has('offset')) { this.pagination.offset = parseInt(params.get('offset')) || 0; restored = true; }
+
+                    // Show advanced filters panel if any advanced filter is active
+                    if (this.filters.jobClass || this.filters.server || this.filters.minAttempts || this.filters.minDuration) {
+                        this.filters.showAdvanced = true;
+                    }
+
+                    return restored;
                 },
 
                 sortIndicator(field) { if (this.sorting.field !== field) return ''; return this.sorting.direction === 'asc' ? '\u2191' : '\u2193'; },
                 toggleAllJobs(event) { this.selectedJobs = event.target.checked ? this.jobs.data.map(j => j.uuid) : []; },
-                prevPage() { this.pagination.offset = Math.max(0, this.pagination.offset - this.pagination.limit); this.selectedJobs = []; this.fetchJobs(); },
-                nextPage() { this.pagination.offset += this.pagination.limit; this.selectedJobs = []; this.fetchJobs(); },
+                prevPage() { this.pagination.offset = Math.max(0, this.pagination.offset - this.pagination.limit); this.selectedJobs = []; this.syncFiltersToUrl(); this.fetchJobs(); },
+                nextPage() { this.pagination.offset += this.pagination.limit; this.selectedJobs = []; this.syncFiltersToUrl(); this.fetchJobs(); },
 
                 // ========== CHARTS ==========
 
