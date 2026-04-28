@@ -50,6 +50,7 @@ class ScalingEvent extends Model
         'margin_percentage',
         'pending',
         'active_workers',
+        'created_at',
     ];
 
     /**
