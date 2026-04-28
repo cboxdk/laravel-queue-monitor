@@ -1938,8 +1938,7 @@
                 async replayJob(uuid) {
                     if (!uuid) return;
                     try {
-                        const apiBase = '{{ config("queue-monitor.api.prefix", "api/queue-monitor") }}';
-                        await fetch(`/${apiBase}/jobs/${uuid}/replay`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' } });
+                        await fetch(this.dashboardUrl + '/jobs/' + uuid + '/replay', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' } });
                         if (this.activeTab === 'overview') this.fetchOverview();
                         if (this.activeTab === 'jobs') this.fetchJobs();
                     } catch (e) { this.error = 'Failed to replay job'; console.error('replayJob error:', e); }
@@ -1962,8 +1961,7 @@
                 async batchReplay() {
                     if (this.selectedJobs.length === 0) return;
                     try {
-                        const apiBase = '{{ config("queue-monitor.api.prefix", "api/queue-monitor") }}';
-                        await fetch(`/${apiBase}/batch/replay`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' }, body: JSON.stringify({ uuids: this.selectedJobs }) });
+                        await fetch(this.dashboardUrl + '/batch/replay', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' }, body: JSON.stringify({ uuids: this.selectedJobs }) });
                         this.selectedJobs = []; this.fetchJobs();
                     } catch (e) { this.error = 'Failed to replay jobs'; console.error('batchReplay error:', e); }
                 },

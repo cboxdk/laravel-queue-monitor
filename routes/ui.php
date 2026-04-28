@@ -1,9 +1,11 @@
 <?php
 
+use Cbox\LaravelQueueMonitor\Http\Controllers\BatchOperationsController;
 use Cbox\LaravelQueueMonitor\Http\Controllers\DashboardController;
 use Cbox\LaravelQueueMonitor\Http\Controllers\DashboardDrillDownController;
 use Cbox\LaravelQueueMonitor\Http\Controllers\DashboardHealthController;
 use Cbox\LaravelQueueMonitor\Http\Controllers\DashboardMetricsController;
+use Cbox\LaravelQueueMonitor\Http\Controllers\JobReplayController;
 use Cbox\LaravelQueueMonitor\Http\Middleware\EnsureQueueMonitorEnabled;
 use Illuminate\Support\Facades\Route;
 
@@ -30,4 +32,8 @@ Route::prefix(config('queue-monitor.ui.route_prefix'))
         Route::get('/autoscale', [DashboardHealthController::class, 'autoscale'])->name('queue-monitor.dashboard.autoscale');
         Route::get('/drill-down', [DashboardDrillDownController::class, 'drillDown'])->name('queue-monitor.dashboard.drill-down');
         Route::get('/jobs/{uuid}/payload', [DashboardMetricsController::class, 'payload'])->name('queue-monitor.job.payload');
+
+        // Dashboard actions (POST via web middleware so auth/session works)
+        Route::post('/jobs/{uuid}/replay', JobReplayController::class)->name('queue-monitor.dashboard.job.replay');
+        Route::post('/batch/replay', [BatchOperationsController::class, 'batchReplay'])->name('queue-monitor.dashboard.batch.replay');
     });
