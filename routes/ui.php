@@ -13,7 +13,7 @@ Route::prefix(config('queue-monitor.ui.route_prefix'))
         [EnsureQueueMonitorEnabled::class.':ui']
     ))
     ->group(function () {
-        // Dashboard (tabs use #hash fragments: #jobs, #analytics, #health, #infrastructure)
+        // Dashboard (tabs use #hash fragments: #jobs, #analytics, #health, #infrastructure, #autoscale)
         Route::get('/', [DashboardController::class, 'index'])->name('queue-monitor.dashboard');
 
         // Deep-link views (hard-refreshable)

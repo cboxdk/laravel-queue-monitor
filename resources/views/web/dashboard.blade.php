@@ -135,8 +135,9 @@
         <nav class="bg-white/95 backdrop-blur-sm border-b border-gray-200/80">
             <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex gap-0 overflow-x-auto" role="tablist">
-                    <template x-for="tab in [{id:'overview',label:'Overview',icon:'chart'},{id:'jobs',label:'Jobs',icon:'list'},{id:'analytics',label:'Analytics',icon:'pie'},{id:'health',label:'Health',icon:'heart'},{id:'infrastructure',label:'Infrastructure',icon:'server'},{id:'autoscale',label:'Autoscale',icon:'scale'}]" :key="tab.id">
+                    <template x-for="tab in [{id:'overview',label:'Overview',icon:'chart'},{id:'jobs',label:'Jobs',icon:'list'},{id:'analytics',label:'Analytics',icon:'pie'},{id:'health',label:'Health',icon:'heart'},{id:'autoscale',label:'Autoscale',icon:'scale'},{id:'infrastructure',label:'Horizon',icon:'server',horizon:true}]" :key="tab.id">
                         <button @click="navigateTo(tab.id)" role="tab"
+                                x-show="!tab.horizon || horizonAvailable"
                                 :aria-selected="activeTab === tab.id"
                                 class="relative flex items-center gap-2 px-5 py-3 text-sm font-medium whitespace-nowrap transition-colors border-b-2"
                                 :class="activeTab === tab.id ? 'text-brand border-brand' : 'text-gray-500 border-transparent hover:text-gray-700 hover:border-gray-300'">
@@ -710,7 +711,7 @@
             {{-- ==================== INFRASTRUCTURE TAB ==================== --}}
             <div x-show="activeTab === 'infrastructure'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0">
                 <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-sm font-semibold text-gray-900">Infrastructure</h3>
+                    <h3 class="text-sm font-semibold text-gray-900">Horizon</h3>
                     <button @click="fetchInfrastructure()" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition">
                         <svg class="h-3.5 w-3.5" :class="loading.infrastructure && 'animate-spin'" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" /></svg>
                         Refresh
@@ -1655,6 +1656,7 @@
                 health: {},
                 infrastructure: {},
                 autoscale: {},
+                horizonAvailable: false,
                 autoscaleAutoRefresh: false,
                 autoscaleRefreshInterval: null,
 
@@ -1854,6 +1856,7 @@
                         this.overview.charts = data.charts || {};
                         const queueNames = (data.queues || []).map(q => q.queue);
                         if (queueNames.length > this.availableQueues.length) this.availableQueues = queueNames;
+                        if (data.horizon_available !== undefined) this.horizonAvailable = data.horizon_available;
                         this.loading.overview = false;
                         this.$nextTick(() => { this.initThroughputChart(); this.updateThroughputChart(data.charts?.throughput); });
                     } catch (e) { this.loading.overview = false; console.error('fetchOverview error:', e); }
