@@ -60,6 +60,7 @@ class DashboardHealthController extends Controller
                 'utilization' => $this->infrastructureService->getScalingData()['utilization'] ?? [],
             ],
             'capacity' => $this->infrastructureService->getCapacityData(),
+            'cluster' => $this->infrastructureService->getClusterData(),
         ];
 
         return response()->json($data);
