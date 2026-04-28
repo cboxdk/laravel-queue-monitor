@@ -859,43 +859,6 @@
                             </div>
                         </div>
 
-                        {{-- Autoscale Activity --}}
-                        <div x-show="infrastructure.scaling?.has_autoscale">
-                                <div class="mb-3"><h4 class="text-sm font-semibold text-gray-900">Autoscale Activity <span class="text-[11px] font-normal text-gray-400">(Last Hour)</span></h4></div>
-                                <div class="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-4 stagger-in">
-                                    <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm p-4"><div class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Total Decisions</div><div class="text-2xl font-bold text-gray-900 tabular-nums" x-text="infrastructure.scaling?.summary?.total_decisions ?? 0"></div></div>
-                                    <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm p-4"><div class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Scale Ups</div><div class="text-2xl font-bold text-emerald-600 tabular-nums" x-text="infrastructure.scaling?.summary?.scale_ups ?? 0"></div></div>
-                                    <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm p-4"><div class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Scale Downs</div><div class="text-2xl font-bold text-blue-600 tabular-nums" x-text="infrastructure.scaling?.summary?.scale_downs ?? 0"></div></div>
-                                    <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm p-4"><div class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">SLA Breaches</div><div class="text-2xl font-bold tabular-nums" :class="(infrastructure.scaling?.summary?.sla_breaches ?? 0) > 0 ? 'text-red-600' : 'text-gray-900'" x-text="infrastructure.scaling?.summary?.sla_breaches ?? 0"></div></div>
-                                    <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm p-4"><div class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">SLA Recoveries</div><div class="text-2xl font-bold text-emerald-600 tabular-nums" x-text="infrastructure.scaling?.summary?.sla_recoveries ?? 0"></div></div>
-                                </div>
-                                <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm overflow-hidden">
-                                    <div class="px-5 py-4 border-b border-gray-100"><h4 class="text-sm font-semibold text-gray-900">Scaling Timeline</h4></div>
-                                    <div class="max-h-96 overflow-y-auto custom-scroll divide-y divide-gray-50">
-                                        <template x-for="(event, idx) in (infrastructure.scaling?.history || [])" :key="idx">
-                                            <div class="flex items-start gap-3 px-5 py-3 hover:bg-gray-50/60 transition-colors">
-                                                <div class="mt-1.5 flex-shrink-0"><span class="block h-2.5 w-2.5 rounded-full" :class="{ 'bg-emerald-500': event.action === 'scale_up', 'bg-blue-500': event.action === 'scale_down', 'bg-red-500': event.action === 'sla_breach', 'bg-emerald-400': event.action === 'sla_recovered', 'bg-orange-500': event.action === 'sla_breach_predicted', 'bg-gray-400': event.action === 'hold' }"></span></div>
-                                                <div class="flex-1 min-w-0">
-                                                    <div class="flex items-center gap-2 flex-wrap">
-                                                        <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold" :class="{ 'bg-emerald-50 text-emerald-700': event.action === 'scale_up', 'bg-blue-50 text-blue-700': event.action === 'scale_down', 'bg-red-50 text-red-700': event.action === 'sla_breach', 'bg-emerald-50 text-emerald-600': event.action === 'sla_recovered', 'bg-orange-50 text-orange-700': event.action === 'sla_breach_predicted', 'bg-gray-100 text-gray-600': event.action === 'hold' }" x-text="event.action.replace('_', ' ').toUpperCase()"></span>
-                                                        <span class="text-sm font-medium text-gray-900" x-text="event.queue"></span>
-                                                        <span x-show="event.current_workers !== event.target_workers" class="text-[11px] text-gray-500" x-text="event.current_workers + ' -> ' + event.target_workers + ' workers'"></span>
-                                                        <span x-show="event.sla_breach_risk" class="inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-bold bg-red-100 text-red-700">SLA Risk</span>
-                                                    </div>
-                                                    <p class="text-[11px] text-gray-500 mt-0.5 truncate" x-text="event.reason"></p>
-                                                </div>
-                                                <div class="flex-shrink-0 text-right"><span class="text-[10px] text-gray-400" x-text="event.time_human"></span></div>
-                                            </div>
-                                        </template>
-                                    </div>
-                                    <div x-show="(infrastructure.scaling?.history || []).length === 0" class="py-10 text-center">
-                                        <div class="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-gray-100 mb-2"><svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7.5L7.5 3m0 0L12 7.5M7.5 3v13.5m13.5-3L16.5 18m0 0L12 13.5m4.5 4.5V4.5" /></svg></div>
-                                        <p class="text-sm text-gray-400">No scaling events recorded</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
                         {{-- Horizon Workload --}}
                         <div x-show="infrastructure.workers?.available && (infrastructure.workers?.workload || []).length > 0" class="bg-white border border-gray-200/80 rounded-xl shadow-sm overflow-hidden">
                                 <div class="px-5 py-4 border-b border-gray-100"><h4 class="text-sm font-semibold text-gray-900">Horizon Workload</h4></div>
@@ -1219,26 +1182,6 @@
                                             <div class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Max Breach %</div>
                                             <div class="text-2xl font-bold text-red-600 tabular-nums"><span x-text="autoscale.scaling?.breach_severity?.max_breach_percentage ?? 0"></span><span class="text-sm font-normal text-gray-400">% over target</span></div>
                                         </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </template>
-
-                        {{-- Host Scaling Trend (Sparkline) --}}
-                        <template x-if="autoscale.available && autoscale.cluster?.has_cluster && (autoscale.cluster?.signal_history ?? []).length > 1">
-                            <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm overflow-hidden">
-                                <div class="px-5 py-4 border-b border-gray-100">
-                                    <h4 class="text-sm font-semibold text-gray-900">Host Scaling Trend <span class="text-[11px] font-normal text-gray-400">(Last Hour)</span></h4>
-                                </div>
-                                <div class="p-5">
-                                    <svg class="w-full h-32" viewBox="0 0 400 100" preserveAspectRatio="none" x-data="{ points() { const history = autoscale.cluster?.signal_history ?? []; if (history.length < 2) return { current: '', recommended: '', area: '' }; const maxVal = Math.max(...history.map(h => Math.max(h.current_hosts ?? 0, h.recommended_hosts ?? 0)), 1); const step = 400 / (history.length - 1); let currentPath = ''; let recommendedPath = ''; let areaPath = ''; history.forEach((h, i) => { const x = i * step; const yC = 90 - ((h.current_hosts ?? 0) / maxVal) * 80; const yR = 90 - ((h.recommended_hosts ?? 0) / maxVal) * 80; currentPath += (i === 0 ? 'M' : 'L') + x + ',' + yC; recommendedPath += (i === 0 ? 'M' : 'L') + x + ',' + yR; areaPath += (i === 0 ? 'M' : 'L') + x + ',' + yC; }); areaPath += 'L400,90L0,90Z'; return { current: currentPath, recommended: recommendedPath, area: areaPath }; } }">
-                                        <path :d="points().area" fill="#eef2ff" opacity="0.5" />
-                                        <path :d="points().recommended" fill="none" stroke="#c7d2fe" stroke-width="2" stroke-dasharray="6,4" />
-                                        <path :d="points().current" fill="none" stroke="#6366f1" stroke-width="2.5" />
-                                    </svg>
-                                    <div class="flex items-center gap-6 mt-3">
-                                        <div class="flex items-center gap-1.5"><span class="h-0.5 w-5 bg-indigo-500 rounded"></span><span class="text-[11px] text-gray-600">Current Hosts</span></div>
-                                        <div class="flex items-center gap-1.5"><span class="h-0.5 w-5 bg-indigo-200 rounded" style="background: repeating-linear-gradient(90deg, #c7d2fe 0, #c7d2fe 4px, transparent 4px, transparent 8px)"></span><span class="text-[11px] text-gray-600">Recommended</span></div>
                                     </div>
                                 </div>
                             </div>

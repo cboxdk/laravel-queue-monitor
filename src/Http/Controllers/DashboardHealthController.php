@@ -56,9 +56,10 @@ class DashboardHealthController extends Controller
             'worker_types' => $this->infrastructureService->getWorkerTypeBreakdown(),
             'queues' => $this->infrastructureService->getQueueInfraData(),
             'sla' => $this->infrastructureService->getSlaData(),
-            'scaling' => $this->infrastructureService->getScalingData(),
+            'scaling' => [
+                'utilization' => $this->infrastructureService->getScalingData()['utilization'] ?? [],
+            ],
             'capacity' => $this->infrastructureService->getCapacityData(),
-            'autoscale_version' => $this->infrastructureService->detectAutoscaleVersion(),
         ];
 
         return response()->json($data);
