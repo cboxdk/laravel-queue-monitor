@@ -1746,7 +1746,7 @@
                     } else {
                         // Restore tab from hash fragment (#jobs, #analytics, etc.)
                         const hash = window.location.hash.replace('#', '');
-                        if (['jobs', 'analytics', 'health', 'infrastructure'].includes(hash)) {
+                        if (['jobs', 'analytics', 'health', 'infrastructure', 'autoscale'].includes(hash)) {
                             this.navigateTo(hash);
                         }
                     }
