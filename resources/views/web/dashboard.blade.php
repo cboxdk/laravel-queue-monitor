@@ -1785,7 +1785,7 @@
                     this.activeTab = tab;
                     this.pushTabState(tab);
                     if (tab === 'overview' && !this.overview.stats.total && this.overview.stats.total !== 0) this.fetchOverview();
-                    else if (tab === 'jobs' && this.jobs.data.length === 0) this.fetchJobs();
+                    else if (tab === 'jobs' && this.jobs.data.length === 0 && !this.hasActiveFilters()) this.fetchJobs();
                     else if (tab === 'analytics' && Object.keys(this.analytics).length === 0) this.fetchAnalytics();
                     else if (tab === 'health' && Object.keys(this.health).length === 0) this.fetchHealth();
                     else if (tab === 'infrastructure' && Object.keys(this.infrastructure).length === 0) this.fetchInfrastructure();
@@ -2026,19 +2026,23 @@
 
                 drillDownToJobs(type, value) {
                     this.closeDrillDown();
-                    this.activeTab = 'jobs';
-                    this.clearFilters();
+                    // Reset filters without fetching (avoid race condition)
+                    this.filters = { search: '', statuses: [], queue: '', dateFrom: '', dateTo: '', showAdvanced: false, jobClass: '', server: '', minAttempts: '', minDuration: '' };
+                    this.pagination.offset = 0;
+                    this.selectedJobs = [];
                     if (type === 'queue') this.filters.queue = value;
                     if (type === 'server') this.filters.server = value;
                     if (type === 'job_class') this.filters.jobClass = value;
+                    this.navigateTo('jobs');
                     this.$nextTick(() => this.fetchJobs());
                 },
 
                 filterJobsByException(exceptionClass) {
-                    this.activeTab = 'jobs';
-                    this.clearFilters();
-                    this.filters.search = this.shortClass(exceptionClass);
-                    this.filters.statuses = ['failed', 'timeout'];
+                    // Reset filters without fetching (avoid race condition)
+                    this.filters = { search: exceptionClass, statuses: ['failed', 'timeout'], queue: '', dateFrom: '', dateTo: '', showAdvanced: false, jobClass: '', server: '', minAttempts: '', minDuration: '' };
+                    this.pagination.offset = 0;
+                    this.selectedJobs = [];
+                    this.navigateTo('jobs');
                     this.$nextTick(() => this.fetchJobs());
                 },
 
