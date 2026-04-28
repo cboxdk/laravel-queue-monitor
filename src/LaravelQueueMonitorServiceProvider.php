@@ -36,6 +36,7 @@ class LaravelQueueMonitorServiceProvider extends PackageServiceProvider
             ->name('laravel-queue-monitor')
             ->hasConfigFile('queue-monitor')
             ->hasMigration('create_queue_monitor_jobs_table')
+            ->hasMigration('add_autoscale_v3_support')
             ->hasViews()
             ->hasCommands([
                 LaravelQueueMonitorCommand::class,
@@ -53,9 +54,6 @@ class LaravelQueueMonitorServiceProvider extends PackageServiceProvider
 
     public function packageBooted(): void
     {
-        // Explicitly load migrations from the package
-        $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
-
         // Order matters: repositories and actions must be bound before event listeners
         // because listeners depend on action classes which depend on repositories
         $this->registerRepositories();
