@@ -923,6 +923,22 @@
 
             {{-- ==================== AUTOSCALE TAB ==================== --}}
             <div x-show="activeTab === 'autoscale'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-sm font-semibold text-gray-900">Autoscale</h3>
+                    <div class="flex items-center gap-2">
+                        <template x-if="autoscaleAutoRefresh">
+                            <span class="text-[10px] text-emerald-600 font-medium">Auto-refreshing every 5s</span>
+                        </template>
+                        <button @click="autoscaleAutoRefresh = !autoscaleAutoRefresh; if (autoscaleAutoRefresh) startAutoscaleAutoRefresh(); else stopAutoscaleAutoRefresh();" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium border rounded-lg transition" :class="autoscaleAutoRefresh ? 'text-emerald-700 bg-emerald-50 border-emerald-200 hover:bg-emerald-100' : 'text-gray-600 bg-white border-gray-200 hover:bg-gray-50'">
+                            <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M5.636 18.364a9 9 0 010-12.728m12.728 0a9 9 0 010 12.728M12 12h.008v.008H12V12zm-3 0a3 3 0 116 0 3 3 0 01-6 0z" /></svg>
+                            <span x-text="autoscaleAutoRefresh ? 'Live' : 'Auto'"></span>
+                        </button>
+                        <button @click="fetchAutoscale()" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition">
+                            <svg class="h-3.5 w-3.5" :class="loading.autoscale && 'animate-spin'" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" /></svg>
+                            Refresh
+                        </button>
+                    </div>
+                </div>
                 <template x-if="loading.autoscale">
                     <div class="flex items-center justify-center py-16"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-brand"></div></div>
                 </template>
@@ -974,17 +990,6 @@
                                                 <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-bold" :class="{ 'bg-emerald-100 text-emerald-700': autoscale.cluster?.scaling_signal?.action === 'scale_up', 'bg-blue-100 text-blue-700': autoscale.cluster?.scaling_signal?.action === 'scale_down', 'bg-gray-100 text-gray-600': autoscale.cluster?.scaling_signal?.action === 'hold' || !autoscale.cluster?.scaling_signal?.action }" x-text="(autoscale.cluster?.scaling_signal?.action ?? 'hold').replace('_', ' ').toUpperCase()"></span>
                                             </div>
                                             <p class="text-[10px] text-gray-400 mt-0.5 truncate" x-text="autoscale.cluster?.scaling_signal?.reason ?? ''"></p>
-                                        </div>
-                                    </div>
-                                    <div class="mt-4 pt-3 border-t border-indigo-100/60" x-show="(autoscale.cluster?.topology?.active_managers ?? []).length > 0">
-                                        <div class="text-[10px] font-bold text-indigo-400 uppercase tracking-wider mb-2">Active Managers</div>
-                                        <div class="flex flex-wrap gap-1.5">
-                                            <template x-for="mgr in (autoscale.cluster?.topology?.active_managers ?? [])" :key="mgr.manager_id">
-                                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] rounded-md border" :class="mgr.manager_id === autoscale.cluster?.topology?.leader_id ? 'bg-indigo-100 border-indigo-300 text-indigo-800 font-semibold' : 'bg-white border-gray-200 text-gray-700'">
-                                                    <span x-show="mgr.manager_id === autoscale.cluster?.topology?.leader_id" class="text-[10px]" title="Leader">&#9733;</span>
-                                                    <span x-text="mgr.host ?? mgr.manager_id"></span>
-                                                </span>
-                                            </template>
                                         </div>
                                     </div>
                                 </div>
@@ -1679,6 +1684,8 @@
                 health: {},
                 infrastructure: {},
                 autoscale: {},
+                autoscaleAutoRefresh: false,
+                autoscaleRefreshInterval: null,
 
                 // Jobs tab state
                 filters: { search: '', statuses: [], queue: '', dateFrom: '', dateTo: '', showAdvanced: false, jobClass: '', server: '', minAttempts: '', minDuration: '' },
@@ -1800,6 +1807,8 @@
                         this.drillDownChart = null;
                         this.drillDown = null; this.drillDownData = null;
                     }
+                    // Stop autoscale auto-refresh when leaving the tab
+                    if (this.activeTab === 'autoscale' && tab !== 'autoscale') { this.autoscaleAutoRefresh = false; this.stopAutoscaleAutoRefresh(); }
                     this.activeTab = tab;
                     this.pushTabState(tab);
                     if (tab === 'overview' && !this.overview.stats.total && this.overview.stats.total !== 0) this.fetchOverview();
@@ -1937,6 +1946,17 @@
                 async fetchAutoscale() {
                     if (Object.keys(this.autoscale).length === 0) this.loading.autoscale = true;
                     try { this.autoscale = await this.fetchWithRetry('{{ route("queue-monitor.dashboard.autoscale") }}'); } catch (e) { console.error('fetchAutoscale error:', e); } finally { this.loading.autoscale = false; }
+                },
+
+                startAutoscaleAutoRefresh() {
+                    this.stopAutoscaleAutoRefresh();
+                    this.autoscaleRefreshInterval = setInterval(() => {
+                        if (this.activeTab === 'autoscale') this.fetchAutoscale();
+                    }, 5000);
+                },
+
+                stopAutoscaleAutoRefresh() {
+                    if (this.autoscaleRefreshInterval) { clearInterval(this.autoscaleRefreshInterval); this.autoscaleRefreshInterval = null; }
                 },
 
                 // ========== ACTIONS ==========
