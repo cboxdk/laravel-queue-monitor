@@ -144,7 +144,20 @@ final readonly class RecordJobQueuedAction
     private function getJobClass(object $jobInstance): string
     {
         if ($jobInstance instanceof QueueJob) {
-            return $jobInstance->resolveName();
+            $name = $jobInstance->resolveName();
+
+            // resolveName() returns the handler class (CallQueuedHandler@call)
+            // when displayName is null — fall back to data.commandName from payload
+            if (str_contains($name, 'CallQueuedHandler')) {
+                $payload = $jobInstance->payload();
+                $commandName = $payload['data']['commandName'] ?? null;
+
+                if (is_string($commandName) && $commandName !== '') {
+                    return $commandName;
+                }
+            }
+
+            return $name;
         }
 
         return $jobInstance::class;
@@ -156,7 +169,15 @@ final readonly class RecordJobQueuedAction
     private function getDisplayName(object $jobInstance): ?string
     {
         if ($jobInstance instanceof QueueJob) {
-            return $jobInstance->resolveName();
+            $name = $jobInstance->resolveName();
+
+            if (str_contains($name, 'CallQueuedHandler')) {
+                $payload = $jobInstance->payload();
+
+                return $payload['data']['commandName'] ?? null;
+            }
+
+            return $name;
         }
 
         if (method_exists($jobInstance, 'displayName')) {
