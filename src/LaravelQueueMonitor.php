@@ -58,7 +58,11 @@ final class LaravelQueueMonitor
      */
     public static function check(Request $request): bool
     {
-        return (self::$authUsing ?: fn () => app()->environment('local'))($request);
+        try {
+            return (self::$authUsing ?: fn () => app()->environment('local'))($request);
+        } catch (\Throwable) {
+            return false;
+        }
     }
 
     /**
