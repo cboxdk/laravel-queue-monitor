@@ -58,6 +58,7 @@ class DashboardHealthController extends Controller
             'sla' => $this->infrastructureService->getSlaData(),
             'scaling' => $this->infrastructureService->getScalingData(),
             'capacity' => $this->infrastructureService->getCapacityData(),
+            'cluster' => $this->infrastructureService->getClusterData(),
         ];
 
         return response()->json($data);

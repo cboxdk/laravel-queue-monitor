@@ -18,6 +18,12 @@ use Illuminate\Database\Eloquent\Model;
  * @property string|null $predicted_pickup_time
  * @property int $sla_target
  * @property bool $sla_breach_risk
+ * @property int|null $breach_seconds
+ * @property string|null $breach_percentage
+ * @property int|null $margin_seconds
+ * @property string|null $margin_percentage
+ * @property int|null $pending
+ * @property int|null $active_workers
  * @property Carbon $created_at
  * @property Carbon $updated_at
  */
@@ -38,6 +44,12 @@ class ScalingEvent extends Model
         'predicted_pickup_time',
         'sla_target',
         'sla_breach_risk',
+        'breach_seconds',
+        'breach_percentage',
+        'margin_seconds',
+        'margin_percentage',
+        'pending',
+        'active_workers',
     ];
 
     /**
@@ -51,6 +63,12 @@ class ScalingEvent extends Model
             'predicted_pickup_time' => 'decimal:2',
             'sla_target' => 'integer',
             'sla_breach_risk' => 'boolean',
+            'breach_seconds' => 'integer',
+            'breach_percentage' => 'decimal:2',
+            'margin_seconds' => 'integer',
+            'margin_percentage' => 'decimal:2',
+            'pending' => 'integer',
+            'active_workers' => 'integer',
         ];
     }
 

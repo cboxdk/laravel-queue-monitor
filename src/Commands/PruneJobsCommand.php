@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Cbox\LaravelQueueMonitor\Commands;
 
+use Cbox\LaravelQueueMonitor\Actions\Core\PruneEventsAction;
 use Cbox\LaravelQueueMonitor\Actions\Core\PruneJobsAction;
 use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Illuminate\Console\Command;
@@ -39,6 +40,17 @@ class PruneJobsCommand extends Command
         $deleted = $action->execute($days, $statuses, $maxRows);
 
         $this->info("Pruned {$deleted} job record(s).");
+
+        // Prune scaling and cluster events
+        $eventsAction = app(PruneEventsAction::class);
+        $eventResult = $eventsAction->execute();
+
+        $this->info("Pruned {$eventResult['scaling_events_deleted']} scaling event(s).");
+        $this->info("Pruned {$eventResult['cluster_events_deleted']} cluster event(s).");
+
+        if ($eventResult['payloads_pruned'] > 0) {
+            $this->info("Cleared {$eventResult['payloads_pruned']} stale cluster event payload(s).");
+        }
 
         return self::SUCCESS;
     }
