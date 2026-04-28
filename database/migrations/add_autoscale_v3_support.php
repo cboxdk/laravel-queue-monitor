@@ -20,7 +20,7 @@ return new class extends Migration
         if (Schema::connection($connection)->hasTable($prefix.'jobs')
             && Schema::connection($connection)->hasColumn($prefix.'jobs', 'status')) {
             Schema::connection($connection)->table($prefix.'jobs', function (Blueprint $table): void {
-                $table->enum('status', JobStatus::values())->index()->change();
+                $table->enum('status', JobStatus::values())->change();
             });
         }
 
