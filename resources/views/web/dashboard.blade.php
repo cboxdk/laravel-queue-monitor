@@ -84,7 +84,7 @@
         }
     </style>
 </head>
-<body class="h-full bg-gradient-to-br from-[#eaeff7] via-[#e0e6f2] to-[#e8e2f5]"
+<body class="min-h-full bg-[#e4e9f2] bg-fixed bg-gradient-to-br from-[#eaeff7] via-[#e0e6f2] to-[#e8e2f5]"
       x-data="dashboard()" x-init="init()" x-cloak>
     <div class="min-h-full relative z-10">
 
