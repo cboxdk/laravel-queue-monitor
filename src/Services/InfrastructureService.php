@@ -507,6 +507,7 @@ final class InfrastructureService
                     'manager_id' => $m->manager_id,
                     'host' => $m->host,
                     'started_at' => $m->meta['started_at'] ?? null,
+                    'started_at_human' => $m->created_at?->diffForHumans(),
                 ])
                 ->values()
                 ->all();

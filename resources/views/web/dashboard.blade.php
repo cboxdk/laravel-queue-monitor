@@ -1075,7 +1075,7 @@
                                         </div>
                                         <div>
                                             <div class="text-[10px] font-bold text-indigo-400 uppercase tracking-wider mb-1">Capacity</div>
-                                            <div class="text-sm text-gray-700"><span class="font-semibold" x-text="autoscale.cluster?.scaling_signal?.current_capacity ?? '-'"></span> workers <span class="text-gray-400">/ <span x-text="autoscale.cluster?.scaling_signal?.required_workers ?? '-'"></span> required</span></div>
+                                            <div class="text-sm text-gray-700"><span class="font-semibold" x-text="autoscale.cluster?.scaling_signal?.current_capacity ?? autoscale.live?.total_workers ?? '-'"></span> workers <span class="text-gray-400">/ <span x-text="autoscale.cluster?.scaling_signal?.required_workers ?? autoscale.live?.total_worker_capacity ?? '-'"></span> <span x-text="autoscale.cluster?.scaling_signal ? 'required' : (autoscale.live ? 'capacity' : 'required')"></span></span></div>
                                         </div>
                                         <div>
                                             <div class="text-[10px] font-bold text-indigo-400 uppercase tracking-wider mb-1">Action</div>
@@ -1213,6 +1213,52 @@
                                                 </tr>
                                             </tbody>
                                         </template>
+                                    </table>
+                                </div>
+                            </div>
+                        </template>
+
+                        {{-- Fallback Hosts Table (from DB active managers, when live data unavailable) --}}
+                        <template x-if="(!autoscale.live || (autoscale.live?.hosts ?? []).length === 0) && (autoscale.cluster?.topology?.active_managers ?? []).length > 0">
+                            <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm overflow-hidden">
+                                <div class="px-5 py-4 border-b border-gray-100">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center gap-2">
+                                            <h4 class="text-sm font-semibold text-gray-900">Hosts</h4>
+                                            <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold bg-gray-100 text-gray-500">FROM EVENTS</span>
+                                        </div>
+                                        <span class="text-[11px] text-gray-400">Live host metrics unavailable</span>
+                                    </div>
+                                </div>
+                                <div class="overflow-x-auto">
+                                    <table class="min-w-full text-sm">
+                                        <thead>
+                                            <tr class="bg-gray-50/80 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                                                <th class="px-4 py-2.5 text-left">Host</th>
+                                                <th class="px-4 py-2.5 text-left">Manager ID</th>
+                                                <th class="px-4 py-2.5 text-left">Role</th>
+                                                <th class="px-4 py-2.5 text-right">Started</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-gray-50">
+                                            <template x-for="mgr in (autoscale.cluster?.topology?.active_managers ?? [])" :key="mgr.manager_id">
+                                                <tr class="hover:bg-gray-50/60 transition-colors">
+                                                    <td class="px-4 py-2.5 whitespace-nowrap">
+                                                        <span class="font-medium text-gray-900" x-text="(mgr.host ?? mgr.manager_id ?? '').replace(/\.localdomain$/, '')"></span>
+                                                    </td>
+                                                    <td class="px-4 py-2.5 whitespace-nowrap">
+                                                        <span class="font-mono text-[11px] text-gray-500" x-text="mgr.manager_id"></span>
+                                                    </td>
+                                                    <td class="px-4 py-2.5 whitespace-nowrap">
+                                                        <span x-show="mgr.manager_id === autoscale.cluster?.topology?.leader_id" class="inline-flex items-center rounded-full px-1.5 py-0.5 text-[9px] font-bold bg-indigo-50 text-indigo-600">LEADER</span>
+                                                        <span x-show="mgr.manager_id !== autoscale.cluster?.topology?.leader_id" class="inline-flex items-center rounded-full px-1.5 py-0.5 text-[9px] font-bold bg-gray-100 text-gray-500">FOLLOWER</span>
+                                                    </td>
+                                                    <td class="px-4 py-2.5 text-right whitespace-nowrap">
+                                                        <span class="text-[11px] text-gray-400" x-text="mgr.started_at_human ?? mgr.started_at ?? '-'"></span>
+                                                    </td>
+                                                </tr>
+                                            </template>
+                                        </tbody>
                                     </table>
                                 </div>
                             </div>
