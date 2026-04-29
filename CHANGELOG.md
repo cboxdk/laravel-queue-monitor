@@ -2,6 +2,41 @@
 
 All notable changes to `laravel-queue-monitor` will be documented in this file.
 
+## v1.6.0 - 2026-04-29
+
+### Features
+
+- **Autoscale v3 support**: Full cluster orchestration monitoring with `ClusterEvent` model, v3 event handlers with signal sampling, and all 11 autoscale v3 events registered in the service provider.
+- **Cluster UI**: New Autoscale tab with cluster banner, sparkline, timeline, enhanced SLA view, live host resources/workloads, expandable host detail with per-queue worker breakdown, and auto-refresh.
+- **Two-stage event pruning**: Payload + row TTL pruning via `PruneEventsAction` for managing cluster event storage.
+- **Job debounce listener**: New `JobDebouncedListener` for autoscale v3 debounced events.
+- **Persistent filters**: Job filters and pagination state now persist in URL query params.
+
+### Fixes
+
+- **Replay dispatching**: Assign fresh UUID and ID to payload so replayed jobs actually dispatch.
+- **Delete job route**: Use POST route instead of DELETE method for job deletion.
+- **Job class resolution**: Resolve actual job class from payload when `displayName` is null.
+- **Failure pattern UI**: Fix click race condition and search in failure patterns.
+- **Dashboard routing**: Route all dashboard mutations (replay, batch, delete) through web middleware.
+- **Auth error handling**: Catch exceptions in auth callback to prevent 500 errors.
+- **Migration conflicts**: Fix duplicate migration loading on Laravel 11 and index conflicts.
+- **V3 migration ordering**: Rename v3 migration to fix alphabetical ordering issues.
+- **NOT NULL constraints**: Fix constraint violations, null-safe access, and Alpine.js debounce issues.
+- **Host panel**: Show real hostname and CPU cores instead of placeholder values.
+- **Autoscale tab restore**: Fix tab not restoring on hard refresh.
+- **Background gradient**: Fix gradient not covering full page height.
+
+### Changes
+
+- Rename Infrastructure tab to Horizon and hide when Horizon is not installed.
+
+### Dependencies
+
+- Update `orchestra/testbench` requirement to `^11.1.0`.
+
+**Full Changelog**: https://github.com/cboxdk/laravel-queue-monitor/compare/v1.5.1...v1.6.0
+
 ## v1.5.1 - 2026-04-22
 
 ### Fixes
