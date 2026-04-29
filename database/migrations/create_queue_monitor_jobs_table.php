@@ -121,12 +121,6 @@ return new class extends Migration
                 $table->decimal('predicted_pickup_time', 10, 2)->nullable();
                 $table->integer('sla_target')->default(30);
                 $table->boolean('sla_breach_risk')->default(false);
-                $table->integer('breach_seconds')->nullable();
-                $table->decimal('breach_percentage', 8, 2)->nullable();
-                $table->integer('margin_seconds')->nullable();
-                $table->decimal('margin_percentage', 8, 2)->nullable();
-                $table->integer('pending')->nullable();
-                $table->integer('active_workers')->nullable();
                 $table->timestamps();
 
                 $table->index(['queue', 'created_at']);
