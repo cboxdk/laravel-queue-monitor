@@ -1136,10 +1136,10 @@
                                                         <div class="flex items-center gap-2">
                                                             <svg class="h-3.5 w-3.5 text-gray-400 transition-transform" :class="expanded && 'rotate-90'" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
                                                             <span x-show="host.is_leader" class="text-[10px] text-indigo-500" title="Leader">&#9733;</span>
-                                                            <span class="font-medium text-gray-900" x-text="host.host ?? host.manager_id"></span>
+                                                            <span class="font-medium text-gray-900" x-text="(host.manager_id ?? host.host ?? '').replace(/\.localdomain$/, '')"></span>
                                                             <span x-show="host.is_leader" class="inline-flex items-center rounded-full px-1.5 py-0.5 text-[9px] font-bold bg-indigo-50 text-indigo-600">LEADER</span>
                                                         </div>
-                                                        <div class="text-[10px] text-gray-400 mt-0.5 ml-5" x-show="host.package_version" x-text="host.package_version"></div>
+                                                        <div class="text-[10px] text-gray-400 mt-0.5 ml-5" x-text="[host.host, host.package_version].filter(Boolean).join(' · ')"></div>
                                                     </td>
                                                     <td class="px-4 py-2.5 text-right whitespace-nowrap">
                                                         <div class="flex items-center justify-end gap-2">
@@ -1159,6 +1159,7 @@
                                                             </div>
                                                             <span class="tabular-nums font-medium" :class="(host.cpu_percent ?? 0) > 85 ? 'text-red-600' : (host.cpu_percent ?? 0) > 60 ? 'text-amber-600' : 'text-gray-700'" x-text="Math.round(host.cpu_percent ?? 0) + '%'"></span>
                                                         </div>
+                                                        <div class="text-[10px] text-gray-400 mt-0.5" x-show="host.cpu_cores" x-text="host.cpu_cores + ' cores'"></div>
                                                     </td>
                                                     <td class="px-4 py-2.5 whitespace-nowrap">
                                                         <div class="flex items-center gap-2">

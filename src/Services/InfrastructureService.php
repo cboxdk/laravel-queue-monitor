@@ -652,6 +652,7 @@ final class InfrastructureService
                     'available_worker_capacity' => $m['available_worker_capacity'] ?? 0,
                     'capacity_limiter' => $m['capacity_limiter'] ?? null,
                     'cpu_percent' => $m['cpu_percent'] ?? null,
+                    'cpu_cores' => $m['cpu_cores'] ?? null,
                     'memory_percent' => $m['memory_percent'] ?? null,
                     'memory_total_mb' => $m['memory_total_mb'] ?? null,
                     'memory_used_mb' => $m['memory_used_mb'] ?? null,
