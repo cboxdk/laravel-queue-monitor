@@ -64,6 +64,7 @@ class DashboardMetricsController extends Controller
                 'distribution' => $chartData,
                 'throughput' => $this->statsRepository->getThroughputByMinute(60),
             ],
+            'horizon_available' => class_exists('Laravel\Horizon\Horizon'),
         ]);
     }
 

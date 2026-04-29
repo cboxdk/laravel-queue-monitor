@@ -12,6 +12,7 @@ enum JobStatus: string
     case FAILED = 'failed';
     case TIMEOUT = 'timeout';
     case CANCELLED = 'cancelled';
+    case DEBOUNCED = 'debounced';
 
     /**
      * Get all status values as an array
@@ -29,7 +30,7 @@ enum JobStatus: string
     public function isFinished(): bool
     {
         return match ($this) {
-            self::COMPLETED, self::FAILED, self::TIMEOUT, self::CANCELLED => true,
+            self::COMPLETED, self::FAILED, self::TIMEOUT, self::CANCELLED, self::DEBOUNCED => true,
             self::QUEUED, self::PROCESSING => false,
         };
     }
@@ -73,6 +74,7 @@ enum JobStatus: string
             self::FAILED => 'Failed',
             self::TIMEOUT => 'Timeout',
             self::CANCELLED => 'Cancelled',
+            self::DEBOUNCED => 'Debounced',
         };
     }
 
@@ -88,6 +90,7 @@ enum JobStatus: string
             self::FAILED => 'red',
             self::TIMEOUT => 'orange',
             self::CANCELLED => 'yellow',
+            self::DEBOUNCED => 'slate',
         };
     }
 }

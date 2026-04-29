@@ -7,7 +7,7 @@ use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 test('job status has all expected cases', function () {
     $cases = JobStatus::cases();
 
-    expect($cases)->toHaveCount(6);
+    expect($cases)->toHaveCount(7);
     expect(JobStatus::values())->toEqual([
         'queued',
         'processing',
@@ -15,6 +15,7 @@ test('job status has all expected cases', function () {
         'failed',
         'timeout',
         'cancelled',
+        'debounced',
     ]);
 });
 
@@ -25,6 +26,7 @@ test('isFinished returns true for finished statuses', function (JobStatus $statu
     JobStatus::FAILED,
     JobStatus::TIMEOUT,
     JobStatus::CANCELLED,
+    JobStatus::DEBOUNCED,
 ]);
 
 test('isFinished returns false for active statuses', function (JobStatus $status) {

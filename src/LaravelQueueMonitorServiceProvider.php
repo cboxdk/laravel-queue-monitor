@@ -9,6 +9,7 @@ use Cbox\LaravelQueueMonitor\Commands\LaravelQueueMonitorCommand;
 use Cbox\LaravelQueueMonitor\Commands\PruneJobsCommand;
 use Cbox\LaravelQueueMonitor\Commands\QueueMonitorDashboardCommand;
 use Cbox\LaravelQueueMonitor\Commands\ReplayJobCommand;
+use Cbox\LaravelQueueMonitor\Listeners\JobDebouncedListener;
 use Cbox\LaravelQueueMonitor\Listeners\JobExceptionOccurredListener;
 use Cbox\LaravelQueueMonitor\Listeners\JobFailedListener;
 use Cbox\LaravelQueueMonitor\Listeners\JobProcessedListener;
@@ -35,6 +36,8 @@ class LaravelQueueMonitorServiceProvider extends PackageServiceProvider
             ->name('laravel-queue-monitor')
             ->hasConfigFile('queue-monitor')
             ->hasMigration('create_queue_monitor_jobs_table')
+            ->hasMigration('extend_autoscale_v3_support')
+            ->runsMigrations()
             ->hasViews()
             ->hasCommands([
                 LaravelQueueMonitorCommand::class,
@@ -52,9 +55,6 @@ class LaravelQueueMonitorServiceProvider extends PackageServiceProvider
 
     public function packageBooted(): void
     {
-        // Explicitly load migrations from the package
-        $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
-
         // Order matters: repositories and actions must be bound before event listeners
         // because listeners depend on action classes which depend on repositories
         $this->registerRepositories();
@@ -112,12 +112,27 @@ class LaravelQueueMonitorServiceProvider extends PackageServiceProvider
         // Register queue-metrics event subscriber
         Event::subscribe(QueueMetricsSubscriber::class);
 
+        // Register debounced job listener (Laravel 13.6+)
+        $debouncedEventClass = 'Illuminate\\Queue\\Events\\JobDebounced';
+        if (class_exists($debouncedEventClass)) {
+            Event::listen($debouncedEventClass, JobDebouncedListener::class);
+        }
+
         // Register autoscale event listeners (if autoscale package is installed)
         $autoscaleEvents = [
+            // v2 events (still supported)
             'Cbox\\LaravelQueueAutoscale\\Events\\ScalingDecisionMade' => 'handleScalingDecision',
             'Cbox\\LaravelQueueAutoscale\\Events\\WorkersScaled' => 'handleWorkersScaled',
             'Cbox\\LaravelQueueAutoscale\\Events\\SlaBreached' => 'handleSlaBreached',
             'Cbox\\LaravelQueueAutoscale\\Events\\SlaRecovered' => 'handleSlaRecovered',
+            // v3 events
+            'Cbox\\LaravelQueueAutoscale\\Events\\SlaBreachPredicted' => 'handleSlaBreachPredicted',
+            'Cbox\\LaravelQueueAutoscale\\Events\\AutoscaleManagerStarted' => 'handleManagerStarted',
+            'Cbox\\LaravelQueueAutoscale\\Events\\AutoscaleManagerStopped' => 'handleManagerStopped',
+            'Cbox\\LaravelQueueAutoscale\\Events\\ClusterLeaderChanged' => 'handleLeaderChanged',
+            'Cbox\\LaravelQueueAutoscale\\Events\\ClusterManagerPresenceChanged' => 'handlePresenceChanged',
+            'Cbox\\LaravelQueueAutoscale\\Events\\ClusterScalingSignalUpdated' => 'handleScalingSignalUpdated',
+            'Cbox\\LaravelQueueAutoscale\\Events\\ClusterSummaryPublished' => 'handleSummaryPublished',
         ];
 
         foreach ($autoscaleEvents as $eventClass => $method) {

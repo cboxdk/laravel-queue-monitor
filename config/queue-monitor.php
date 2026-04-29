@@ -91,6 +91,11 @@ return [
         // Which statuses to prune (empty array = prune all statuses)
         // Failed and timeout jobs are included to prevent unbounded growth
         'prune_statuses' => ['completed', 'failed', 'timeout'],
+
+        // Days to retain full JSON payloads in cluster_events.meta.
+        // After this period, meta is nulled but typed columns preserved for trends.
+        // Set to null to disable payload pruning (keep payloads for full retention period).
+        'payload_days' => env('QUEUE_MONITOR_PAYLOAD_DAYS', 2),
     ],
 
     /*

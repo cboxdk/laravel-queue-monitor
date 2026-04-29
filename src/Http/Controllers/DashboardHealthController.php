@@ -56,10 +56,32 @@ class DashboardHealthController extends Controller
             'worker_types' => $this->infrastructureService->getWorkerTypeBreakdown(),
             'queues' => $this->infrastructureService->getQueueInfraData(),
             'sla' => $this->infrastructureService->getSlaData(),
-            'scaling' => $this->infrastructureService->getScalingData(),
+            'scaling' => array_intersect_key(
+                $this->infrastructureService->getScalingData(),
+                array_flip(['utilization', 'breach_severity']),
+            ),
             'capacity' => $this->infrastructureService->getCapacityData(),
+            'cluster' => $this->infrastructureService->getClusterData(),
         ];
 
         return response()->json($data);
+    }
+
+    /**
+     * Autoscale tab: cluster orchestration, scaling signals, leader election
+     */
+    public function autoscale(): JsonResponse
+    {
+        $scaling = $this->infrastructureService->getScalingData();
+        $cluster = $this->infrastructureService->getClusterData();
+        $live = $this->infrastructureService->getLiveClusterState();
+
+        return response()->json([
+            'scaling' => $scaling,
+            'cluster' => $cluster,
+            'live' => $live,
+            'sla' => $this->infrastructureService->getSlaData(),
+            'available' => ($scaling['has_autoscale'] ?? false) || (is_array($cluster) && ($cluster['has_cluster'] ?? false)) || $live !== null,
+        ]);
     }
 }

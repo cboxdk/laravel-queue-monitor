@@ -84,7 +84,7 @@
         }
     </style>
 </head>
-<body class="h-full bg-gradient-to-br from-[#eaeff7] via-[#e0e6f2] to-[#e8e2f5]"
+<body class="min-h-full bg-[#e4e9f2] bg-fixed bg-gradient-to-br from-[#eaeff7] via-[#e0e6f2] to-[#e8e2f5]"
       x-data="dashboard()" x-init="init()" x-cloak>
     <div class="min-h-full relative z-10">
 
@@ -135,8 +135,9 @@
         <nav class="bg-white/95 backdrop-blur-sm border-b border-gray-200/80">
             <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex gap-0 overflow-x-auto" role="tablist">
-                    <template x-for="tab in [{id:'overview',label:'Overview',icon:'chart'},{id:'jobs',label:'Jobs',icon:'list'},{id:'analytics',label:'Analytics',icon:'pie'},{id:'health',label:'Health',icon:'heart'},{id:'infrastructure',label:'Infrastructure',icon:'server'}]" :key="tab.id">
+                    <template x-for="tab in [{id:'overview',label:'Overview',icon:'chart'},{id:'jobs',label:'Jobs',icon:'list'},{id:'analytics',label:'Analytics',icon:'pie'},{id:'health',label:'Health',icon:'heart'},{id:'autoscale',label:'Autoscale',icon:'scale'},{id:'infrastructure',label:'Horizon',icon:'server',horizon:true}]" :key="tab.id">
                         <button @click="navigateTo(tab.id)" role="tab"
+                                x-show="!tab.horizon || horizonAvailable"
                                 :aria-selected="activeTab === tab.id"
                                 class="relative flex items-center gap-2 px-5 py-3 text-sm font-medium whitespace-nowrap transition-colors border-b-2"
                                 :class="activeTab === tab.id ? 'text-brand border-brand' : 'text-gray-500 border-transparent hover:text-gray-700 hover:border-gray-300'">
@@ -154,6 +155,9 @@
                             </template>
                             <template x-if="tab.icon === 'server'">
                                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M5.25 14.25h13.5m-13.5 0a3 3 0 01-3-3m3 3a3 3 0 100 6h13.5a3 3 0 100-6m-16.5-3a3 3 0 013-3h13.5a3 3 0 013 3m-19.5 0a4.5 4.5 0 01.9-2.7L5.737 5.1a3.375 3.375 0 012.7-1.35h7.126c1.062 0 2.062.5 2.7 1.35l2.587 3.45a4.5 4.5 0 01.9 2.7m0 0a3 3 0 01-3 3m0 3h.008v.008h-.008v-.008zm0-6h.008v.008h-.008v-.008zm-3 6h.008v.008h-.008v-.008zm0-6h.008v.008h-.008v-.008z" /></svg>
+                            </template>
+                            <template x-if="tab.icon === 'scale'">
+                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7.5L7.5 3m0 0L12 7.5M7.5 3v13.5m13.5 0L16.5 21m0 0L12 16.5m4.5 4.5V7.5" /></svg>
                             </template>
                             <span x-text="tab.label"></span>
                         </button>
@@ -369,7 +373,7 @@
                     <div class="flex flex-wrap gap-3 items-center">
                         <div class="relative flex-1 min-w-[200px]">
                             <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>
-                            <input type="text" x-model.debounce.300ms="filters.search" @input="resetPaginationAndFetch()" placeholder="Search jobs..." class="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition">
+                            <input type="text" x-model="filters.search" @input.debounce.300ms="resetPaginationAndFetch()" placeholder="Search jobs..." class="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition">
                         </div>
                         <div class="relative" x-data="{ open: false }">
                             <button @click="open = !open" class="flex items-center gap-2 px-3 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 transition">
@@ -378,7 +382,7 @@
                                 <svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
                             </button>
                             <div x-show="open" @click.away="open = false" x-transition class="absolute z-20 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg py-1">
-                                <template x-for="s in ['queued','processing','completed','failed','timeout']" :key="s">
+                                <template x-for="s in ['queued','processing','completed','failed','timeout','debounced']" :key="s">
                                     <label class="flex items-center gap-2 px-3 py-1.5 hover:bg-gray-50 cursor-pointer">
                                         <input type="checkbox" :value="s" x-model="filters.statuses" @change="resetPaginationAndFetch()" class="rounded border-gray-300 text-brand focus:ring-brand">
                                         <span class="text-sm capitalize" x-text="s"></span>
@@ -417,11 +421,11 @@
                     <div x-show="filters.showAdvanced" x-transition class="mt-4 pt-4 border-t border-gray-100 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
                         <div>
                             <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Job Class</label>
-                            <input type="text" x-model.debounce.300ms="filters.jobClass" @input="resetPaginationAndFetch()" placeholder="e.g. SendEmail" class="w-full px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand">
+                            <input type="text" x-model="filters.jobClass" @input.debounce.300ms="resetPaginationAndFetch()" placeholder="e.g. SendEmail" class="w-full px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand">
                         </div>
                         <div>
                             <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Server</label>
-                            <input type="text" x-model.debounce.300ms="filters.server" @input="resetPaginationAndFetch()" placeholder="hostname" class="w-full px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand">
+                            <input type="text" x-model="filters.server" @input.debounce.300ms="resetPaginationAndFetch()" placeholder="hostname" class="w-full px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand">
                         </div>
                         <div>
                             <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Attempts</label>
@@ -707,7 +711,7 @@
             {{-- ==================== INFRASTRUCTURE TAB ==================== --}}
             <div x-show="activeTab === 'infrastructure'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0">
                 <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-sm font-semibold text-gray-900">Infrastructure</h3>
+                    <h3 class="text-sm font-semibold text-gray-900">Horizon</h3>
                     <button @click="fetchInfrastructure()" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition">
                         <svg class="h-3.5 w-3.5" :class="loading.infrastructure && 'animate-spin'" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" /></svg>
                         Refresh
@@ -720,6 +724,135 @@
                 </template>
                 <template x-if="!loading.infrastructure">
                     <div class="space-y-6">
+
+                        {{-- Cluster Status Banner (v3 only) --}}
+                        <template x-if="infrastructure.cluster?.has_cluster">
+                            <div class="bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-200/80 rounded-xl shadow-sm overflow-hidden">
+                                <div class="px-5 py-4 border-b border-indigo-100/60">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center gap-2">
+                                            <div class="h-2 w-2 rounded-full bg-indigo-500 animate-pulse"></div>
+                                            <h4 class="text-sm font-semibold text-indigo-900">Cluster Orchestration</h4>
+                                            <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold bg-indigo-100 text-indigo-700" x-text="'v' + (infrastructure.cluster?.autoscale_version ?? '3')"></span>
+                                        </div>
+                                        <span class="text-[10px] text-indigo-400" x-text="'Cluster: ' + (infrastructure.cluster?.topology?.cluster_id ?? 'unknown')"></span>
+                                    </div>
+                                </div>
+                                <div class="p-5">
+                                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                                        <div>
+                                            <div class="text-[10px] font-bold text-indigo-400 uppercase tracking-wider mb-1">Leader</div>
+                                            <div class="text-sm font-semibold text-indigo-900 truncate" x-text="infrastructure.cluster?.topology?.leader_id ?? 'electing...'"></div>
+                                        </div>
+                                        <div>
+                                            <div class="text-[10px] font-bold text-indigo-400 uppercase tracking-wider mb-1">Hosts</div>
+                                            <div class="flex items-baseline gap-1">
+                                                <span class="text-2xl font-bold tabular-nums" :class="(infrastructure.cluster?.scaling_signal?.current_hosts ?? 0) >= (infrastructure.cluster?.scaling_signal?.recommended_hosts ?? 1) ? 'text-emerald-600' : (infrastructure.cluster?.scaling_signal?.current_hosts ?? 0) >= (infrastructure.cluster?.scaling_signal?.recommended_hosts ?? 1) * 0.6 ? 'text-amber-600' : 'text-red-600'" x-text="infrastructure.cluster?.scaling_signal?.current_hosts ?? infrastructure.cluster?.topology?.host_count ?? 0"></span>
+                                                <span class="text-sm text-gray-400">/ <span x-text="infrastructure.cluster?.scaling_signal?.recommended_hosts ?? '?'"></span> recommended</span>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div class="text-[10px] font-bold text-indigo-400 uppercase tracking-wider mb-1">Capacity</div>
+                                            <div class="text-sm text-gray-700"><span class="font-semibold" x-text="infrastructure.cluster?.scaling_signal?.current_capacity ?? '-'"></span> workers <span class="text-gray-400">/ <span x-text="infrastructure.cluster?.scaling_signal?.required_workers ?? '-'"></span> required</span></div>
+                                        </div>
+                                        <div>
+                                            <div class="text-[10px] font-bold text-indigo-400 uppercase tracking-wider mb-1">Action</div>
+                                            <div>
+                                                <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-bold" :class="{
+                                                    'bg-emerald-100 text-emerald-700': infrastructure.cluster?.scaling_signal?.action === 'scale_up',
+                                                    'bg-blue-100 text-blue-700': infrastructure.cluster?.scaling_signal?.action === 'scale_down',
+                                                    'bg-gray-100 text-gray-600': infrastructure.cluster?.scaling_signal?.action === 'hold' || !infrastructure.cluster?.scaling_signal?.action
+                                                }" x-text="(infrastructure.cluster?.scaling_signal?.action ?? 'hold').replace('_', ' ').toUpperCase()"></span>
+                                            </div>
+                                            <p class="text-[10px] text-gray-400 mt-0.5 truncate" x-text="infrastructure.cluster?.scaling_signal?.reason ?? ''"></p>
+                                        </div>
+                                    </div>
+                                    <div class="mt-4 pt-3 border-t border-indigo-100/60" x-show="(infrastructure.cluster?.topology?.active_managers ?? []).length > 0">
+                                        <div class="text-[10px] font-bold text-indigo-400 uppercase tracking-wider mb-2">Active Managers</div>
+                                        <div class="flex flex-wrap gap-1.5">
+                                            <template x-for="mgr in (infrastructure.cluster?.topology?.active_managers ?? [])" :key="mgr.manager_id">
+                                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] rounded-md border" :class="mgr.manager_id === infrastructure.cluster?.topology?.leader_id ? 'bg-indigo-100 border-indigo-300 text-indigo-800 font-semibold' : 'bg-white border-gray-200 text-gray-700'">
+                                                    <span x-show="mgr.manager_id === infrastructure.cluster?.topology?.leader_id" class="text-[10px]" title="Leader">&#9733;</span>
+                                                    <span x-text="mgr.host ?? mgr.manager_id"></span>
+                                                </span>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+
+                        {{-- Scaling Signal Sparkline (v3 only) --}}
+                        <template x-if="infrastructure.cluster?.has_cluster && (infrastructure.cluster?.signal_history ?? []).length > 1">
+                            <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm overflow-hidden">
+                                <div class="px-5 py-4 border-b border-gray-100">
+                                    <h4 class="text-sm font-semibold text-gray-900">Host Scaling Trend <span class="text-[11px] font-normal text-gray-400">(Last Hour)</span></h4>
+                                </div>
+                                <div class="p-5">
+                                    <svg class="w-full h-24" viewBox="0 0 400 80" preserveAspectRatio="none" x-data="{
+                                        points() {
+                                            const history = infrastructure.cluster?.signal_history ?? [];
+                                            if (history.length < 2) return { current: '', recommended: '' };
+                                            const maxVal = Math.max(...history.map(h => Math.max(h.current_hosts ?? 0, h.recommended_hosts ?? 0)), 1);
+                                            const step = 400 / (history.length - 1);
+                                            let currentPath = '';
+                                            let recommendedPath = '';
+                                            history.forEach((h, i) => {
+                                                const x = i * step;
+                                                const yC = 75 - ((h.current_hosts ?? 0) / maxVal) * 70;
+                                                const yR = 75 - ((h.recommended_hosts ?? 0) / maxVal) * 70;
+                                                currentPath += (i === 0 ? 'M' : 'L') + x + ',' + yC;
+                                                recommendedPath += (i === 0 ? 'M' : 'L') + x + ',' + yR;
+                                            });
+                                            return { current: currentPath, recommended: recommendedPath };
+                                        }
+                                    }">
+                                        <path :d="points().recommended" fill="none" stroke="#c7d2fe" stroke-width="2" stroke-dasharray="6,4" />
+                                        <path :d="points().current" fill="none" stroke="#6366f1" stroke-width="2.5" />
+                                    </svg>
+                                    <div class="flex items-center gap-4 mt-2">
+                                        <div class="flex items-center gap-1.5"><span class="h-0.5 w-4 bg-indigo-500 rounded"></span><span class="text-[10px] text-gray-500">Current Hosts</span></div>
+                                        <div class="flex items-center gap-1.5"><span class="h-0.5 w-4 bg-indigo-200 rounded" style="background: repeating-linear-gradient(90deg, #c7d2fe 0, #c7d2fe 4px, transparent 4px, transparent 8px)"></span><span class="text-[10px] text-gray-500">Recommended</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+
+                        {{-- Cluster Event Timeline (v3 only) --}}
+                        <template x-if="infrastructure.cluster?.has_cluster && ((infrastructure.cluster?.leader_history ?? []).length > 0 || (infrastructure.cluster?.manager_events ?? []).length > 0)">
+                            <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm overflow-hidden">
+                                <div class="px-5 py-4 border-b border-gray-100"><h4 class="text-sm font-semibold text-gray-900">Cluster Events</h4></div>
+                                <div class="max-h-64 overflow-y-auto custom-scroll divide-y divide-gray-50">
+                                    <template x-for="(evt, idx) in (infrastructure.cluster?.manager_events ?? [])" :key="'mgr-' + idx">
+                                        <div class="flex items-start gap-3 px-5 py-3 hover:bg-gray-50/60 transition-colors">
+                                            <div class="mt-1.5 flex-shrink-0"><span class="block h-2.5 w-2.5 rounded-full" :class="evt.event_type === 'manager_started' ? 'bg-emerald-500' : 'bg-red-400'"></span></div>
+                                            <div class="flex-1 min-w-0">
+                                                <div class="flex items-center gap-2 flex-wrap">
+                                                    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold" :class="evt.event_type === 'manager_started' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'" x-text="evt.event_type === 'manager_started' ? 'STARTED' : 'STOPPED'"></span>
+                                                    <span class="text-sm font-medium text-gray-900" x-text="evt.host ?? evt.manager_id"></span>
+                                                    <span x-show="evt.reason" class="text-[11px] text-gray-500" x-text="evt.reason"></span>
+                                                    <span x-show="evt.meta?.uptime_seconds" class="text-[10px] text-gray-400" x-text="'uptime: ' + Math.round(evt.meta?.uptime_seconds / 60) + 'm'"></span>
+                                                </div>
+                                            </div>
+                                            <div class="flex-shrink-0"><span class="text-[10px] text-gray-400" x-text="evt.time_human"></span></div>
+                                        </div>
+                                    </template>
+                                    <template x-for="(evt, idx) in (infrastructure.cluster?.leader_history ?? [])" :key="'ldr-' + idx">
+                                        <div class="flex items-start gap-3 px-5 py-3 hover:bg-gray-50/60 transition-colors">
+                                            <div class="mt-1.5 flex-shrink-0"><span class="block h-2.5 w-2.5 rounded-full bg-indigo-500"></span></div>
+                                            <div class="flex-1 min-w-0">
+                                                <div class="flex items-center gap-2 flex-wrap">
+                                                    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold bg-indigo-50 text-indigo-700">LEADER CHANGE</span>
+                                                    <span class="text-[11px] text-gray-500" x-text="(evt.previous_leader_id ?? '?') + ' → ' + (evt.leader_id ?? '?')"></span>
+                                                </div>
+                                            </div>
+                                            <div class="flex-shrink-0"><span class="text-[10px] text-gray-400" x-text="evt.time_human"></span></div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+
                         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                             <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm p-8 flex flex-col items-center justify-center">
                                 <div class="relative">
@@ -850,45 +983,9 @@
                                         </div>
                                         <div class="w-full bg-gray-100 rounded-full h-2"><div class="h-2 rounded-full transition-all duration-500" :class="sla.compliance >= 99 ? 'bg-emerald-500' : sla.compliance >= 95 ? 'bg-amber-500' : 'bg-red-500'" :style="'width: ' + sla.compliance + '%'"></div></div>
                                         <div x-show="sla.breached > 0" class="mt-1.5 text-[10px] text-red-500 font-semibold" x-text="sla.breached + ' breached'"></div>
+                                        <div x-show="infrastructure.scaling?.breach_severity" class="mt-1.5 text-[10px] text-red-400" x-text="'avg ' + (infrastructure.scaling?.breach_severity?.avg_breach_seconds ?? 0) + 's over · max ' + (infrastructure.scaling?.breach_severity?.max_breach_percentage ?? 0) + '% over'"></div>
                                     </div>
                                 </template>
-                            </div>
-                        </div>
-
-                        {{-- Autoscale Activity --}}
-                        <div x-show="infrastructure.scaling?.has_autoscale">
-                                <div class="mb-3"><h4 class="text-sm font-semibold text-gray-900">Autoscale Activity <span class="text-[11px] font-normal text-gray-400">(Last Hour)</span></h4></div>
-                                <div class="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-4 stagger-in">
-                                    <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm p-4"><div class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Total Decisions</div><div class="text-2xl font-bold text-gray-900 tabular-nums" x-text="infrastructure.scaling?.summary?.total_decisions ?? 0"></div></div>
-                                    <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm p-4"><div class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Scale Ups</div><div class="text-2xl font-bold text-emerald-600 tabular-nums" x-text="infrastructure.scaling?.summary?.scale_ups ?? 0"></div></div>
-                                    <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm p-4"><div class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Scale Downs</div><div class="text-2xl font-bold text-blue-600 tabular-nums" x-text="infrastructure.scaling?.summary?.scale_downs ?? 0"></div></div>
-                                    <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm p-4"><div class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">SLA Breaches</div><div class="text-2xl font-bold tabular-nums" :class="(infrastructure.scaling?.summary?.sla_breaches ?? 0) > 0 ? 'text-red-600' : 'text-gray-900'" x-text="infrastructure.scaling?.summary?.sla_breaches ?? 0"></div></div>
-                                    <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm p-4 col-span-2 lg:col-span-1"><div class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">SLA Recoveries</div><div class="text-2xl font-bold text-emerald-600 tabular-nums" x-text="infrastructure.scaling?.summary?.sla_recoveries ?? 0"></div></div>
-                                </div>
-                                <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm overflow-hidden">
-                                    <div class="px-5 py-4 border-b border-gray-100"><h4 class="text-sm font-semibold text-gray-900">Scaling Timeline</h4></div>
-                                    <div class="max-h-96 overflow-y-auto custom-scroll divide-y divide-gray-50">
-                                        <template x-for="(event, idx) in (infrastructure.scaling?.history || [])" :key="idx">
-                                            <div class="flex items-start gap-3 px-5 py-3 hover:bg-gray-50/60 transition-colors">
-                                                <div class="mt-1.5 flex-shrink-0"><span class="block h-2.5 w-2.5 rounded-full" :class="{ 'bg-emerald-500': event.action === 'scale_up', 'bg-blue-500': event.action === 'scale_down', 'bg-red-500': event.action === 'sla_breach', 'bg-emerald-400': event.action === 'sla_recovered', 'bg-gray-400': event.action === 'hold' }"></span></div>
-                                                <div class="flex-1 min-w-0">
-                                                    <div class="flex items-center gap-2 flex-wrap">
-                                                        <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold" :class="{ 'bg-emerald-50 text-emerald-700': event.action === 'scale_up', 'bg-blue-50 text-blue-700': event.action === 'scale_down', 'bg-red-50 text-red-700': event.action === 'sla_breach', 'bg-emerald-50 text-emerald-600': event.action === 'sla_recovered', 'bg-gray-100 text-gray-600': event.action === 'hold' }" x-text="event.action.replace('_', ' ').toUpperCase()"></span>
-                                                        <span class="text-sm font-medium text-gray-900" x-text="event.queue"></span>
-                                                        <span x-show="event.current_workers !== event.target_workers" class="text-[11px] text-gray-500" x-text="event.current_workers + ' -> ' + event.target_workers + ' workers'"></span>
-                                                        <span x-show="event.sla_breach_risk" class="inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-bold bg-red-100 text-red-700">SLA Risk</span>
-                                                    </div>
-                                                    <p class="text-[11px] text-gray-500 mt-0.5 truncate" x-text="event.reason"></p>
-                                                </div>
-                                                <div class="flex-shrink-0 text-right"><span class="text-[10px] text-gray-400" x-text="event.time_human"></span></div>
-                                            </div>
-                                        </template>
-                                    </div>
-                                    <div x-show="(infrastructure.scaling?.history || []).length === 0" class="py-10 text-center">
-                                        <div class="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-gray-100 mb-2"><svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7.5L7.5 3m0 0L12 7.5M7.5 3v13.5m13.5-3L16.5 18m0 0L12 13.5m4.5 4.5V4.5" /></svg></div>
-                                        <p class="text-sm text-gray-400">No scaling events recorded</p>
-                                    </div>
-                                </div>
                             </div>
                         </div>
 
@@ -913,6 +1010,391 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </template>
+            </div>
+
+            {{-- ==================== AUTOSCALE TAB ==================== --}}
+            <div x-show="activeTab === 'autoscale'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-sm font-semibold text-gray-900">Autoscale</h3>
+                    <div class="flex items-center gap-2">
+                        <template x-if="autoscaleAutoRefresh">
+                            <span class="text-[10px] text-emerald-600 font-medium">Auto-refreshing every 5s</span>
+                        </template>
+                        <button @click="autoscaleAutoRefresh = !autoscaleAutoRefresh; if (autoscaleAutoRefresh) startAutoscaleAutoRefresh(); else stopAutoscaleAutoRefresh();" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium border rounded-lg transition" :class="autoscaleAutoRefresh ? 'text-emerald-700 bg-emerald-50 border-emerald-200 hover:bg-emerald-100' : 'text-gray-600 bg-white border-gray-200 hover:bg-gray-50'">
+                            <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M5.636 18.364a9 9 0 010-12.728m12.728 0a9 9 0 010 12.728M12 12h.008v.008H12V12zm-3 0a3 3 0 116 0 3 3 0 01-6 0z" /></svg>
+                            <span x-text="autoscaleAutoRefresh ? 'Live' : 'Auto'"></span>
+                        </button>
+                        <button @click="fetchAutoscale()" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition">
+                            <svg class="h-3.5 w-3.5" :class="loading.autoscale && 'animate-spin'" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" /></svg>
+                            Refresh
+                        </button>
+                    </div>
+                </div>
+                <template x-if="loading.autoscale">
+                    <div class="flex items-center justify-center py-16"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-brand"></div></div>
+                </template>
+                <template x-if="!loading.autoscale">
+                    <div class="space-y-6">
+
+                        {{-- Not Available State --}}
+                        <template x-if="!autoscale.available">
+                            <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm p-12 text-center">
+                                <svg class="h-12 w-12 text-gray-300 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7.5L7.5 3m0 0L12 7.5M7.5 3v13.5m13.5 0L16.5 21m0 0L12 16.5m4.5 4.5V7.5" /></svg>
+                                <h3 class="text-sm font-semibold text-gray-900 mb-1">No Autoscale Data</h3>
+                                <p class="text-sm text-gray-500">Install <code class="text-xs bg-gray-100 px-1.5 py-0.5 rounded">cboxdk/laravel-queue-autoscale</code> to enable autoscaling and cluster orchestration monitoring.</p>
+                            </div>
+                        </template>
+
+                        {{-- Cluster Topology Banner --}}
+                        <template x-if="autoscale.available && autoscale.cluster?.has_cluster">
+                            <div class="bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-200/80 rounded-xl shadow-sm overflow-hidden">
+                                <div class="px-5 py-4 border-b border-indigo-100/60">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center gap-2">
+                                            <div class="h-2 w-2 rounded-full bg-indigo-500 animate-pulse"></div>
+                                            <h4 class="text-sm font-semibold text-indigo-900">Cluster Topology</h4>
+                                            <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold bg-indigo-100 text-indigo-700" x-text="'v' + (autoscale.cluster?.autoscale_version ?? '3')"></span>
+                                        </div>
+                                        <span class="text-[10px] text-indigo-400" x-text="'Cluster: ' + (autoscale.cluster?.topology?.cluster_id ?? 'unknown')"></span>
+                                    </div>
+                                </div>
+                                <div class="p-5">
+                                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                                        <div>
+                                            <div class="text-[10px] font-bold text-indigo-400 uppercase tracking-wider mb-1">Leader</div>
+                                            <div class="text-sm font-semibold text-indigo-900 truncate" x-text="autoscale.cluster?.topology?.leader_id ?? 'electing...'"></div>
+                                        </div>
+                                        <div>
+                                            <div class="text-[10px] font-bold text-indigo-400 uppercase tracking-wider mb-1">Hosts</div>
+                                            <div class="flex items-baseline gap-1">
+                                                <span class="text-2xl font-bold tabular-nums" :class="(autoscale.cluster?.scaling_signal?.current_hosts ?? 0) >= (autoscale.cluster?.scaling_signal?.recommended_hosts ?? 1) ? 'text-emerald-600' : (autoscale.cluster?.scaling_signal?.current_hosts ?? 0) >= (autoscale.cluster?.scaling_signal?.recommended_hosts ?? 1) * 0.6 ? 'text-amber-600' : 'text-red-600'" x-text="autoscale.cluster?.scaling_signal?.current_hosts ?? autoscale.cluster?.topology?.host_count ?? 0"></span>
+                                                <span class="text-sm text-gray-400">/ <span x-text="autoscale.cluster?.scaling_signal?.recommended_hosts ?? '?'"></span> recommended</span>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div class="text-[10px] font-bold text-indigo-400 uppercase tracking-wider mb-1">Capacity</div>
+                                            <div class="text-sm text-gray-700"><span class="font-semibold" x-text="autoscale.cluster?.scaling_signal?.current_capacity ?? '-'"></span> workers <span class="text-gray-400">/ <span x-text="autoscale.cluster?.scaling_signal?.required_workers ?? '-'"></span> required</span></div>
+                                        </div>
+                                        <div>
+                                            <div class="text-[10px] font-bold text-indigo-400 uppercase tracking-wider mb-1">Action</div>
+                                            <div>
+                                                <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-bold" :class="{ 'bg-emerald-100 text-emerald-700': autoscale.cluster?.scaling_signal?.action === 'scale_up', 'bg-blue-100 text-blue-700': autoscale.cluster?.scaling_signal?.action === 'scale_down', 'bg-gray-100 text-gray-600': autoscale.cluster?.scaling_signal?.action === 'hold' || !autoscale.cluster?.scaling_signal?.action }" x-text="(autoscale.cluster?.scaling_signal?.action ?? 'hold').replace('_', ' ').toUpperCase()"></span>
+                                            </div>
+                                            <p class="text-[10px] text-gray-400 mt-0.5 truncate" x-text="autoscale.cluster?.scaling_signal?.reason ?? ''"></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+
+                        {{-- Scaling Stats Cards --}}
+                        <template x-if="autoscale.available">
+                            <div class="grid grid-cols-2 lg:grid-cols-6 gap-4 stagger-in">
+                                <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm p-4"><div class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Total Decisions</div><div class="text-2xl font-bold text-gray-900 tabular-nums" x-text="autoscale.scaling?.summary?.total_decisions ?? 0"></div></div>
+                                <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm p-4"><div class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Scale Ups</div><div class="text-2xl font-bold text-emerald-600 tabular-nums" x-text="autoscale.scaling?.summary?.scale_ups ?? 0"></div></div>
+                                <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm p-4"><div class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Scale Downs</div><div class="text-2xl font-bold text-blue-600 tabular-nums" x-text="autoscale.scaling?.summary?.scale_downs ?? 0"></div></div>
+                                <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm p-4"><div class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">SLA Breaches</div><div class="text-2xl font-bold text-red-600 tabular-nums" x-text="autoscale.scaling?.summary?.sla_breaches ?? 0"></div></div>
+                                <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm p-4"><div class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">SLA Recoveries</div><div class="text-2xl font-bold text-emerald-600 tabular-nums" x-text="autoscale.scaling?.summary?.sla_recoveries ?? 0"></div></div>
+                                <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm p-4"><div class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Predictions</div><div class="text-2xl font-bold text-orange-600 tabular-nums" x-text="autoscale.scaling?.summary?.sla_breach_predictions ?? 0"></div></div>
+                            </div>
+                        </template>
+
+                        {{-- Live Hosts Table --}}
+                        <template x-if="autoscale.live && (autoscale.live?.hosts ?? []).length > 0">
+                            <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm overflow-hidden">
+                                <div class="px-5 py-4 border-b border-gray-100">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center gap-2">
+                                            <h4 class="text-sm font-semibold text-gray-900">Hosts</h4>
+                                            <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold bg-emerald-50 text-emerald-700">LIVE</span>
+                                        </div>
+                                        <div class="flex items-center gap-3 text-[11px] text-gray-400">
+                                            <span><span class="font-semibold text-gray-700" x-text="autoscale.live?.total_workers ?? 0"></span> / <span x-text="autoscale.live?.total_worker_capacity ?? 0"></span> workers</span>
+                                            <span><span class="font-semibold" :class="(autoscale.live?.utilization_percent ?? 0) > 85 ? 'text-red-600' : (autoscale.live?.utilization_percent ?? 0) > 60 ? 'text-amber-600' : 'text-gray-700'" x-text="Math.round(autoscale.live?.utilization_percent ?? 0) + '%'"></span> utilization</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="overflow-x-auto">
+                                    <table class="min-w-full text-sm">
+                                        <thead>
+                                            <tr class="bg-gray-50/80 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                                                <th class="px-4 py-2.5 text-left">Host</th>
+                                                <th class="px-4 py-2.5 text-right">Workers</th>
+                                                <th class="px-4 py-2.5 text-left">CPU</th>
+                                                <th class="px-4 py-2.5 text-left">Memory</th>
+                                                <th class="px-4 py-2.5 text-left">Limiter</th>
+                                                <th class="px-4 py-2.5 text-left">Queues</th>
+                                                <th class="px-4 py-2.5 text-right">Seen</th>
+                                            </tr>
+                                        </thead>
+                                        <template x-for="host in (autoscale.live?.hosts ?? [])" :key="host.manager_id">
+                                            <tbody class="divide-y divide-gray-50" x-data="{ expanded: false }">
+                                                <tr @click="expanded = !expanded" class="hover:bg-gray-50/60 transition-colors cursor-pointer">
+                                                    <td class="px-4 py-2.5 whitespace-nowrap">
+                                                        <div class="flex items-center gap-2">
+                                                            <svg class="h-3.5 w-3.5 text-gray-400 transition-transform" :class="expanded && 'rotate-90'" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
+                                                            <span x-show="host.is_leader" class="text-[10px] text-indigo-500" title="Leader">&#9733;</span>
+                                                            <span class="font-medium text-gray-900" x-text="(host.manager_id ?? host.host ?? '').replace(/\.localdomain$/, '')"></span>
+                                                            <span x-show="host.is_leader" class="inline-flex items-center rounded-full px-1.5 py-0.5 text-[9px] font-bold bg-indigo-50 text-indigo-600">LEADER</span>
+                                                        </div>
+                                                        <div class="text-[10px] text-gray-400 mt-0.5 ml-5" x-text="[host.host, host.package_version].filter(Boolean).join(' · ')"></div>
+                                                    </td>
+                                                    <td class="px-4 py-2.5 text-right whitespace-nowrap">
+                                                        <div class="flex items-center justify-end gap-2">
+                                                            <div class="w-16 bg-gray-100 rounded-full h-1.5">
+                                                                <div class="h-1.5 rounded-full transition-all" :class="host.max_workers > 0 && (host.total_workers / host.max_workers) > 0.85 ? 'bg-red-500' : (host.max_workers > 0 && (host.total_workers / host.max_workers) > 0.6) ? 'bg-amber-500' : 'bg-emerald-500'" :style="'width: ' + (host.max_workers > 0 ? Math.min(host.total_workers / host.max_workers * 100, 100) : 0) + '%'"></div>
+                                                            </div>
+                                                            <span class="font-semibold tabular-nums text-gray-900" x-text="host.total_workers"></span>
+                                                            <span class="text-gray-400">/</span>
+                                                            <span class="tabular-nums text-gray-500" x-text="host.max_workers"></span>
+                                                        </div>
+                                                        <div class="text-[10px] text-gray-400 mt-0.5 text-right" x-text="host.available_worker_capacity + ' available'"></div>
+                                                    </td>
+                                                    <td class="px-4 py-2.5 whitespace-nowrap">
+                                                        <div class="flex items-center gap-2">
+                                                            <div class="w-12 bg-gray-100 rounded-full h-1.5">
+                                                                <div class="h-1.5 rounded-full transition-all" :class="(host.cpu_percent ?? 0) > 85 ? 'bg-red-500' : (host.cpu_percent ?? 0) > 60 ? 'bg-amber-500' : 'bg-emerald-500'" :style="'width: ' + Math.min(host.cpu_percent ?? 0, 100) + '%'"></div>
+                                                            </div>
+                                                            <span class="tabular-nums font-medium" :class="(host.cpu_percent ?? 0) > 85 ? 'text-red-600' : (host.cpu_percent ?? 0) > 60 ? 'text-amber-600' : 'text-gray-700'" x-text="Math.round(host.cpu_percent ?? 0) + '%'"></span>
+                                                        </div>
+                                                        <div class="text-[10px] text-gray-400 mt-0.5" x-show="host.cpu_cores" x-text="host.cpu_cores + ' cores'"></div>
+                                                    </td>
+                                                    <td class="px-4 py-2.5 whitespace-nowrap">
+                                                        <div class="flex items-center gap-2">
+                                                            <div class="w-12 bg-gray-100 rounded-full h-1.5">
+                                                                <div class="h-1.5 rounded-full transition-all" :class="(host.memory_percent ?? 0) > 85 ? 'bg-red-500' : (host.memory_percent ?? 0) > 60 ? 'bg-amber-500' : 'bg-emerald-500'" :style="'width: ' + Math.min(host.memory_percent ?? 0, 100) + '%'"></div>
+                                                            </div>
+                                                            <span class="tabular-nums font-medium" :class="(host.memory_percent ?? 0) > 85 ? 'text-red-600' : (host.memory_percent ?? 0) > 60 ? 'text-amber-600' : 'text-gray-700'" x-text="Math.round(host.memory_percent ?? 0) + '%'"></span>
+                                                        </div>
+                                                        <div class="text-[10px] text-gray-400 mt-0.5" x-text="Math.round(host.memory_used_mb ?? 0) + ' / ' + Math.round(host.memory_total_mb ?? 0) + ' MB'"></div>
+                                                    </td>
+                                                    <td class="px-4 py-2.5 whitespace-nowrap">
+                                                        <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold" :class="{ 'bg-blue-50 text-blue-700': host.capacity_limiter === 'cpu', 'bg-purple-50 text-purple-700': host.capacity_limiter === 'memory', 'bg-gray-100 text-gray-600': host.capacity_limiter === 'config' || !host.capacity_limiter }" x-text="(host.capacity_limiter ?? 'config').toUpperCase()"></span>
+                                                    </td>
+                                                    <td class="px-4 py-2.5">
+                                                        <span class="text-[11px] text-gray-500" x-text="Object.keys(host.queue_workers ?? {}).length + ' queues'"></span>
+                                                    </td>
+                                                    <td class="px-4 py-2.5 text-right whitespace-nowrap">
+                                                        <span class="text-[11px] text-gray-400" x-text="host.last_seen_human ?? '-'"></span>
+                                                    </td>
+                                                </tr>
+                                                <tr x-show="expanded" x-transition.opacity>
+                                                    <td colspan="7" class="px-0 py-0">
+                                                        <div class="bg-gray-50/80 px-6 py-4 border-t border-gray-100">
+                                                            <div class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-3">Queue Workers on <span class="text-gray-600" x-text="host.host ?? host.manager_id"></span></div>
+                                                            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+                                                                <template x-for="(count, queue) in (host.queue_workers ?? {})" :key="'detail-' + queue">
+                                                                    <div class="bg-white rounded-lg border border-gray-200/80 px-3 py-2.5 flex items-center justify-between">
+                                                                        <div>
+                                                                            <div class="text-[11px] font-medium text-gray-900" x-text="queue.split(':').pop()"></div>
+                                                                            <div class="text-[10px] text-gray-400" x-text="queue.includes(':') ? queue.split(':').slice(0, -1).join(':') : 'default'"></div>
+                                                                        </div>
+                                                                        <div class="flex items-center gap-1.5">
+                                                                            <div class="flex gap-0.5">
+                                                                                <template x-for="i in Math.min(count, 10)" :key="'dot-' + i">
+                                                                                    <span class="block h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                                                                                </template>
+                                                                                <span x-show="count > 10" class="text-[9px] text-gray-400 ml-0.5" x-text="'+' + (count - 10)"></span>
+                                                                            </div>
+                                                                            <span class="text-lg font-bold tabular-nums text-gray-900" x-text="count"></span>
+                                                                        </div>
+                                                                    </div>
+                                                                </template>
+                                                            </div>
+                                                            <div class="mt-3 flex items-center gap-4 text-[10px] text-gray-400">
+                                                                <span>Manager ID: <span class="font-mono text-gray-600" x-text="host.manager_id"></span></span>
+                                                                <span x-show="host.group_count > 0" x-text="host.group_count + ' groups'"></span>
+                                                                <span x-text="host.memory_free_mb ? (Math.round(host.memory_free_mb) + ' MB free') : ''"></span>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </template>
+                                    </table>
+                                </div>
+                            </div>
+                        </template>
+
+                        {{-- Workloads Table --}}
+                        <template x-if="autoscale.live && (autoscale.live?.workloads ?? []).length > 0">
+                            <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm overflow-hidden">
+                                <div class="px-5 py-4 border-b border-gray-100">
+                                    <h4 class="text-sm font-semibold text-gray-900">Workloads</h4>
+                                </div>
+                                <div class="overflow-x-auto">
+                                    <table class="min-w-full text-sm">
+                                        <thead>
+                                            <tr class="bg-gray-50/80 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                                                <th class="px-4 py-2.5 text-left">Queue</th>
+                                                <th class="px-4 py-2.5 text-right">Workers</th>
+                                                <th class="px-4 py-2.5 text-right">Pending</th>
+                                                <th class="px-4 py-2.5 text-right">Jobs/min</th>
+                                                <th class="px-4 py-2.5 text-right">Oldest Job</th>
+                                                <th class="px-4 py-2.5 text-right">SLA</th>
+                                                <th class="px-4 py-2.5 text-right">Utilization</th>
+                                                <th class="px-4 py-2.5 text-left">Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-gray-50">
+                                            <template x-for="(wl, idx) in (autoscale.live?.workloads ?? [])" :key="'wl-' + idx">
+                                                <tr class="hover:bg-gray-50/60 transition-colors">
+                                                    <td class="px-4 py-2.5 whitespace-nowrap">
+                                                        <div class="flex items-center gap-2">
+                                                            <span class="font-medium text-gray-900" x-text="wl.name"></span>
+                                                            <span class="text-[10px] text-gray-400" x-text="wl.connection"></span>
+                                                            <span x-show="wl.type === 'group'" class="inline-flex items-center rounded-full px-1.5 py-0.5 text-[9px] font-bold bg-violet-50 text-violet-600">GROUP</span>
+                                                        </div>
+                                                    </td>
+                                                    <td class="px-4 py-2.5 text-right whitespace-nowrap tabular-nums">
+                                                        <span class="font-semibold text-gray-900" x-text="wl.current_workers"></span>
+                                                        <span class="text-gray-400"> / </span>
+                                                        <span class="text-gray-500" x-text="wl.target_workers"></span>
+                                                        <div class="text-[10px] text-gray-400" x-text="wl.worker_min + '–' + wl.worker_max + ' range'"></div>
+                                                    </td>
+                                                    <td class="px-4 py-2.5 text-right whitespace-nowrap tabular-nums" :class="(wl.pending ?? 0) > 0 ? 'font-semibold text-amber-600' : 'text-gray-500'" x-text="wl.pending"></td>
+                                                    <td class="px-4 py-2.5 text-right whitespace-nowrap tabular-nums text-gray-700" x-text="(wl.throughput_per_minute ?? 0).toFixed(1)"></td>
+                                                    <td class="px-4 py-2.5 text-right whitespace-nowrap">
+                                                        <span class="tabular-nums font-medium" :class="{ 'text-red-600': wl.oldest_job_age_status === 'breached', 'text-amber-600': wl.oldest_job_age_status === 'warning', 'text-gray-700': wl.oldest_job_age_status === 'normal' }" x-text="(wl.oldest_job_age ?? 0) + 's'"></span>
+                                                    </td>
+                                                    <td class="px-4 py-2.5 text-right whitespace-nowrap tabular-nums text-gray-500" x-text="(wl.sla_target_seconds ?? '-') + 's'"></td>
+                                                    <td class="px-4 py-2.5 text-right whitespace-nowrap">
+                                                        <div class="flex items-center justify-end gap-2">
+                                                            <div class="w-12 bg-gray-100 rounded-full h-1.5">
+                                                                <div class="h-1.5 rounded-full transition-all" :class="(wl.utilization_percent ?? 0) > 85 ? 'bg-red-500' : (wl.utilization_percent ?? 0) > 60 ? 'bg-amber-500' : 'bg-emerald-500'" :style="'width: ' + Math.min(wl.utilization_percent ?? 0, 100) + '%'"></div>
+                                                            </div>
+                                                            <span class="tabular-nums font-medium text-gray-700" x-text="Math.round(wl.utilization_percent ?? 0) + '%'"></span>
+                                                        </div>
+                                                    </td>
+                                                    <td class="px-4 py-2.5 whitespace-nowrap">
+                                                        <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold" :class="{ 'bg-emerald-50 text-emerald-700': wl.action === 'scale_up', 'bg-blue-50 text-blue-700': wl.action === 'scale_down', 'bg-gray-100 text-gray-600': wl.action === 'hold' }" x-text="(wl.action ?? 'hold').replace('_', ' ').toUpperCase()"></span>
+                                                    </td>
+                                                </tr>
+                                            </template>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </template>
+
+                        {{-- SLA Compliance + Breach Severity --}}
+                        <template x-if="autoscale.available && (autoscale.sla?.per_queue || []).length > 0">
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm overflow-hidden">
+                                    <div class="px-5 py-4 border-b border-gray-100"><h4 class="text-sm font-semibold text-gray-900">SLA Compliance by Queue</h4></div>
+                                    <div class="divide-y divide-gray-50">
+                                        <template x-for="(sla, idx) in (autoscale.sla?.per_queue ?? [])" :key="'sla-q-' + idx">
+                                            <div class="px-5 py-3 flex items-center justify-between">
+                                                <div class="flex items-center gap-3 min-w-0">
+                                                    <span class="text-sm font-medium text-gray-900 truncate" x-text="sla.queue"></span>
+                                                    <span class="text-[10px] text-gray-400" x-text="sla.target_seconds + 's target'"></span>
+                                                </div>
+                                                <div class="flex items-center gap-3">
+                                                    <div class="w-24 bg-gray-100 rounded-full h-1.5">
+                                                        <div class="h-1.5 rounded-full transition-all duration-500" :class="sla.compliance >= 99 ? 'bg-emerald-500' : sla.compliance >= 95 ? 'bg-amber-500' : 'bg-red-500'" :style="'width: ' + Math.min(sla.compliance, 100) + '%'"></div>
+                                                    </div>
+                                                    <span class="text-sm font-bold tabular-nums w-14 text-right" :class="sla.compliance >= 99 ? 'text-emerald-600' : sla.compliance >= 95 ? 'text-amber-600' : 'text-red-600'" x-text="sla.compliance.toFixed(1) + '%'"></span>
+                                                    <span x-show="sla.breached > 0" class="text-[10px] text-red-500 font-semibold" x-text="sla.breached + ' breached'"></span>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                                <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm overflow-hidden" x-show="autoscale.scaling?.breach_severity">
+                                    <div class="px-5 py-4 border-b border-gray-100"><h4 class="text-sm font-semibold text-gray-900">Breach Severity <span class="text-[11px] font-normal text-gray-400">(Last Hour)</span></h4></div>
+                                    <div class="p-5 space-y-4">
+                                        <div>
+                                            <div class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Avg Breach Duration</div>
+                                            <div class="text-2xl font-bold text-red-600 tabular-nums"><span x-text="autoscale.scaling?.breach_severity?.avg_breach_seconds ?? 0"></span><span class="text-sm font-normal text-gray-400">s over SLA</span></div>
+                                        </div>
+                                        <div>
+                                            <div class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Max Breach %</div>
+                                            <div class="text-2xl font-bold text-red-600 tabular-nums"><span x-text="autoscale.scaling?.breach_severity?.max_breach_percentage ?? 0"></span><span class="text-sm font-normal text-gray-400">% over target</span></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+
+                        {{-- Scaling Decision Timeline --}}
+                        <template x-if="autoscale.available && (autoscale.scaling?.history ?? []).length > 0">
+                            <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm overflow-hidden">
+                                <div class="px-5 py-4 border-b border-gray-100"><h4 class="text-sm font-semibold text-gray-900">Scaling Decisions <span class="text-[11px] font-normal text-gray-400">(Last Hour)</span></h4></div>
+                                <div class="max-h-80 overflow-y-auto custom-scroll divide-y divide-gray-50">
+                                    <template x-for="(event, idx) in (autoscale.scaling?.history ?? [])" :key="'as-ev-' + idx">
+                                        <div class="flex items-start gap-3 px-5 py-3 hover:bg-gray-50/60 transition-colors">
+                                            <div class="mt-1.5 flex-shrink-0"><span class="block h-2.5 w-2.5 rounded-full" :class="{ 'bg-emerald-500': event.action === 'scale_up', 'bg-blue-500': event.action === 'scale_down', 'bg-red-500': event.action === 'sla_breach', 'bg-emerald-400': event.action === 'sla_recovered', 'bg-orange-500': event.action === 'sla_breach_predicted', 'bg-gray-400': event.action === 'hold' }"></span></div>
+                                            <div class="flex-1 min-w-0">
+                                                <div class="flex items-center gap-2 flex-wrap">
+                                                    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold" :class="{ 'bg-emerald-50 text-emerald-700': event.action === 'scale_up', 'bg-blue-50 text-blue-700': event.action === 'scale_down', 'bg-red-50 text-red-700': event.action === 'sla_breach', 'bg-emerald-50 text-emerald-600': event.action === 'sla_recovered', 'bg-orange-50 text-orange-700': event.action === 'sla_breach_predicted', 'bg-gray-100 text-gray-600': event.action === 'hold' }" x-text="event.action.replace(/_/g, ' ').toUpperCase()"></span>
+                                                    <span class="text-[11px] text-gray-500" x-text="event.queue"></span>
+                                                    <span class="text-[11px] font-medium text-gray-700" x-text="event.current_workers + ' → ' + event.target_workers + ' workers'"></span>
+                                                </div>
+                                                <p class="text-[11px] text-gray-400 mt-0.5 truncate" x-text="event.reason"></p>
+                                            </div>
+                                            <div class="flex-shrink-0"><span class="text-[10px] text-gray-400" x-text="event.time_human"></span></div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+
+                        {{-- Cluster Events (Leader Changes + Manager Lifecycle) --}}
+                        <template x-if="autoscale.available && autoscale.cluster?.has_cluster && ((autoscale.cluster?.leader_history ?? []).length > 0 || (autoscale.cluster?.manager_events ?? []).length > 0)">
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                {{-- Leader Election History --}}
+                                <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm overflow-hidden">
+                                    <div class="px-5 py-4 border-b border-gray-100"><h4 class="text-sm font-semibold text-gray-900">Leader Election History</h4></div>
+                                    <div class="max-h-64 overflow-y-auto custom-scroll divide-y divide-gray-50">
+                                        <template x-for="(evt, idx) in (autoscale.cluster?.leader_history ?? [])" :key="'as-ldr-' + idx">
+                                            <div class="flex items-start gap-3 px-5 py-3 hover:bg-gray-50/60 transition-colors">
+                                                <div class="mt-1.5 flex-shrink-0"><span class="block h-2.5 w-2.5 rounded-full bg-indigo-500"></span></div>
+                                                <div class="flex-1 min-w-0">
+                                                    <div class="flex items-center gap-2 flex-wrap">
+                                                        <span class="text-sm font-medium text-gray-900" x-text="evt.leader_id ?? '?'"></span>
+                                                        <span class="text-[10px] text-gray-400" x-text="'from ' + (evt.previous_leader_id ?? '?')"></span>
+                                                    </div>
+                                                    <p class="text-[10px] text-gray-400 mt-0.5" x-text="'Observed by: ' + (evt.observed_by ?? 'unknown')"></p>
+                                                </div>
+                                                <div class="flex-shrink-0"><span class="text-[10px] text-gray-400" x-text="evt.time_human"></span></div>
+                                            </div>
+                                        </template>
+                                        <template x-if="(autoscale.cluster?.leader_history ?? []).length === 0">
+                                            <div class="px-5 py-6 text-center text-[11px] text-gray-400">No leader changes in the last 24 hours</div>
+                                        </template>
+                                    </div>
+                                </div>
+                                {{-- Manager Lifecycle --}}
+                                <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm overflow-hidden">
+                                    <div class="px-5 py-4 border-b border-gray-100"><h4 class="text-sm font-semibold text-gray-900">Manager Lifecycle</h4></div>
+                                    <div class="max-h-64 overflow-y-auto custom-scroll divide-y divide-gray-50">
+                                        <template x-for="(evt, idx) in (autoscale.cluster?.manager_events ?? [])" :key="'as-mgr-' + idx">
+                                            <div class="flex items-start gap-3 px-5 py-3 hover:bg-gray-50/60 transition-colors">
+                                                <div class="mt-1.5 flex-shrink-0"><span class="block h-2.5 w-2.5 rounded-full" :class="evt.event_type === 'manager_started' ? 'bg-emerald-500' : 'bg-red-400'"></span></div>
+                                                <div class="flex-1 min-w-0">
+                                                    <div class="flex items-center gap-2 flex-wrap">
+                                                        <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold" :class="evt.event_type === 'manager_started' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'" x-text="evt.event_type === 'manager_started' ? 'STARTED' : 'STOPPED'"></span>
+                                                        <span class="text-sm font-medium text-gray-900" x-text="evt.host ?? evt.manager_id"></span>
+                                                    </div>
+                                                    <div class="flex items-center gap-3 mt-0.5">
+                                                        <span x-show="evt.reason" class="text-[10px] text-gray-500" x-text="evt.reason"></span>
+                                                        <span x-show="evt.meta?.uptime_seconds" class="text-[10px] text-gray-400" x-text="'uptime: ' + Math.round((evt.meta?.uptime_seconds ?? 0) / 60) + 'm'"></span>
+                                                        <span x-show="evt.meta?.worker_count" class="text-[10px] text-gray-400" x-text="(evt.meta?.worker_count ?? 0) + ' workers'"></span>
+                                                    </div>
+                                                </div>
+                                                <div class="flex-shrink-0"><span class="text-[10px] text-gray-400" x-text="evt.time_human"></span></div>
+                                            </div>
+                                        </template>
+                                        <template x-if="(autoscale.cluster?.manager_events ?? []).length === 0">
+                                            <div class="px-5 py-6 text-center text-[11px] text-gray-400">No manager events in the last 24 hours</div>
+                                        </template>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+
                     </div>
                 </template>
             </div>
@@ -1303,6 +1785,10 @@
                 analytics: {},
                 health: {},
                 infrastructure: {},
+                autoscale: {},
+                horizonAvailable: false,
+                autoscaleAutoRefresh: false,
+                autoscaleRefreshInterval: null,
 
                 // Jobs tab state
                 filters: { search: '', statuses: [], queue: '', dateFrom: '', dateTo: '', showAdvanced: false, jobClass: '', server: '', minAttempts: '', minDuration: '' },
@@ -1314,7 +1800,7 @@
                 // Auto-refresh
                 refreshInterval: null,
                 isLive: true,
-                loading: { overview: true, jobs: false, analytics: false, health: false, infrastructure: false, detail: false },
+                loading: { overview: true, jobs: false, analytics: false, health: false, infrastructure: false, autoscale: false, detail: false },
                 error: null,
                 retryCount: 0,
                 maxRetries: 3,
@@ -1363,8 +1849,17 @@
                     } else {
                         // Restore tab from hash fragment (#jobs, #analytics, etc.)
                         const hash = window.location.hash.replace('#', '');
-                        if (['jobs', 'analytics', 'health', 'infrastructure'].includes(hash)) {
+                        if (['jobs', 'analytics', 'health', 'infrastructure', 'autoscale'].includes(hash)) {
                             this.navigateTo(hash);
+                        }
+
+                        // Restore filters from URL query params
+                        if (this.restoreFiltersFromUrl()) {
+                            // Switch to jobs tab if filters are present but we're not there yet
+                            if (this.activeTab !== 'jobs') {
+                                this.navigateTo('jobs');
+                            }
+                            this.fetchJobs();
                         }
                     }
 
@@ -1386,6 +1881,10 @@
                             this.jobView = null; this.jobDetail = null;
                             this.drillDown = null; this.drillDownData = null;
                             if (e.state?.tab) this.activeTab = e.state.tab;
+                            // Restore filters from URL on back/forward
+                            this.filters = { search: '', statuses: [], queue: '', dateFrom: '', dateTo: '', showAdvanced: false, jobClass: '', server: '', minAttempts: '', minDuration: '' };
+                            this.restoreFiltersFromUrl();
+                            if (this.activeTab === 'jobs') this.fetchJobs();
                         }
                     });
 
@@ -1424,13 +1923,16 @@
                         this.drillDownChart = null;
                         this.drillDown = null; this.drillDownData = null;
                     }
+                    // Stop autoscale auto-refresh when leaving the tab
+                    if (this.activeTab === 'autoscale' && tab !== 'autoscale') { this.autoscaleAutoRefresh = false; this.stopAutoscaleAutoRefresh(); }
                     this.activeTab = tab;
                     this.pushTabState(tab);
                     if (tab === 'overview' && !this.overview.stats.total && this.overview.stats.total !== 0) this.fetchOverview();
-                    else if (tab === 'jobs' && this.jobs.data.length === 0) this.fetchJobs();
+                    else if (tab === 'jobs' && this.jobs.data.length === 0 && !this.hasActiveFilters()) this.fetchJobs();
                     else if (tab === 'analytics' && Object.keys(this.analytics).length === 0) this.fetchAnalytics();
                     else if (tab === 'health' && Object.keys(this.health).length === 0) this.fetchHealth();
                     else if (tab === 'infrastructure' && Object.keys(this.infrastructure).length === 0) this.fetchInfrastructure();
+                    else if (tab === 'autoscale' && Object.keys(this.autoscale).length === 0) this.fetchAutoscale();
                     this.$nextTick(() => {
                         if (tab === 'overview') this.initThroughputChart();
                         if (tab === 'analytics') this.initDistributionChart();
@@ -1439,7 +1941,8 @@
 
                 pushTabState(tab) {
                     const hash = tab === 'overview' ? '' : '#' + tab;
-                    history.pushState({ tab }, '', this.dashboardUrl + hash);
+                    const qs = window.location.search;
+                    history.pushState({ tab }, '', this.dashboardUrl + qs + hash);
                 },
 
                 openJobView(uuid, pushHistory = true) {
@@ -1497,6 +2000,7 @@
                         this.overview.charts = data.charts || {};
                         const queueNames = (data.queues || []).map(q => q.queue);
                         if (queueNames.length > this.availableQueues.length) this.availableQueues = queueNames;
+                        if (data.horizon_available !== undefined) this.horizonAvailable = data.horizon_available;
                         this.loading.overview = false;
                         this.$nextTick(() => { this.initThroughputChart(); this.updateThroughputChart(data.charts?.throughput); });
                     } catch (e) { this.loading.overview = false; console.error('fetchOverview error:', e); }
@@ -1557,13 +2061,28 @@
                     try { this.infrastructure = await this.fetchWithRetry('{{ route("queue-monitor.dashboard.infrastructure") }}'); } catch (e) { console.error('fetchInfrastructure error:', e); } finally { this.loading.infrastructure = false; }
                 },
 
+                async fetchAutoscale() {
+                    if (Object.keys(this.autoscale).length === 0) this.loading.autoscale = true;
+                    try { this.autoscale = await this.fetchWithRetry('{{ route("queue-monitor.dashboard.autoscale") }}'); } catch (e) { console.error('fetchAutoscale error:', e); } finally { this.loading.autoscale = false; }
+                },
+
+                startAutoscaleAutoRefresh() {
+                    this.stopAutoscaleAutoRefresh();
+                    this.autoscaleRefreshInterval = setInterval(() => {
+                        if (this.activeTab === 'autoscale') this.fetchAutoscale();
+                    }, 5000);
+                },
+
+                stopAutoscaleAutoRefresh() {
+                    if (this.autoscaleRefreshInterval) { clearInterval(this.autoscaleRefreshInterval); this.autoscaleRefreshInterval = null; }
+                },
+
                 // ========== ACTIONS ==========
 
                 async replayJob(uuid) {
                     if (!uuid) return;
                     try {
-                        const apiBase = '{{ config("queue-monitor.api.prefix", "api/queue-monitor") }}';
-                        await fetch(`/${apiBase}/jobs/${uuid}/replay`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' } });
+                        await fetch(this.dashboardUrl + '/jobs/' + uuid + '/replay', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' } });
                         if (this.activeTab === 'overview') this.fetchOverview();
                         if (this.activeTab === 'jobs') this.fetchJobs();
                     } catch (e) { this.error = 'Failed to replay job'; console.error('replayJob error:', e); }
@@ -1575,8 +2094,8 @@
                     if (!uuid) return;
                     this.confirmDelete = null;
                     try {
-                        const apiBase = '{{ config("queue-monitor.api.prefix", "api/queue-monitor") }}';
-                        await fetch(`/${apiBase}/jobs/${uuid}`, { method: 'DELETE', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' } });
+                        const res = await fetch(this.dashboardUrl + '/jobs/' + uuid + '/delete', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' } });
+                        if (!res.ok) { const err = await res.json().catch(() => ({})); this.error = err.message || 'Failed to delete job (HTTP ' + res.status + ')'; return; }
                         if (this.jobView) this.closeJobView();
                         if (this.activeTab === 'overview') this.fetchOverview();
                         if (this.activeTab === 'jobs') this.fetchJobs();
@@ -1586,8 +2105,7 @@
                 async batchReplay() {
                     if (this.selectedJobs.length === 0) return;
                     try {
-                        const apiBase = '{{ config("queue-monitor.api.prefix", "api/queue-monitor") }}';
-                        await fetch(`/${apiBase}/batch/replay`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' }, body: JSON.stringify({ uuids: this.selectedJobs }) });
+                        await fetch(this.dashboardUrl + '/batch/replay', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' }, body: JSON.stringify({ uuids: this.selectedJobs }) });
                         this.selectedJobs = []; this.fetchJobs();
                     } catch (e) { this.error = 'Failed to replay jobs'; console.error('batchReplay error:', e); }
                 },
@@ -1596,8 +2114,7 @@
                     if (!uuid) return;
                     if (action === 'delete' && !confirm('Delete this stuck job? This cannot be undone.')) return;
                     try {
-                        const apiBase = '{{ config("queue-monitor.api.prefix", "api/queue-monitor") }}';
-                        const res = await fetch(`/${apiBase}/stuck-jobs/resolve`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' }, body: JSON.stringify({ uuids: [uuid], action }) });
+                        const res = await fetch(this.dashboardUrl + '/stuck-jobs/resolve', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' }, body: JSON.stringify({ uuids: [uuid], action }) });
                         if (!res.ok) throw new Error('Request failed');
                         this.fetchHealth();
                     } catch (e) { this.error = `Failed to ${action} stuck job`; console.error('resolveStuckJob error:', e); }
@@ -1607,8 +2124,7 @@
                     const label = action === 'delete' ? 'delete' : 'retry';
                     if (!confirm(`${label.charAt(0).toUpperCase() + label.slice(1)} all stuck jobs?`)) return;
                     try {
-                        const apiBase = '{{ config("queue-monitor.api.prefix", "api/queue-monitor") }}';
-                        const res = await fetch(`/${apiBase}/stuck-jobs/resolve-all`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' }, body: JSON.stringify({ action }) });
+                        const res = await fetch(this.dashboardUrl + '/stuck-jobs/resolve-all', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' }, body: JSON.stringify({ action }) });
                         if (!res.ok) throw new Error('Request failed');
                         this.fetchHealth();
                     } catch (e) { this.error = `Failed to ${label} stuck jobs`; console.error('resolveAllStuckJobs error:', e); }
@@ -1618,8 +2134,7 @@
                     if (this.selectedJobs.length === 0) return;
                     if (!confirm(`Delete ${this.selectedJobs.length} job(s)? This cannot be undone.`)) return;
                     try {
-                        const apiBase = '{{ config("queue-monitor.api.prefix", "api/queue-monitor") }}';
-                        await fetch(`/${apiBase}/batch/delete`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' }, body: JSON.stringify({ uuids: this.selectedJobs }) });
+                        await fetch(this.dashboardUrl + '/batch/delete', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' }, body: JSON.stringify({ uuids: this.selectedJobs }) });
                         this.selectedJobs = []; this.fetchJobs();
                     } catch (e) { this.error = 'Failed to delete jobs'; console.error('batchDelete error:', e); }
                 },
@@ -1655,19 +2170,25 @@
 
                 drillDownToJobs(type, value) {
                     this.closeDrillDown();
-                    this.activeTab = 'jobs';
-                    this.clearFilters();
+                    // Reset filters without fetching (avoid race condition)
+                    this.filters = { search: '', statuses: [], queue: '', dateFrom: '', dateTo: '', showAdvanced: false, jobClass: '', server: '', minAttempts: '', minDuration: '' };
+                    this.pagination.offset = 0;
+                    this.selectedJobs = [];
                     if (type === 'queue') this.filters.queue = value;
                     if (type === 'server') this.filters.server = value;
                     if (type === 'job_class') this.filters.jobClass = value;
+                    this.navigateTo('jobs');
+                    this.syncFiltersToUrl();
                     this.$nextTick(() => this.fetchJobs());
                 },
 
                 filterJobsByException(exceptionClass) {
-                    this.activeTab = 'jobs';
-                    this.clearFilters();
-                    this.filters.search = this.shortClass(exceptionClass);
-                    this.filters.statuses = ['failed', 'timeout'];
+                    // Reset filters without fetching (avoid race condition)
+                    this.filters = { search: exceptionClass, statuses: ['failed', 'timeout'], queue: '', dateFrom: '', dateTo: '', showAdvanced: false, jobClass: '', server: '', minAttempts: '', minDuration: '' };
+                    this.pagination.offset = 0;
+                    this.selectedJobs = [];
+                    this.navigateTo('jobs');
+                    this.syncFiltersToUrl();
                     this.$nextTick(() => this.fetchJobs());
                 },
 
@@ -1706,21 +2227,73 @@
 
                 clearFilters() {
                     this.filters = { search: '', statuses: [], queue: '', dateFrom: '', dateTo: '', showAdvanced: false, jobClass: '', server: '', minAttempts: '', minDuration: '' };
+                    this.syncFiltersToUrl();
                     this.resetPaginationAndFetch();
                 },
 
-                resetPaginationAndFetch() { this.pagination.offset = 0; this.selectedJobs = []; this.fetchJobs(); },
+                resetPaginationAndFetch() { this.pagination.offset = 0; this.selectedJobs = []; this.syncFiltersToUrl(); this.fetchJobs(); },
 
                 toggleSort(field) {
                     if (this.sorting.field === field) this.sorting.direction = this.sorting.direction === 'asc' ? 'desc' : 'asc';
                     else { this.sorting.field = field; this.sorting.direction = 'desc'; }
+                    this.syncFiltersToUrl();
                     this.fetchJobs();
+                },
+
+                // ========== URL FILTER PERSISTENCE ==========
+
+                syncFiltersToUrl() {
+                    const params = new URLSearchParams();
+                    if (this.filters.search) params.set('search', this.filters.search);
+                    this.filters.statuses.forEach(s => params.append('status', s));
+                    if (this.filters.queue) params.set('queue', this.filters.queue);
+                    if (this.filters.dateFrom) params.set('from', this.filters.dateFrom);
+                    if (this.filters.dateTo) params.set('to', this.filters.dateTo);
+                    if (this.filters.jobClass) params.set('class', this.filters.jobClass);
+                    if (this.filters.server) params.set('server', this.filters.server);
+                    if (this.filters.minAttempts) params.set('attempts', this.filters.minAttempts);
+                    if (this.filters.minDuration) params.set('duration', this.filters.minDuration);
+                    if (this.sorting.field !== 'queued_at') params.set('sort', this.sorting.field);
+                    if (this.sorting.direction !== 'desc') params.set('dir', this.sorting.direction);
+                    if (this.pagination.offset > 0) params.set('offset', this.pagination.offset);
+
+                    const hash = this.activeTab === 'overview' ? '' : '#' + this.activeTab;
+                    const qs = params.toString();
+                    const url = this.dashboardUrl + (qs ? '?' + qs : '') + hash;
+                    history.replaceState({ tab: this.activeTab, filters: true }, '', url);
+                },
+
+                restoreFiltersFromUrl() {
+                    const params = new URLSearchParams(window.location.search);
+                    if (!params.toString()) return false;
+
+                    let restored = false;
+                    if (params.has('search')) { this.filters.search = params.get('search'); restored = true; }
+                    const statuses = params.getAll('status');
+                    if (statuses.length > 0) { this.filters.statuses = statuses; restored = true; }
+                    if (params.has('queue')) { this.filters.queue = params.get('queue'); restored = true; }
+                    if (params.has('from')) { this.filters.dateFrom = params.get('from'); restored = true; }
+                    if (params.has('to')) { this.filters.dateTo = params.get('to'); restored = true; }
+                    if (params.has('class')) { this.filters.jobClass = params.get('class'); restored = true; }
+                    if (params.has('server')) { this.filters.server = params.get('server'); restored = true; }
+                    if (params.has('attempts')) { this.filters.minAttempts = params.get('attempts'); restored = true; }
+                    if (params.has('duration')) { this.filters.minDuration = params.get('duration'); restored = true; }
+                    if (params.has('sort')) { this.sorting.field = params.get('sort'); restored = true; }
+                    if (params.has('dir')) { this.sorting.direction = params.get('dir'); restored = true; }
+                    if (params.has('offset')) { this.pagination.offset = parseInt(params.get('offset')) || 0; restored = true; }
+
+                    // Show advanced filters panel if any advanced filter is active
+                    if (this.filters.jobClass || this.filters.server || this.filters.minAttempts || this.filters.minDuration) {
+                        this.filters.showAdvanced = true;
+                    }
+
+                    return restored;
                 },
 
                 sortIndicator(field) { if (this.sorting.field !== field) return ''; return this.sorting.direction === 'asc' ? '\u2191' : '\u2193'; },
                 toggleAllJobs(event) { this.selectedJobs = event.target.checked ? this.jobs.data.map(j => j.uuid) : []; },
-                prevPage() { this.pagination.offset = Math.max(0, this.pagination.offset - this.pagination.limit); this.selectedJobs = []; this.fetchJobs(); },
-                nextPage() { this.pagination.offset += this.pagination.limit; this.selectedJobs = []; this.fetchJobs(); },
+                prevPage() { this.pagination.offset = Math.max(0, this.pagination.offset - this.pagination.limit); this.selectedJobs = []; this.syncFiltersToUrl(); this.fetchJobs(); },
+                nextPage() { this.pagination.offset += this.pagination.limit; this.selectedJobs = []; this.syncFiltersToUrl(); this.fetchJobs(); },
 
                 // ========== CHARTS ==========
 
@@ -1779,7 +2352,7 @@
                 // ========== FORMATTING HELPERS ==========
 
                 statusClass(status) {
-                    const classes = { 'completed': 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/20', 'failed': 'bg-red-50 text-red-700 ring-1 ring-red-500/20', 'timeout': 'bg-red-50 text-red-700 ring-1 ring-red-500/20', 'processing': 'bg-blue-50 text-blue-700 ring-1 ring-blue-500/20', 'queued': 'bg-amber-50 text-amber-700 ring-1 ring-amber-600/20' };
+                    const classes = { 'completed': 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/20', 'failed': 'bg-red-50 text-red-700 ring-1 ring-red-500/20', 'timeout': 'bg-red-50 text-red-700 ring-1 ring-red-500/20', 'processing': 'bg-blue-50 text-blue-700 ring-1 ring-blue-500/20', 'queued': 'bg-amber-50 text-amber-700 ring-1 ring-amber-600/20', 'debounced': 'bg-slate-50 text-slate-600 ring-1 ring-slate-400/20' };
                     return classes[status] || 'bg-gray-50 text-gray-700 ring-1 ring-gray-500/20';
                 },
 

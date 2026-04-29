@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Cbox\LaravelQueueMonitor\Services;
 
 use Cbox\LaravelQueueMonitor\Enums\JobStatus;
+use Cbox\LaravelQueueMonitor\Models\ClusterEvent;
 use Cbox\LaravelQueueMonitor\Models\ScalingEvent;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -89,8 +90,7 @@ final class InfrastructureService
                 SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as completed,
                 SUM(CASE WHEN status IN (?, ?) THEN 1 ELSE 0 END) as failed,
                 AVG(CASE WHEN duration_ms IS NOT NULL THEN duration_ms END) as avg_duration_ms,
-                COUNT(DISTINCT worker_id) as unique_workers')
-            ->addBinding([
+                COUNT(DISTINCT worker_id) as unique_workers', [
                 JobStatus::COMPLETED->value,
                 JobStatus::FAILED->value,
                 JobStatus::TIMEOUT->value,
@@ -346,7 +346,26 @@ final class InfrastructureService
                     'scale_downs' => $summaryCounts['scale_down'] ?? 0,
                     'sla_breaches' => $summaryCounts['sla_breach'] ?? 0,
                     'sla_recoveries' => $summaryCounts['sla_recovered'] ?? 0,
+                    'sla_breach_predictions' => $summaryCounts['sla_breach_predicted'] ?? 0,
                 ];
+
+                // Breach severity stats
+                $breachSeverity = null;
+                /** @var object{avg_breach_seconds: float|null, max_breach_percentage: float|null}|null $breachData */
+                $breachData = DB::connection($dbConnection)
+                    ->table($prefix.'scaling_events')
+                    ->where('created_at', '>=', now()->subHour())
+                    ->where('action', 'sla_breach')
+                    ->whereNotNull('breach_seconds')
+                    ->selectRaw('AVG(breach_seconds) as avg_breach_seconds, MAX(breach_percentage) as max_breach_percentage')
+                    ->first();
+
+                if ($breachData !== null && $breachData->avg_breach_seconds !== null) {
+                    $breachSeverity = [
+                        'avg_breach_seconds' => round((float) $breachData->avg_breach_seconds, 1),
+                        'max_breach_percentage' => round((float) $breachData->max_breach_percentage, 1),
+                    ];
+                }
             } catch (\Throwable) {
                 // Silently handle if table exists but queries fail
             }
@@ -364,6 +383,8 @@ final class InfrastructureService
             'history' => $scalingHistory,
             'summary' => $scalingSummary,
             'has_autoscale' => $hasScalingTable && count($scalingHistory) > 0,
+            'autoscale_version' => $this->detectAutoscaleVersion(),
+            'breach_severity' => $breachSeverity ?? null,
         ];
     }
 
@@ -426,6 +447,258 @@ final class InfrastructureService
         }
 
         return ['queues' => $capacity];
+    }
+
+    /**
+     * Cluster orchestration data for v3 autoscale. Returns null when not available.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function getClusterData(): ?array
+    {
+        /** @var string|null $dbConnection */
+        $dbConnection = config('queue-monitor.database.connection');
+        /** @var string $prefix */
+        $prefix = config('queue-monitor.database.table_prefix', 'queue_monitor_');
+
+        if (! Schema::connection($dbConnection)->hasTable($prefix.'cluster_events')) {
+            return null;
+        }
+
+        try {
+            if (! ClusterEvent::exists()) {
+                return null;
+            }
+
+            // Topology: derive from latest presence_changed or manager start/stop events
+            $latestPresence = ClusterEvent::ofType('presence_changed')
+                ->orderByDesc('created_at')
+                ->first();
+
+            /** @var string $clusterId */
+            $clusterId = $latestPresence !== null
+                ? $latestPresence->cluster_id
+                : (string) (ClusterEvent::orderByDesc('created_at')->value('cluster_id') ?? 'unknown');
+
+            // Active managers: started but not yet stopped (last 24h window)
+            // A manager is active if its latest start event is more recent than its latest stop event.
+            $startedManagers = ClusterEvent::forCluster($clusterId)
+                ->ofType('manager_started')
+                ->recent(24)
+                ->orderByDesc('created_at')
+                ->get()
+                ->unique('manager_id');
+
+            $latestStopByManager = ClusterEvent::forCluster($clusterId)
+                ->ofType('manager_stopped')
+                ->recent(24)
+                ->orderByDesc('created_at')
+                ->get()
+                ->unique('manager_id')
+                ->keyBy('manager_id');
+
+            $activeManagers = $startedManagers
+                ->filter(function (ClusterEvent $m) use ($latestStopByManager): bool {
+                    $lastStop = $latestStopByManager->get($m->manager_id);
+
+                    return $lastStop === null || $m->created_at > $lastStop->created_at;
+                })
+                ->map(fn (ClusterEvent $m) => [
+                    'manager_id' => $m->manager_id,
+                    'host' => $m->host,
+                    'started_at' => $m->meta['started_at'] ?? null,
+                ])
+                ->values()
+                ->all();
+
+            // Current leader
+            $latestLeaderChange = ClusterEvent::forCluster($clusterId)
+                ->ofType('leader_changed')
+                ->orderByDesc('created_at')
+                ->first();
+
+            $leaderId = $latestLeaderChange !== null
+                ? $latestLeaderChange->leader_id
+                : ($latestPresence?->leader_id);
+
+            // Latest scaling signal
+            $latestSignal = ClusterEvent::forCluster($clusterId)
+                ->ofType('scaling_signal')
+                ->orderByDesc('created_at')
+                ->first();
+
+            // Signal history for sparkline (last hour, max 50)
+            $signalHistory = ClusterEvent::forCluster($clusterId)
+                ->ofType('scaling_signal')
+                ->recent(1)
+                ->orderBy('created_at')
+                ->limit(50)
+                ->get()
+                ->map(fn (ClusterEvent $e) => [
+                    'current_hosts' => $e->current_hosts,
+                    'recommended_hosts' => $e->recommended_hosts,
+                    'current_capacity' => $e->current_capacity,
+                    'required_workers' => $e->required_workers,
+                    'action' => $e->action,
+                    'time' => $e->created_at?->toIso8601String(),
+                ])
+                ->all();
+
+            // Leader history (last 24h)
+            $leaderHistory = ClusterEvent::forCluster($clusterId)
+                ->ofType('leader_changed')
+                ->recent(24)
+                ->orderByDesc('created_at')
+                ->limit(20)
+                ->get()
+                ->map(fn (ClusterEvent $e) => [
+                    'leader_id' => $e->leader_id,
+                    'previous_leader_id' => $e->previous_leader_id,
+                    'observed_by' => $e->manager_id,
+                    'time' => $e->created_at?->toIso8601String(),
+                    'time_human' => $e->created_at?->diffForHumans(),
+                ])
+                ->all();
+
+            // Manager events (start/stop, last 24h)
+            $managerEvents = ClusterEvent::forCluster($clusterId)
+                ->whereIn('event_type', ['manager_started', 'manager_stopped'])
+                ->recent(24)
+                ->orderByDesc('created_at')
+                ->limit(20)
+                ->get()
+                ->map(fn (ClusterEvent $e) => [
+                    'event_type' => $e->event_type,
+                    'manager_id' => $e->manager_id,
+                    'host' => $e->host,
+                    'reason' => $e->reason,
+                    'meta' => $e->meta,
+                    'time' => $e->created_at?->toIso8601String(),
+                    'time_human' => $e->created_at?->diffForHumans(),
+                ])
+                ->all();
+
+            return [
+                'has_cluster' => true,
+                'autoscale_version' => $this->detectAutoscaleVersion() ?? 3,
+                'topology' => [
+                    'cluster_id' => $clusterId,
+                    'leader_id' => $leaderId,
+                    'active_managers' => $activeManagers,
+                    'host_count' => count($activeManagers),
+                ],
+                'scaling_signal' => $latestSignal ? [
+                    'current_hosts' => $latestSignal->current_hosts,
+                    'recommended_hosts' => $latestSignal->recommended_hosts,
+                    'current_capacity' => $latestSignal->current_capacity,
+                    'required_workers' => $latestSignal->required_workers,
+                    'action' => $latestSignal->action,
+                    'reason' => $latestSignal->reason,
+                    'updated_at' => $latestSignal->created_at?->toIso8601String(),
+                ] : null,
+                'signal_history' => $signalHistory,
+                'leader_history' => $leaderHistory,
+                'manager_events' => $managerEvents,
+            ];
+        } catch (\Throwable $e) {
+            report($e);
+
+            return null;
+        }
+    }
+
+    /**
+     * Live cluster state from autoscale v3 Redis heartbeats.
+     * Returns real-time per-host resource data when available.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function getLiveClusterState(): ?array
+    {
+        if (! class_exists('Cbox\\LaravelQueueAutoscale\\Facades\\LaravelQueueAutoscale')) {
+            return null;
+        }
+
+        try {
+            /** @var array<string, mixed> $summary */
+            $summary = app('Cbox\\LaravelQueueAutoscale\\LaravelQueueAutoscale')->cluster();
+
+            if (empty($summary)) {
+                return null;
+            }
+
+            /** @var array<int, array<string, mixed>> $managers */
+            $managers = $summary['managers'] ?? [];
+
+            /** @var array<int, array<string, mixed>> $workloads */
+            $workloads = $summary['workloads'] ?? [];
+
+            return [
+                'cluster_id' => $summary['cluster_id'] ?? null,
+                'leader_id' => $summary['leader_id'] ?? null,
+                'manager_count' => $summary['manager_count'] ?? 0,
+                'total_workers' => $summary['total_workers'] ?? 0,
+                'required_workers' => $summary['required_workers'] ?? 0,
+                'total_worker_capacity' => $summary['total_worker_capacity'] ?? 0,
+                'utilization_percent' => $summary['utilization_percent'] ?? 0,
+                'scale_signal' => $summary['scale_signal'] ?? null,
+                'generated_at' => $summary['generated_at'] ?? null,
+                'hosts' => collect($managers)->map(fn (array $m) => [
+                    'manager_id' => $m['manager_id'] ?? null,
+                    'host' => $m['host'] ?? null,
+                    'is_leader' => $m['is_leader'] ?? false,
+                    'total_workers' => $m['total_workers'] ?? 0,
+                    'max_workers' => $m['max_workers'] ?? 0,
+                    'available_worker_capacity' => $m['available_worker_capacity'] ?? 0,
+                    'capacity_limiter' => $m['capacity_limiter'] ?? null,
+                    'cpu_percent' => $m['cpu_percent'] ?? null,
+                    'cpu_cores' => $m['cpu_cores'] ?? null,
+                    'memory_percent' => $m['memory_percent'] ?? null,
+                    'memory_total_mb' => $m['memory_total_mb'] ?? null,
+                    'memory_used_mb' => $m['memory_used_mb'] ?? null,
+                    'memory_free_mb' => $m['memory_free_mb'] ?? null,
+                    'queue_count' => $m['queue_count'] ?? 0,
+                    'group_count' => $m['group_count'] ?? 0,
+                    'queue_workers' => $m['queue_workers'] ?? [],
+                    'package_version' => $m['package_version'] ?? null,
+                    'last_seen_human' => $m['last_seen_human'] ?? null,
+                ])->values()->all(),
+                'workloads' => collect($workloads)->map(fn (array $w) => [
+                    'type' => $w['type'] ?? 'queue',
+                    'connection' => $w['connection'] ?? null,
+                    'name' => $w['name'] ?? null,
+                    'current_workers' => $w['current_workers'] ?? 0,
+                    'target_workers' => $w['target_workers'] ?? 0,
+                    'worker_min' => $w['worker_min'] ?? 0,
+                    'worker_max' => $w['worker_max'] ?? 0,
+                    'sla_target_seconds' => $w['sla_target_seconds'] ?? null,
+                    'pending' => $w['pending'] ?? 0,
+                    'oldest_job_age' => $w['oldest_job_age'] ?? 0,
+                    'oldest_job_age_status' => $w['oldest_job_age_status'] ?? 'normal',
+                    'throughput_per_minute' => $w['throughput_per_minute'] ?? 0,
+                    'active_workers' => $w['active_workers'] ?? 0,
+                    'utilization_percent' => $w['utilization_percent'] ?? 0,
+                    'action' => $w['action'] ?? 'hold',
+                ])->values()->all(),
+            ];
+        } catch (\Throwable $e) {
+            report($e);
+
+            return null;
+        }
+    }
+
+    private function detectAutoscaleVersion(): ?int
+    {
+        if (class_exists('Cbox\\LaravelQueueAutoscale\\Events\\ClusterLeaderChanged')) {
+            return 3;
+        }
+
+        if (class_exists('Cbox\\LaravelQueueAutoscale\\Events\\ScalingDecisionMade')) {
+            return 2;
+        }
+
+        return null;
     }
 
     /**
