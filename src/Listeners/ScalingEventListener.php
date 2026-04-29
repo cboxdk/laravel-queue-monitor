@@ -58,11 +58,11 @@ class ScalingEventListener
             $slaTarget = property_exists($event, 'slaTarget') ? $event->slaTarget : null;
 
             $data = [
-                'connection' => property_exists($event, 'connection') ? $event->connection : null,
-                'queue' => property_exists($event, 'queue') ? $event->queue : null,
+                'connection' => property_exists($event, 'connection') ? $event->connection : 'unknown',
+                'queue' => property_exists($event, 'queue') ? $event->queue : 'unknown',
                 'action' => 'sla_breach',
-                'current_workers' => $activeWorkers,
-                'target_workers' => $activeWorkers,
+                'current_workers' => $activeWorkers ?? 0,
+                'target_workers' => $activeWorkers ?? 0,
                 'reason' => "SLA breached: {$oldestJobAge}s > {$slaTarget}s target ({$pending} pending)",
                 'sla_target' => $slaTarget,
                 'sla_breach_risk' => true,
@@ -112,8 +112,8 @@ class ScalingEventListener
 
             // v2 fallback
             if (property_exists($event, 'workersScaled')) {
-                $data['current_workers'] = $data['current_workers'] ?: $event->workersScaled;
-                $data['target_workers'] = $data['target_workers'] ?: $event->workersScaled;
+                $data['current_workers'] = $data['current_workers'] ?? $event->workersScaled;
+                $data['target_workers'] = $data['target_workers'] ?? $event->workersScaled;
             }
             if (property_exists($event, 'recoveryTime') && $data['reason'] === 'SLA recovered') {
                 $data['reason'] = "SLA recovered after {$event->recoveryTime}s";
@@ -144,7 +144,7 @@ class ScalingEventListener
             ScalingEvent::create([
                 'connection' => property_exists($decision, 'connection') ? $decision->connection : 'unknown',
                 'queue' => property_exists($decision, 'queue') ? $decision->queue : 'unknown',
-                'action' => property_exists($decision, 'action') && is_callable([$decision, 'action']) ? $decision->action() : 'sla_breach_predicted',
+                'action' => 'sla_breach_predicted',
                 'current_workers' => property_exists($decision, 'currentWorkers') ? $decision->currentWorkers : 0,
                 'target_workers' => property_exists($decision, 'targetWorkers') ? $decision->targetWorkers : 0,
                 'reason' => property_exists($decision, 'reason') ? $decision->reason : 'SLA breach predicted',

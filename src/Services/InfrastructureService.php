@@ -687,7 +687,7 @@ final class InfrastructureService
         }
     }
 
-    public function detectAutoscaleVersion(): ?int
+    private function detectAutoscaleVersion(): ?int
     {
         if (class_exists('Cbox\\LaravelQueueAutoscale\\Events\\ClusterLeaderChanged')) {
             return 3;
