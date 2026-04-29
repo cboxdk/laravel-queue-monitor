@@ -2,6 +2,14 @@
 
 All notable changes to `laravel-queue-monitor` will be documented in this file.
 
+## v1.7.0 - 2026-04-29
+
+### Changes
+
+- Bump `cboxdk/laravel-queue-metrics` dependency to `^3.0`
+
+**Full Changelog**: https://github.com/cboxdk/laravel-queue-monitor/compare/v1.6.1...v1.7.0
+
 ## v1.6.1 - 2026-04-29
 
 ### Fixes
