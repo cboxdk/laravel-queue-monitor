@@ -2,6 +2,15 @@
 
 All notable changes to `laravel-queue-monitor` will be documented in this file.
 
+## v1.6.1 - 2026-04-29
+
+### Fixes
+
+- **Fallback hosts panel**: Show active managers from database events when live cluster data (Redis) is unavailable, so hosts are visible even without the autoscale package in the monitor context.
+- **Capacity fallback**: Capacity field in cluster topology now falls back to live worker counts when no scaling signals have been recorded yet.
+
+**Full Changelog**: https://github.com/cboxdk/laravel-queue-monitor/compare/v1.6.0...v1.6.1
+
 ## v1.6.0 - 2026-04-29
 
 ### Features
