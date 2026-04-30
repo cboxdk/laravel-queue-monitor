@@ -2,6 +2,13 @@
 
 All notable changes to `laravel-queue-monitor` will be documented in this file.
 
+## v1.7.2 - 2026-04-30
+
+### Fixes
+
+- **Autoscale stat cards wrong total**: `Total Decisions` now only counts actionable events (scale_up, scale_down, sla_breach, sla_recovered, sla_breach_predicted) instead of all events including hold/null decisions.
+- **Autoscale tab not auto-refreshing**: Include the autoscale tab in the main auto-refresh loop so stat cards update automatically.
+
 ## v1.7.1 - 2026-04-30
 
 ### Fixes
