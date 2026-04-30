@@ -137,7 +137,9 @@ class DashboardDrillDownController extends Controller
                     'queued_at' => $job->queued_at,
                     'error' => $job->exception_message,
                 ];
-            });
+            })
+            ->values()
+            ->all();
 
         // Failure patterns (top exception classes for this entity)
         $failurePatterns = DB::table($table)

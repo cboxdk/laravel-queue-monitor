@@ -2238,7 +2238,7 @@
                         const url = `{{ route('queue-monitor.dashboard.drill-down') }}?type=${type}&value=${encodeURIComponent(value)}`;
                         const data = await this.fetchWithRetry(url);
                         this.drillDownData = data;
-                        this.$nextTick(() => requestAnimationFrame(() => this.initDrillDownChart()));
+                        this.updateDrillDownChart(data?.throughput);
                     } catch (e) { console.error('refreshDrillDown error:', e); }
                 },
 
@@ -2270,10 +2270,16 @@
                             if (retries < 10) requestAnimationFrame(() => this.initDrillDownChart(retries + 1));
                             return;
                         }
-                        if (this.drillDownChart) this.drillDownChart.dispose();
-                        this.drillDownChart = echarts.init(el);
-                        const data = this.drillDownData?.throughput;
-                        if (!data || !Array.isArray(data) || data.length === 0) return;
+                        if (!this.drillDownChart) {
+                            this.drillDownChart = echarts.init(el);
+                        }
+                        this.updateDrillDownChart(this.drillDownData?.throughput);
+                    } catch (e) { console.warn('Drill-down chart init error:', e.message); }
+                },
+
+                updateDrillDownChart(data) {
+                    if (!this.drillDownChart || !data || !Array.isArray(data) || data.length === 0) return;
+                    try {
                         const labels = data.map(d => { const parts = (d.minute || '').split(' '); return parts.length > 1 ? parts[1] : d.minute; });
                         this.drillDownChart.setOption({
                             tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, formatter: (params) => { let html = `<div style="font-size:12px;font-weight:600;margin-bottom:4px">${params[0]?.axisValue || ''}</div>`; params.forEach(p => { html += `<div style="font-size:11px">${p.marker} ${p.seriesName}: ${p.value}</div>`; }); return html; } },
@@ -2285,7 +2291,7 @@
                                 { name: 'Failed', type: 'bar', stack: 'throughput', data: data.map(d => d.failed || 0), itemStyle: { color: '#ef4444', borderRadius: [3, 3, 0, 0] }, barMaxWidth: 16 },
                             ],
                         });
-                    } catch (e) { console.warn('Drill-down chart error:', e.message); }
+                    } catch (e) { console.warn('Drill-down chart update error:', e.message); }
                 },
 
                 drillDownStatusClass(status) {
