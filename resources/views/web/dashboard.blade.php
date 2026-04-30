@@ -894,7 +894,7 @@
                                         <div class="mt-4 border-t border-gray-100 pt-4">
                                             <div class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Horizon Supervisors</div>
                                             <div class="space-y-2">
-                                                <template x-for="sup in infrastructure.workers.supervisors" :key="sup.name">
+                                                <template x-for="sup in (infrastructure.workers?.supervisors || [])" :key="sup.name">
                                                     <div class="flex items-center justify-between py-1.5 px-3 rounded-lg bg-gray-50">
                                                         <div class="flex items-center gap-2"><span class="h-2 w-2 rounded-full" :class="sup.status === 'running' ? 'bg-emerald-500' : 'bg-gray-400'"></span><span class="text-sm font-medium text-gray-700" :title="sup.name" x-text="sup.name.includes(':') ? sup.name.split(':').pop() : sup.name"></span></div>
                                                         <div class="flex items-center gap-3"><span class="text-[11px] text-gray-500" x-text="sup.processes + ' processes'"></span><span class="text-[10px] text-gray-400" x-text="sup.queues.join(', ')"></span></div>
@@ -1004,19 +1004,19 @@
                         {{-- Horizon Workload --}}
                         <div x-show="infrastructure.workers?.available && (infrastructure.workers?.workload || []).length > 0" class="bg-white border border-gray-200/80 rounded-xl shadow-sm overflow-hidden">
                                 <div class="px-5 py-4 border-b border-gray-100"><h4 class="text-sm font-semibold text-gray-900">Horizon Workload</h4></div>
-                                <div x-show="infrastructure.workers.workload.every(w => w.length === 0 && w.wait === 0)" class="py-10 text-center">
+                                <div x-show="(infrastructure.workers?.workload || []).every(w => w.length === 0 && w.wait === 0)" class="py-10 text-center">
                                     <div class="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-emerald-50 mb-2"><svg class="h-5 w-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></div>
                                     <p class="text-sm text-emerald-600 font-medium">All queues clear</p>
-                                    <p class="text-[11px] text-gray-400 mt-1">No pending jobs across <span x-text="infrastructure.workers.workload.length"></span> queues</p>
+                                    <p class="text-[11px] text-gray-400 mt-1">No pending jobs across <span x-text="(infrastructure.workers?.workload || []).length"></span> queues</p>
                                 </div>
-                                <div x-show="!infrastructure.workers.workload.every(w => w.length === 0 && w.wait === 0)" class="divide-y divide-gray-50">
-                                    <template x-for="w in infrastructure.workers.workload" :key="w.queue">
+                                <div x-show="!(infrastructure.workers?.workload || []).every(w => w.length === 0 && w.wait === 0)" class="divide-y divide-gray-50">
+                                    <template x-for="w in (infrastructure.workers?.workload || [])" :key="w.queue">
                                         <div class="px-5 py-3">
                                             <div class="flex items-center justify-between mb-1.5">
                                                 <span class="text-sm font-medium text-gray-900" x-text="w.queue"></span>
                                                 <div class="flex items-center gap-4 text-[11px] text-gray-500"><span x-text="w.length + ' pending'"></span><span x-text="w.wait + 's wait'"></span><span x-text="w.processes + ' workers'"></span></div>
                                             </div>
-                                            <div class="w-full bg-gray-100 rounded-full h-2"><div class="h-2 rounded-full transition-all duration-500" :class="w.length > 100 ? 'bg-red-500' : w.length > 50 ? 'bg-amber-500' : 'bg-brand'" :style="'width: ' + Math.min(100, (w.length / Math.max(1, ...infrastructure.workers.workload.map(x => x.length))) * 100) + '%'"></div></div>
+                                            <div class="w-full bg-gray-100 rounded-full h-2"><div class="h-2 rounded-full transition-all duration-500" :class="w.length > 100 ? 'bg-red-500' : w.length > 50 ? 'bg-amber-500' : 'bg-brand'" :style="'width: ' + Math.min(100, (w.length / Math.max(1, ...(infrastructure.workers?.workload || []).map(x => x.length))) * 100) + '%'"></div></div>
                                         </div>
                                     </template>
                                 </div>
