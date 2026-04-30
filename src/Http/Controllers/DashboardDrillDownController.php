@@ -79,6 +79,7 @@ class DashboardDrillDownController extends Controller
         $total = $statsRow ? (int) $statsRow->total : 0;
         $completed = $statsRow ? (int) $statsRow->completed : 0;
         $failed = $statsRow ? (int) $statsRow->failed : 0;
+        $finished = $completed + $failed;
 
         // Percentiles via sampled duration values (bounded to 1000 rows for memory safety)
         $durations = DB::table($table)
@@ -99,7 +100,7 @@ class DashboardDrillDownController extends Controller
             'total' => $total,
             'completed' => $completed,
             'failed' => $failed,
-            'success_rate' => $total > 0 ? round(($completed / $total) * 100, 2) : 0,
+            'success_rate' => $finished > 0 ? round(($completed / $finished) * 100, 2) : 0,
             'avg_duration_ms' => $statsRow && $statsRow->avg_duration_ms !== null ? round((float) $statsRow->avg_duration_ms, 2) : null,
             'max_duration_ms' => $statsRow && $statsRow->max_duration_ms !== null ? (int) $statsRow->max_duration_ms : null,
             'min_duration_ms' => $statsRow && $statsRow->min_duration_ms !== null ? (int) $statsRow->min_duration_ms : null,

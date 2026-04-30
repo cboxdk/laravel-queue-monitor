@@ -79,6 +79,7 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
         $total = (int) $stats->total;
         $completed = (int) $stats->completed;
         $failed = (int) $stats->failed + (int) $stats->timeout;
+        $finished = $completed + $failed;
 
         return [
             'total' => $total,
@@ -87,8 +88,8 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
             'timeout' => (int) $stats->timeout,
             'processing' => (int) $stats->processing,
             'queue_backlog' => (int) $stats->queued,
-            'success_rate' => $total > 0 ? round(($completed / $total) * 100, 2) : 0,
-            'failure_rate' => $total > 0 ? round(($failed / $total) * 100, 2) : 0,
+            'success_rate' => $finished > 0 ? round(($completed / $finished) * 100, 2) : 0,
+            'failure_rate' => $finished > 0 ? round(($failed / $finished) * 100, 2) : 0,
             'avg_duration_ms' => $stats->avg_duration_ms !== null ? round((float) $stats->avg_duration_ms, 2) : null,
             'max_duration_ms' => $stats->max_duration_ms !== null ? (int) $stats->max_duration_ms : null,
             'avg_memory_mb' => $stats->avg_memory_mb !== null ? round((float) $stats->avg_memory_mb, 2) : null,
@@ -137,16 +138,22 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
 
         /** @var array<int, array<string, mixed>> $result */
         $result = $query->get()
-            ->map(fn ($row) => [
-                'server_name' => $row->server_name,
-                'total_jobs' => (int) $row->total,
-                'completed' => (int) $row->completed,
-                'failed' => (int) $row->failed,
-                'success_rate' => (int) $row->total > 0
-                    ? round(((int) $row->completed / (int) $row->total) * 100, 2)
-                    : 0,
-                'avg_duration_ms' => $row->avg_duration_ms !== null ? round((float) $row->avg_duration_ms, 2) : null,
-            ])
+            ->map(function ($row) {
+                $completed = (int) $row->completed;
+                $failed = (int) $row->failed;
+                $finished = $completed + $failed;
+
+                return [
+                    'server_name' => $row->server_name,
+                    'total_jobs' => (int) $row->total,
+                    'completed' => $completed,
+                    'failed' => $failed,
+                    'success_rate' => $finished > 0
+                        ? round(($completed / $finished) * 100, 2)
+                        : 0,
+                    'avg_duration_ms' => $row->avg_duration_ms !== null ? round((float) $row->avg_duration_ms, 2) : null,
+                ];
+            })
             ->values()
             ->all();
 
@@ -197,18 +204,24 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
 
         /** @var array<int, array<string, mixed>> $result */
         $result = $query->get()
-            ->map(fn ($row) => [
-                'queue' => $row->queue,
-                'connection' => $row->connection,
-                'total_jobs' => (int) $row->total,
-                'completed' => (int) $row->completed,
-                'failed' => (int) $row->failed,
-                'processing' => (int) $row->processing,
-                'success_rate' => (int) $row->total > 0
-                    ? round(((int) $row->completed / (int) $row->total) * 100, 2)
-                    : 0,
-                'avg_duration_ms' => $row->avg_duration_ms !== null ? round((float) $row->avg_duration_ms, 2) : null,
-            ])
+            ->map(function ($row) {
+                $completed = (int) $row->completed;
+                $failed = (int) $row->failed;
+                $finished = $completed + $failed;
+
+                return [
+                    'queue' => $row->queue,
+                    'connection' => $row->connection,
+                    'total_jobs' => (int) $row->total,
+                    'completed' => $completed,
+                    'failed' => $failed,
+                    'processing' => (int) $row->processing,
+                    'success_rate' => $finished > 0
+                        ? round(($completed / $finished) * 100, 2)
+                        : 0,
+                    'avg_duration_ms' => $row->avg_duration_ms !== null ? round((float) $row->avg_duration_ms, 2) : null,
+                ];
+            })
             ->values()
             ->all();
 
@@ -258,17 +271,23 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
 
         /** @var array<int, array<string, mixed>> $result */
         $result = $query->get()
-            ->map(fn ($row) => [
-                'job_class' => $row->job_class,
-                'total_jobs' => (int) $row->total,
-                'completed' => (int) $row->completed,
-                'failed' => (int) $row->failed,
-                'success_rate' => (int) $row->total > 0
-                    ? round(((int) $row->completed / (int) $row->total) * 100, 2)
-                    : 0,
-                'avg_duration_ms' => $row->avg_duration_ms !== null ? round((float) $row->avg_duration_ms, 2) : null,
-                'max_duration_ms' => $row->max_duration_ms !== null ? (int) $row->max_duration_ms : null,
-            ])
+            ->map(function ($row) {
+                $completed = (int) $row->completed;
+                $failed = (int) $row->failed;
+                $finished = $completed + $failed;
+
+                return [
+                    'job_class' => $row->job_class,
+                    'total_jobs' => (int) $row->total,
+                    'completed' => $completed,
+                    'failed' => $failed,
+                    'success_rate' => $finished > 0
+                        ? round(($completed / $finished) * 100, 2)
+                        : 0,
+                    'avg_duration_ms' => $row->avg_duration_ms !== null ? round((float) $row->avg_duration_ms, 2) : null,
+                    'max_duration_ms' => $row->max_duration_ms !== null ? (int) $row->max_duration_ms : null,
+                ];
+            })
             ->values()
             ->all();
 
@@ -338,11 +357,13 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
             ->select([
                 'queue',
                 DB::raw('COUNT(*) as total'),
+                DB::raw('SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as completed'),
                 DB::raw('SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as processing'),
                 DB::raw('SUM(CASE WHEN status IN (?, ?) THEN 1 ELSE 0 END) as failed'),
                 DB::raw('AVG(CASE WHEN duration_ms IS NOT NULL THEN duration_ms END) as avg_duration_ms'),
             ])
             ->addBinding([
+                JobStatus::COMPLETED->value,
                 JobStatus::PROCESSING->value,
                 JobStatus::FAILED->value,
                 JobStatus::TIMEOUT->value,
@@ -352,12 +373,14 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
             ->get()
             ->map(function ($row) {
                 $total = (int) $row->total;
+                $completed = (int) $row->completed;
                 $processing = (int) $row->processing;
                 $failed = (int) $row->failed;
+                $finished = $completed + $failed;
                 $avgDuration = $row->avg_duration_ms !== null ? (float) $row->avg_duration_ms : null;
 
-                // Simple health score calculation
-                $failureRate = $total > 0 ? ($failed / $total) : 0;
+                // Health score based on finished jobs only (excludes queued/processing)
+                $failureRate = $finished > 0 ? ($failed / $finished) : 0;
                 $health = 100 - ($failureRate * 100);
 
                 return [

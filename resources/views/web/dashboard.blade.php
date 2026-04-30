@@ -175,6 +175,14 @@
             {{-- ==================== OVERVIEW TAB ==================== --}}
             <div x-show="activeTab === 'overview'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0">
 
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-sm font-semibold text-gray-900">Overview</h3>
+                    <button @click="fetchOverview()" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition">
+                        <svg class="h-3.5 w-3.5" :class="loading.overview && 'animate-spin'" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" /></svg>
+                        Refresh
+                    </button>
+                </div>
+
                 {{-- Stats Grid --}}
                 <div class="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6 stagger-in">
                     <div class="bg-white border border-gray-200/80 border-l-4 border-l-brand rounded-xl shadow-sm p-4 card-hover">
@@ -415,6 +423,10 @@
                             More
                         </button>
                         <button x-show="hasActiveFilters()" @click="clearFilters()" class="text-[11px] font-semibold text-red-600 hover:text-red-800 transition">Clear all</button>
+                        <button @click="fetchJobs()" class="inline-flex items-center gap-1.5 px-3 py-2 text-[11px] font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition">
+                            <svg class="h-3.5 w-3.5" :class="loading.jobs && 'animate-spin'" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" /></svg>
+                            Refresh
+                        </button>
                     </div>
 
                     {{-- Advanced filters --}}
@@ -1683,10 +1695,16 @@
 
                 {{-- Back nav + header --}}
                 <div class="mb-6">
-                    <button @click="closeDrillDown()" class="inline-flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-700 transition mb-4 group">
-                        <svg class="h-4 w-4 transition-transform group-hover:-translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" /></svg>
-                        Back
-                    </button>
+                    <div class="flex items-center justify-between mb-4">
+                        <button @click="closeDrillDown()" class="inline-flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-700 transition group">
+                            <svg class="h-4 w-4 transition-transform group-hover:-translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" /></svg>
+                            Back
+                        </button>
+                        <button @click="refreshDrillDown()" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition">
+                            <svg class="h-3.5 w-3.5" :class="drillDownLoading && 'animate-spin'" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" /></svg>
+                            Refresh
+                        </button>
+                    </div>
 
                     <div class="flex items-center gap-3">
                         <div class="text-[10px] font-bold text-gray-400 uppercase tracking-wider" x-text="drillDown?.type?.replace('_', ' ')"></div>
@@ -1893,19 +1911,16 @@
                     } else if (initialDrillDownType && initialDrillDownValue) {
                         this.openDrillDown(initialDrillDownType, initialDrillDownValue, false);
                     } else {
+                        // Restore filters from URL query params first (before navigating)
+                        const hasFilters = this.restoreFiltersFromUrl();
+
                         // Restore tab from hash fragment (#jobs, #analytics, etc.)
                         const hash = window.location.hash.replace('#', '');
-                        if (['jobs', 'analytics', 'health', 'infrastructure', 'autoscale'].includes(hash)) {
+                        if (hasFilters && this.activeTab !== 'jobs') {
+                            // Filters present — switch to jobs tab (navigateTo will fetch with correct filters)
+                            this.navigateTo('jobs');
+                        } else if (['jobs', 'analytics', 'health', 'infrastructure', 'autoscale'].includes(hash)) {
                             this.navigateTo(hash);
-                        }
-
-                        // Restore filters from URL query params
-                        if (this.restoreFiltersFromUrl()) {
-                            // Switch to jobs tab if filters are present but we're not there yet
-                            if (this.activeTab !== 'jobs') {
-                                this.navigateTo('jobs');
-                            }
-                            this.fetchJobs();
                         }
                     }
 
@@ -1952,8 +1967,10 @@
                     if (this.refreshInterval) clearInterval(this.refreshInterval);
                     this.refreshInterval = setInterval(() => {
                         if (!this.isLive || this.jobView) return;
+                        if (this.drillDown) { this.refreshDrillDown(); return; }
                         if (this.activeTab === 'overview') this.fetchOverview();
-                        else if (this.activeTab === 'jobs' && !this.hasActiveFilters()) this.fetchJobs();
+                        else if (this.activeTab === 'jobs') this.fetchJobs();
+                        else if (this.activeTab === 'health') this.fetchHealth();
                     }, {{ config('queue-monitor.ui.refresh_interval', 3000) }});
                 },
 
@@ -1973,12 +1990,12 @@
                     if (this.activeTab === 'autoscale' && tab !== 'autoscale') { this.autoscaleAutoRefresh = false; this.stopAutoscaleAutoRefresh(); }
                     this.activeTab = tab;
                     this.pushTabState(tab);
-                    if (tab === 'overview' && !this.overview.stats.total && this.overview.stats.total !== 0) this.fetchOverview();
-                    else if (tab === 'jobs' && this.jobs.data.length === 0 && !this.hasActiveFilters()) this.fetchJobs();
-                    else if (tab === 'analytics' && Object.keys(this.analytics).length === 0) this.fetchAnalytics();
-                    else if (tab === 'health' && Object.keys(this.health).length === 0) this.fetchHealth();
-                    else if (tab === 'infrastructure' && Object.keys(this.infrastructure).length === 0) this.fetchInfrastructure();
-                    else if (tab === 'autoscale' && Object.keys(this.autoscale).length === 0) this.fetchAutoscale();
+                    if (tab === 'overview') this.fetchOverview();
+                    else if (tab === 'jobs') this.fetchJobs();
+                    else if (tab === 'analytics') this.fetchAnalytics();
+                    else if (tab === 'health') this.fetchHealth();
+                    else if (tab === 'infrastructure') this.fetchInfrastructure();
+                    else if (tab === 'autoscale') this.fetchAutoscale();
                     this.$nextTick(() => {
                         if (tab === 'overview') this.initThroughputChart();
                         if (tab === 'analytics') this.initDistributionChart();
@@ -2202,7 +2219,7 @@
                         this.drillDownData = data;
                     } catch (e) { console.error('drill-down error:', e); } finally {
                         this.drillDownLoading = false;
-                        this.$nextTick(() => { this.$nextTick(() => this.initDrillDownChart()); });
+                        this.$nextTick(() => requestAnimationFrame(() => this.initDrillDownChart()));
                     }
                 },
 
@@ -2214,34 +2231,45 @@
                     this.pushTabState(this.activeTab);
                 },
 
+                async refreshDrillDown() {
+                    if (!this.drillDown) return;
+                    const { type, value } = this.drillDown;
+                    try {
+                        const url = `{{ route('queue-monitor.dashboard.drill-down') }}?type=${type}&value=${encodeURIComponent(value)}`;
+                        const data = await this.fetchWithRetry(url);
+                        this.drillDownData = data;
+                        this.$nextTick(() => requestAnimationFrame(() => this.initDrillDownChart()));
+                    } catch (e) { console.error('refreshDrillDown error:', e); }
+                },
+
                 drillDownToJobs(type, value) {
                     this.closeDrillDown();
-                    // Reset filters without fetching (avoid race condition)
                     this.filters = { search: '', statuses: [], queue: '', dateFrom: '', dateTo: '', showAdvanced: false, jobClass: '', server: '', minAttempts: '', minDuration: '' };
                     this.pagination.offset = 0;
                     this.selectedJobs = [];
                     if (type === 'queue') this.filters.queue = value;
                     if (type === 'server') this.filters.server = value;
                     if (type === 'job_class') this.filters.jobClass = value;
-                    this.navigateTo('jobs');
                     this.syncFiltersToUrl();
-                    this.$nextTick(() => this.fetchJobs());
+                    this.navigateTo('jobs');
                 },
 
                 filterJobsByException(exceptionClass) {
-                    // Reset filters without fetching (avoid race condition)
                     this.filters = { search: exceptionClass, statuses: ['failed', 'timeout'], queue: '', dateFrom: '', dateTo: '', showAdvanced: false, jobClass: '', server: '', minAttempts: '', minDuration: '' };
                     this.pagination.offset = 0;
                     this.selectedJobs = [];
-                    this.navigateTo('jobs');
                     this.syncFiltersToUrl();
-                    this.$nextTick(() => this.fetchJobs());
+                    this.navigateTo('jobs');
                 },
 
-                initDrillDownChart() {
+                initDrillDownChart(retries = 0) {
                     try {
                         const el = document.getElementById('drilldown-throughput-chart');
-                        if (!el || el.offsetWidth === 0) return;
+                        if (!el) return;
+                        if (el.offsetWidth === 0) {
+                            if (retries < 10) requestAnimationFrame(() => this.initDrillDownChart(retries + 1));
+                            return;
+                        }
                         if (this.drillDownChart) this.drillDownChart.dispose();
                         this.drillDownChart = echarts.init(el);
                         const data = this.drillDownData?.throughput;
@@ -2343,9 +2371,14 @@
 
                 // ========== CHARTS ==========
 
-                initThroughputChart() {
+                initThroughputChart(retries = 0) {
                     const el = document.getElementById('throughput-chart');
-                    if (!el || el.offsetWidth === 0 || this.throughputChart) return;
+                    if (!el) return;
+                    if (el.offsetWidth === 0) {
+                        if (retries < 10) requestAnimationFrame(() => this.initThroughputChart(retries + 1));
+                        return;
+                    }
+                    if (this.throughputChart) return;
                     this.throughputChart = echarts.init(el);
                 },
 
