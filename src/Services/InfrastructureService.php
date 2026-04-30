@@ -341,7 +341,9 @@ final class InfrastructureService
                     ->all();
 
                 // Summary: aggregate counts (no full table load)
+                $trackedActions = ['scale_up', 'scale_down', 'sla_breach', 'sla_recovered', 'sla_breach_predicted'];
                 $summaryCounts = ScalingEvent::where('created_at', '>=', now()->subHour())
+                    ->whereIn('action', $trackedActions)
                     ->selectRaw('action, COUNT(*) as cnt')
                     ->groupBy('action')
                     ->pluck('cnt', 'action')

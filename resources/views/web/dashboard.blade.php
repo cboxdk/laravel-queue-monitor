@@ -1971,6 +1971,7 @@
                         if (this.activeTab === 'overview') this.fetchOverview();
                         else if (this.activeTab === 'jobs') this.fetchJobs();
                         else if (this.activeTab === 'health') this.fetchHealth();
+                        else if (this.activeTab === 'autoscale') this.fetchAutoscale();
                     }, {{ config('queue-monitor.ui.refresh_interval', 3000) }});
                 },
 
