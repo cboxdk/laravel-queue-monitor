@@ -54,9 +54,14 @@ final readonly class EloquentTagRepository implements TagRepositoryContract
                 't.tag',
                 DB::raw('COUNT(*) as count'),
                 DB::raw('SUM(CASE WHEN j.status = ? THEN 1 ELSE 0 END) as successful_count'),
-                DB::raw('ROUND((SUM(CASE WHEN j.status = ? THEN 1 ELSE 0 END) * 100.0) / COUNT(*), 2) as success_rate'),
+                DB::raw('CASE WHEN SUM(CASE WHEN j.status IN (?, ?, ?) THEN 1 ELSE 0 END) > 0 THEN ROUND((SUM(CASE WHEN j.status = ? THEN 1 ELSE 0 END) * 100.0) / SUM(CASE WHEN j.status IN (?, ?, ?) THEN 1 ELSE 0 END), 2) ELSE 0 END as success_rate'),
             ])
-            ->addBinding([JobStatus::COMPLETED->value, JobStatus::COMPLETED->value])
+            ->addBinding([
+                JobStatus::COMPLETED->value,
+                JobStatus::COMPLETED->value, JobStatus::FAILED->value, JobStatus::TIMEOUT->value,
+                JobStatus::COMPLETED->value,
+                JobStatus::COMPLETED->value, JobStatus::FAILED->value, JobStatus::TIMEOUT->value,
+            ])
             ->groupBy('t.tag')
             ->orderByDesc('count')
             ->get()

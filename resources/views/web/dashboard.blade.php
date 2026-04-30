@@ -175,6 +175,14 @@
             {{-- ==================== OVERVIEW TAB ==================== --}}
             <div x-show="activeTab === 'overview'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0">
 
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-sm font-semibold text-gray-900">Overview</h3>
+                    <button @click="fetchOverview()" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition">
+                        <svg class="h-3.5 w-3.5" :class="loading.overview && 'animate-spin'" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" /></svg>
+                        Refresh
+                    </button>
+                </div>
+
                 {{-- Stats Grid --}}
                 <div class="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6 stagger-in">
                     <div class="bg-white border border-gray-200/80 border-l-4 border-l-brand rounded-xl shadow-sm p-4 card-hover">
@@ -415,6 +423,10 @@
                             More
                         </button>
                         <button x-show="hasActiveFilters()" @click="clearFilters()" class="text-[11px] font-semibold text-red-600 hover:text-red-800 transition">Clear all</button>
+                        <button @click="fetchJobs()" class="inline-flex items-center gap-1.5 px-3 py-2 text-[11px] font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition">
+                            <svg class="h-3.5 w-3.5" :class="loading.jobs && 'animate-spin'" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" /></svg>
+                            Refresh
+                        </button>
                     </div>
 
                     {{-- Advanced filters --}}
@@ -882,7 +894,7 @@
                                         <div class="mt-4 border-t border-gray-100 pt-4">
                                             <div class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Horizon Supervisors</div>
                                             <div class="space-y-2">
-                                                <template x-for="sup in infrastructure.workers.supervisors" :key="sup.name">
+                                                <template x-for="sup in (infrastructure.workers?.supervisors || [])" :key="sup.name">
                                                     <div class="flex items-center justify-between py-1.5 px-3 rounded-lg bg-gray-50">
                                                         <div class="flex items-center gap-2"><span class="h-2 w-2 rounded-full" :class="sup.status === 'running' ? 'bg-emerald-500' : 'bg-gray-400'"></span><span class="text-sm font-medium text-gray-700" :title="sup.name" x-text="sup.name.includes(':') ? sup.name.split(':').pop() : sup.name"></span></div>
                                                         <div class="flex items-center gap-3"><span class="text-[11px] text-gray-500" x-text="sup.processes + ' processes'"></span><span class="text-[10px] text-gray-400" x-text="sup.queues.join(', ')"></span></div>
@@ -992,19 +1004,19 @@
                         {{-- Horizon Workload --}}
                         <div x-show="infrastructure.workers?.available && (infrastructure.workers?.workload || []).length > 0" class="bg-white border border-gray-200/80 rounded-xl shadow-sm overflow-hidden">
                                 <div class="px-5 py-4 border-b border-gray-100"><h4 class="text-sm font-semibold text-gray-900">Horizon Workload</h4></div>
-                                <div x-show="infrastructure.workers.workload.every(w => w.length === 0 && w.wait === 0)" class="py-10 text-center">
+                                <div x-show="(infrastructure.workers?.workload || []).every(w => w.length === 0 && w.wait === 0)" class="py-10 text-center">
                                     <div class="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-emerald-50 mb-2"><svg class="h-5 w-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></div>
                                     <p class="text-sm text-emerald-600 font-medium">All queues clear</p>
-                                    <p class="text-[11px] text-gray-400 mt-1">No pending jobs across <span x-text="infrastructure.workers.workload.length"></span> queues</p>
+                                    <p class="text-[11px] text-gray-400 mt-1">No pending jobs across <span x-text="(infrastructure.workers?.workload || []).length"></span> queues</p>
                                 </div>
-                                <div x-show="!infrastructure.workers.workload.every(w => w.length === 0 && w.wait === 0)" class="divide-y divide-gray-50">
-                                    <template x-for="w in infrastructure.workers.workload" :key="w.queue">
+                                <div x-show="!(infrastructure.workers?.workload || []).every(w => w.length === 0 && w.wait === 0)" class="divide-y divide-gray-50">
+                                    <template x-for="w in (infrastructure.workers?.workload || [])" :key="w.queue">
                                         <div class="px-5 py-3">
                                             <div class="flex items-center justify-between mb-1.5">
                                                 <span class="text-sm font-medium text-gray-900" x-text="w.queue"></span>
                                                 <div class="flex items-center gap-4 text-[11px] text-gray-500"><span x-text="w.length + ' pending'"></span><span x-text="w.wait + 's wait'"></span><span x-text="w.processes + ' workers'"></span></div>
                                             </div>
-                                            <div class="w-full bg-gray-100 rounded-full h-2"><div class="h-2 rounded-full transition-all duration-500" :class="w.length > 100 ? 'bg-red-500' : w.length > 50 ? 'bg-amber-500' : 'bg-brand'" :style="'width: ' + Math.min(100, (w.length / Math.max(1, ...infrastructure.workers.workload.map(x => x.length))) * 100) + '%'"></div></div>
+                                            <div class="w-full bg-gray-100 rounded-full h-2"><div class="h-2 rounded-full transition-all duration-500" :class="w.length > 100 ? 'bg-red-500' : w.length > 50 ? 'bg-amber-500' : 'bg-brand'" :style="'width: ' + Math.min(100, (w.length / Math.max(1, ...(infrastructure.workers?.workload || []).map(x => x.length))) * 100) + '%'"></div></div>
                                         </div>
                                     </template>
                                 </div>
@@ -1683,10 +1695,16 @@
 
                 {{-- Back nav + header --}}
                 <div class="mb-6">
-                    <button @click="closeDrillDown()" class="inline-flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-700 transition mb-4 group">
-                        <svg class="h-4 w-4 transition-transform group-hover:-translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" /></svg>
-                        Back
-                    </button>
+                    <div class="flex items-center justify-between mb-4">
+                        <button @click="closeDrillDown()" class="inline-flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-700 transition group">
+                            <svg class="h-4 w-4 transition-transform group-hover:-translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" /></svg>
+                            Back
+                        </button>
+                        <button @click="refreshDrillDown()" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition">
+                            <svg class="h-3.5 w-3.5" :class="drillDownLoading && 'animate-spin'" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" /></svg>
+                            Refresh
+                        </button>
+                    </div>
 
                     <div class="flex items-center gap-3">
                         <div class="text-[10px] font-bold text-gray-400 uppercase tracking-wider" x-text="drillDown?.type?.replace('_', ' ')"></div>
@@ -1893,19 +1911,16 @@
                     } else if (initialDrillDownType && initialDrillDownValue) {
                         this.openDrillDown(initialDrillDownType, initialDrillDownValue, false);
                     } else {
+                        // Restore filters from URL query params first (before navigating)
+                        const hasFilters = this.restoreFiltersFromUrl();
+
                         // Restore tab from hash fragment (#jobs, #analytics, etc.)
                         const hash = window.location.hash.replace('#', '');
-                        if (['jobs', 'analytics', 'health', 'infrastructure', 'autoscale'].includes(hash)) {
+                        if (hasFilters && this.activeTab !== 'jobs') {
+                            // Filters present — switch to jobs tab (navigateTo will fetch with correct filters)
+                            this.navigateTo('jobs');
+                        } else if (['jobs', 'analytics', 'health', 'infrastructure', 'autoscale'].includes(hash)) {
                             this.navigateTo(hash);
-                        }
-
-                        // Restore filters from URL query params
-                        if (this.restoreFiltersFromUrl()) {
-                            // Switch to jobs tab if filters are present but we're not there yet
-                            if (this.activeTab !== 'jobs') {
-                                this.navigateTo('jobs');
-                            }
-                            this.fetchJobs();
                         }
                     }
 
@@ -1952,8 +1967,10 @@
                     if (this.refreshInterval) clearInterval(this.refreshInterval);
                     this.refreshInterval = setInterval(() => {
                         if (!this.isLive || this.jobView) return;
+                        if (this.drillDown) { this.refreshDrillDown(); return; }
                         if (this.activeTab === 'overview') this.fetchOverview();
-                        else if (this.activeTab === 'jobs' && !this.hasActiveFilters()) this.fetchJobs();
+                        else if (this.activeTab === 'jobs') this.fetchJobs();
+                        else if (this.activeTab === 'health') this.fetchHealth();
                     }, {{ config('queue-monitor.ui.refresh_interval', 3000) }});
                 },
 
@@ -1973,12 +1990,12 @@
                     if (this.activeTab === 'autoscale' && tab !== 'autoscale') { this.autoscaleAutoRefresh = false; this.stopAutoscaleAutoRefresh(); }
                     this.activeTab = tab;
                     this.pushTabState(tab);
-                    if (tab === 'overview' && !this.overview.stats.total && this.overview.stats.total !== 0) this.fetchOverview();
-                    else if (tab === 'jobs' && this.jobs.data.length === 0 && !this.hasActiveFilters()) this.fetchJobs();
-                    else if (tab === 'analytics' && Object.keys(this.analytics).length === 0) this.fetchAnalytics();
-                    else if (tab === 'health' && Object.keys(this.health).length === 0) this.fetchHealth();
-                    else if (tab === 'infrastructure' && Object.keys(this.infrastructure).length === 0) this.fetchInfrastructure();
-                    else if (tab === 'autoscale' && Object.keys(this.autoscale).length === 0) this.fetchAutoscale();
+                    if (tab === 'overview') this.fetchOverview();
+                    else if (tab === 'jobs') this.fetchJobs();
+                    else if (tab === 'analytics') this.fetchAnalytics();
+                    else if (tab === 'health') this.fetchHealth();
+                    else if (tab === 'infrastructure') this.fetchInfrastructure();
+                    else if (tab === 'autoscale') this.fetchAutoscale();
                     this.$nextTick(() => {
                         if (tab === 'overview') this.initThroughputChart();
                         if (tab === 'analytics') this.initDistributionChart();
@@ -2202,7 +2219,7 @@
                         this.drillDownData = data;
                     } catch (e) { console.error('drill-down error:', e); } finally {
                         this.drillDownLoading = false;
-                        this.$nextTick(() => { this.$nextTick(() => this.initDrillDownChart()); });
+                        this.$nextTick(() => requestAnimationFrame(() => this.initDrillDownChart()));
                     }
                 },
 
@@ -2214,38 +2231,55 @@
                     this.pushTabState(this.activeTab);
                 },
 
+                async refreshDrillDown() {
+                    if (!this.drillDown) return;
+                    const { type, value } = this.drillDown;
+                    try {
+                        const url = `{{ route('queue-monitor.dashboard.drill-down') }}?type=${type}&value=${encodeURIComponent(value)}`;
+                        const data = await this.fetchWithRetry(url);
+                        this.drillDownData = data;
+                        this.updateDrillDownChart(data?.throughput);
+                    } catch (e) { console.error('refreshDrillDown error:', e); }
+                },
+
                 drillDownToJobs(type, value) {
                     this.closeDrillDown();
-                    // Reset filters without fetching (avoid race condition)
                     this.filters = { search: '', statuses: [], queue: '', dateFrom: '', dateTo: '', showAdvanced: false, jobClass: '', server: '', minAttempts: '', minDuration: '' };
                     this.pagination.offset = 0;
                     this.selectedJobs = [];
                     if (type === 'queue') this.filters.queue = value;
                     if (type === 'server') this.filters.server = value;
                     if (type === 'job_class') this.filters.jobClass = value;
-                    this.navigateTo('jobs');
                     this.syncFiltersToUrl();
-                    this.$nextTick(() => this.fetchJobs());
+                    this.navigateTo('jobs');
                 },
 
                 filterJobsByException(exceptionClass) {
-                    // Reset filters without fetching (avoid race condition)
                     this.filters = { search: exceptionClass, statuses: ['failed', 'timeout'], queue: '', dateFrom: '', dateTo: '', showAdvanced: false, jobClass: '', server: '', minAttempts: '', minDuration: '' };
                     this.pagination.offset = 0;
                     this.selectedJobs = [];
-                    this.navigateTo('jobs');
                     this.syncFiltersToUrl();
-                    this.$nextTick(() => this.fetchJobs());
+                    this.navigateTo('jobs');
                 },
 
-                initDrillDownChart() {
+                initDrillDownChart(retries = 0) {
                     try {
                         const el = document.getElementById('drilldown-throughput-chart');
-                        if (!el || el.offsetWidth === 0) return;
-                        if (this.drillDownChart) this.drillDownChart.dispose();
-                        this.drillDownChart = echarts.init(el);
-                        const data = this.drillDownData?.throughput;
-                        if (!data || !Array.isArray(data) || data.length === 0) return;
+                        if (!el) return;
+                        if (el.offsetWidth === 0) {
+                            if (retries < 10) requestAnimationFrame(() => this.initDrillDownChart(retries + 1));
+                            return;
+                        }
+                        if (!this.drillDownChart) {
+                            this.drillDownChart = echarts.init(el);
+                        }
+                        this.updateDrillDownChart(this.drillDownData?.throughput);
+                    } catch (e) { console.warn('Drill-down chart init error:', e.message); }
+                },
+
+                updateDrillDownChart(data) {
+                    if (!this.drillDownChart || !data || !Array.isArray(data) || data.length === 0) return;
+                    try {
                         const labels = data.map(d => { const parts = (d.minute || '').split(' '); return parts.length > 1 ? parts[1] : d.minute; });
                         this.drillDownChart.setOption({
                             tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, formatter: (params) => { let html = `<div style="font-size:12px;font-weight:600;margin-bottom:4px">${params[0]?.axisValue || ''}</div>`; params.forEach(p => { html += `<div style="font-size:11px">${p.marker} ${p.seriesName}: ${p.value}</div>`; }); return html; } },
@@ -2257,7 +2291,7 @@
                                 { name: 'Failed', type: 'bar', stack: 'throughput', data: data.map(d => d.failed || 0), itemStyle: { color: '#ef4444', borderRadius: [3, 3, 0, 0] }, barMaxWidth: 16 },
                             ],
                         });
-                    } catch (e) { console.warn('Drill-down chart error:', e.message); }
+                    } catch (e) { console.warn('Drill-down chart update error:', e.message); }
                 },
 
                 drillDownStatusClass(status) {
@@ -2343,9 +2377,14 @@
 
                 // ========== CHARTS ==========
 
-                initThroughputChart() {
+                initThroughputChart(retries = 0) {
                     const el = document.getElementById('throughput-chart');
-                    if (!el || el.offsetWidth === 0 || this.throughputChart) return;
+                    if (!el) return;
+                    if (el.offsetWidth === 0) {
+                        if (retries < 10) requestAnimationFrame(() => this.initThroughputChart(retries + 1));
+                        return;
+                    }
+                    if (this.throughputChart) return;
                     this.throughputChart = echarts.init(el);
                 },
 

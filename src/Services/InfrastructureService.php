@@ -100,16 +100,22 @@ final class InfrastructureService
             ->orderBy('worker_type')
             ->orderByDesc(DB::raw('COUNT(*)'))
             ->get()
-            ->map(fn ($row) => [
-                'worker_type' => $row->worker_type,
-                'queue' => $row->queue,
-                'total' => (int) $row->total,
-                'completed' => (int) $row->completed,
-                'failed' => (int) $row->failed,
-                'success_rate' => (int) $row->total > 0 ? round(((int) $row->completed / (int) $row->total) * 100, 1) : 0,
-                'avg_duration_ms' => $row->avg_duration_ms !== null ? round((float) $row->avg_duration_ms) : null,
-                'unique_workers' => (int) $row->unique_workers,
-            ])
+            ->map(function ($row) {
+                $completed = (int) $row->completed;
+                $failed = (int) $row->failed;
+                $finished = $completed + $failed;
+
+                return [
+                    'worker_type' => $row->worker_type,
+                    'queue' => $row->queue,
+                    'total' => (int) $row->total,
+                    'completed' => $completed,
+                    'failed' => $failed,
+                    'success_rate' => $finished > 0 ? round(($completed / $finished) * 100, 1) : 0,
+                    'avg_duration_ms' => $row->avg_duration_ms !== null ? round((float) $row->avg_duration_ms) : null,
+                    'unique_workers' => (int) $row->unique_workers,
+                ];
+            })
             ->all();
 
         // Aggregate per worker type
