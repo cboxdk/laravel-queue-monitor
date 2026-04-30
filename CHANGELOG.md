@@ -2,6 +2,23 @@
 
 All notable changes to `laravel-queue-monitor` will be documented in this file.
 
+## v1.7.1 - 2026-04-30
+
+### Fixes
+
+- **Success rate calculation**: Only count finished jobs (completed + failed/timeout) in success rate, excluding queued/processing jobs that incorrectly deflated the metric.
+- **Drill-down chart redrawing**: Stop the throughput chart from constantly disposing and recreating on every auto-refresh. Chart now updates data in-place via `setOption()`.
+- **Drill-down recent jobs empty**: Convert `recent_jobs` from Collection to plain array (`->values()->all()`) to prevent cache serialization issues on direct page load.
+- **Chart rendering on direct navigation**: Retry chart initialization via `requestAnimationFrame` when the DOM element has zero width during initial layout, fixing missing throughput charts on `/queue-monitor/queue/{name}`.
+- **Infrastructure TypeError**: Guard all `infrastructure.workers.workload` and `infrastructure.workers.supervisors` accesses with optional chaining to prevent `Cannot read properties of undefined` errors.
+- **Init race condition**: Restore URL filters before navigation so only one fetch fires with correct filters instead of two competing fetches.
+
+### Changes
+
+- Add Refresh buttons to Overview, Jobs, and Drill-down views.
+- Expand auto-refresh to cover drill-down views, Health tab, and Jobs tab with active filters.
+- Always re-fetch data on tab switch for fresh state.
+
 ## v1.7.0 - 2026-04-29
 
 ### Changes
@@ -236,6 +253,7 @@ First stable release of Queue Monitor for Laravel - a comprehensive job monitori
 
 ```bash
 composer require cboxdk/laravel-queue-monitor
+
 
 
 
