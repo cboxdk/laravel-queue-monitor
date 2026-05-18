@@ -2,6 +2,20 @@
 
 All notable changes to `laravel-queue-monitor` will be documented in this file.
 
+## v1.7.3 — Persist autoscale scaling decisions - 2026-05-19
+
+### Fixes
+
+- **`handleScalingDecision` listener no longer drops every event** — The listener guarded `$decision->action()` with `property_exists($decision, 'action')`, but `action()` is a method on `Cbox\LaravelQueueAutoscale\Scaling\ScalingDecision`, not a property. `property_exists()` returns `false` for methods, so the ternary fell through to `null`. Every insert then failed with `SQLSTATE[23000]: Column 'action' cannot be null` (NOT NULL constraint) — exceptions were caught and `report()`'d but no row persisted. Net effect: `queue_monitor_scaling_events` only ever contained rows from `handleWorkersScaled` (`up`/`down`), so the `/queue-monitor/autoscale` summary stat cards (`Total Decisions`, `Scale Ups`, `Scale Downs`, etc., which filter on `scale_up`/`scale_down`/`hold`) showed `0` regardless of cluster activity. The guard is now `method_exists()`, matching what's actually being checked.
+- **Same fix for `isSlaBreachRisk`** — same `property_exists` vs. method mismatch on the SLA breach risk flag. Less visible because the fallback was `false` (a valid value), but the field was always `false` in persisted rows when the call should have returned otherwise.
+
+### Testing
+
+- 445 tests, 1216 assertions
+- New regression test in `ListenerTest`: `handleScalingDecision` with a duck-typed `ScalingDecision` (readonly props + `action()` + `isSlaBreachRisk()` methods) now writes a row with the correct action string. The existing "tolerates malformed event" test is retained.
+
+**Full Changelog**: https://github.com/cboxdk/laravel-queue-monitor/compare/v1.7.2...v1.7.3
+
 ## v1.7.2 - 2026-04-30
 
 ### Fixes

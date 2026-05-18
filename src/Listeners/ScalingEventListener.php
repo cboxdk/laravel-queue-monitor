@@ -19,13 +19,15 @@ class ScalingEventListener
             ScalingEvent::create([
                 'connection' => property_exists($decision, 'connection') ? $decision->connection : null,
                 'queue' => property_exists($decision, 'queue') ? $decision->queue : null,
-                'action' => property_exists($decision, 'action') && is_callable([$decision, 'action']) ? $decision->action() : null,
+                // action() and isSlaBreachRisk() are methods on ScalingDecision,
+                // not properties — guard with method_exists, not property_exists.
+                'action' => method_exists($decision, 'action') ? $decision->action() : null,
                 'current_workers' => property_exists($decision, 'currentWorkers') ? $decision->currentWorkers : null,
                 'target_workers' => property_exists($decision, 'targetWorkers') ? $decision->targetWorkers : null,
                 'reason' => property_exists($decision, 'reason') ? $decision->reason : null,
                 'predicted_pickup_time' => property_exists($decision, 'predictedPickupTime') ? $decision->predictedPickupTime : null,
                 'sla_target' => property_exists($decision, 'slaTarget') ? $decision->slaTarget : null,
-                'sla_breach_risk' => property_exists($decision, 'isSlaBreachRisk') && is_callable([$decision, 'isSlaBreachRisk']) ? $decision->isSlaBreachRisk() : false,
+                'sla_breach_risk' => method_exists($decision, 'isSlaBreachRisk') ? $decision->isSlaBreachRisk() : false,
             ]);
         } catch (\Throwable $e) {
             // Never crash the autoscale process — monitoring is observational only

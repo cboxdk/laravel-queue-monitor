@@ -105,27 +105,71 @@ test('job exception occurred listener does not overwrite existing exception', fu
     expect($job->exception_message)->toBe('Original message');
 });
 
-test('scaling event listener handles scaling decision without crashing', function () {
+test('scaling event listener persists scaling decision with action and breach risk', function () {
     $listener = new ScalingEventListener;
 
-    // The listener guards with property_exists() && is_callable() for the action
-    // field, which means it needs a decision object matching the autoscale package
-    // interface. With a plain object, action resolves to null and the NOT NULL
-    // constraint causes a silent failure — by design (never crash the queue).
-    $decision = new stdClass;
-    $decision->connection = 'redis';
-    $decision->queue = 'default';
-    $decision->currentWorkers = 2;
-    $decision->targetWorkers = 5;
-    $decision->reason = 'High load';
+    // Mimic the public surface of Cbox\LaravelQueueAutoscale\Scaling\ScalingDecision:
+    // - readonly properties for connection/queue/workers/reason/slaTarget
+    // - action() method returning 'scale_up' | 'scale_down' | 'hold'
+    // - isSlaBreachRisk() method returning bool
+    $decision = new class
+    {
+        public string $connection = 'redis';
 
-    $event = new stdClass;
-    $event->decision = $decision;
+        public string $queue = 'default';
 
-    // Must not throw — listener catches all exceptions
+        public int $currentWorkers = 2;
+
+        public int $targetWorkers = 5;
+
+        public string $reason = 'High load';
+
+        public ?float $predictedPickupTime = 8.5;
+
+        public int $slaTarget = 10;
+
+        public function action(): string
+        {
+            return 'scale_up';
+        }
+
+        public function isSlaBreachRisk(): bool
+        {
+            return false;
+        }
+    };
+
+    $event = new class($decision)
+    {
+        public function __construct(public readonly object $decision) {}
+    };
+
     $listener->handleScalingDecision($event);
 
-    // May or may not insert depending on DB constraints, but never crashes
+    $row = ScalingEvent::query()->latest('id')->first();
+    expect($row)->not->toBeNull()
+        ->and($row->connection)->toBe('redis')
+        ->and($row->queue)->toBe('default')
+        ->and($row->action)->toBe('scale_up')
+        ->and($row->current_workers)->toBe(2)
+        ->and($row->target_workers)->toBe(5)
+        ->and($row->reason)->toBe('High load')
+        ->and((float) $row->predicted_pickup_time)->toBe(8.5)
+        ->and($row->sla_target)->toBe(10)
+        ->and((bool) $row->sla_breach_risk)->toBeFalse();
+});
+
+test('scaling event listener tolerates malformed decision objects without crashing', function () {
+    $listener = new ScalingEventListener;
+
+    // No action() method, no expected properties — listener must not throw.
+    // Insert may silently fail on NOT NULL columns; the point is the autoscale
+    // process must keep running.
+    $event = new stdClass;
+    $event->decision = new stdClass;
+
+    $listener->handleScalingDecision($event);
+
     expect(true)->toBeTrue();
 });
 
