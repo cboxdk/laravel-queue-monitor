@@ -72,12 +72,7 @@ final readonly class JobFilterData
     public static function fromRequest(array $data): self
     {
         return new self(
-            statuses: isset($data['statuses']) && is_array($data['statuses'])
-                ? array_map(
-                    fn (mixed $status): JobStatus => JobStatus::from(is_string($status) ? $status : (is_scalar($status) ? (string) $status : '')),
-                    $data['statuses']
-                )
-                : null,
+            statuses: self::parseStatuses($data['statuses'] ?? null),
             queues: isset($data['queues']) && is_array($data['queues'])
                 ? array_values(array_map(fn (mixed $v): string => is_string($v) ? $v : (is_scalar($v) ? (string) $v : ''), $data['queues']))
                 : null,
@@ -93,18 +88,18 @@ final readonly class JobFilterData
             tags: isset($data['tags']) && is_array($data['tags'])
                 ? array_values(array_map(fn (mixed $v): string => is_string($v) ? $v : (is_scalar($v) ? (string) $v : ''), $data['tags']))
                 : null,
-            queuedAfter: isset($data['queued_after']) && (is_string($data['queued_after']) || is_numeric($data['queued_after'])) ? Carbon::parse($data['queued_after']) : null,
-            queuedBefore: isset($data['queued_before']) && (is_string($data['queued_before']) || is_numeric($data['queued_before'])) ? Carbon::parse($data['queued_before']) : null,
-            startedAfter: isset($data['started_after']) && (is_string($data['started_after']) || is_numeric($data['started_after'])) ? Carbon::parse($data['started_after']) : null,
-            startedBefore: isset($data['started_before']) && (is_string($data['started_before']) || is_numeric($data['started_before'])) ? Carbon::parse($data['started_before']) : null,
-            completedAfter: isset($data['completed_after']) && (is_string($data['completed_after']) || is_numeric($data['completed_after'])) ? Carbon::parse($data['completed_after']) : null,
-            completedBefore: isset($data['completed_before']) && (is_string($data['completed_before']) || is_numeric($data['completed_before'])) ? Carbon::parse($data['completed_before']) : null,
+            queuedAfter: self::parseDate($data['queued_after'] ?? null),
+            queuedBefore: self::parseDate($data['queued_before'] ?? null),
+            startedAfter: self::parseDate($data['started_after'] ?? null),
+            startedBefore: self::parseDate($data['started_before'] ?? null),
+            completedAfter: self::parseDate($data['completed_after'] ?? null),
+            completedBefore: self::parseDate($data['completed_before'] ?? null),
             minDurationMs: isset($data['min_duration_ms']) && is_numeric($data['min_duration_ms']) ? (int) $data['min_duration_ms'] : null,
             maxDurationMs: isset($data['max_duration_ms']) && is_numeric($data['max_duration_ms']) ? (int) $data['max_duration_ms'] : null,
             minAttempts: isset($data['min_attempts']) && is_numeric($data['min_attempts']) ? (int) $data['min_attempts'] : null,
             search: isset($data['search']) && is_scalar($data['search']) ? (string) $data['search'] : null,
-            limit: isset($data['limit']) && is_numeric($data['limit']) ? min((int) $data['limit'], 1000) : 50,
-            offset: isset($data['offset']) && is_numeric($data['offset']) ? (int) $data['offset'] : 0,
+            limit: isset($data['limit']) && is_numeric($data['limit']) ? max(1, min((int) $data['limit'], 1000)) : 50,
+            offset: isset($data['offset']) && is_numeric($data['offset']) ? max(0, (int) $data['offset']) : 0,
             sortBy: self::validateSortColumn($data['sort_by'] ?? null),
             sortDirection: self::validateSortDirection($data['sort_direction'] ?? null),
         );
@@ -171,6 +166,14 @@ final readonly class JobFilterData
     }
 
     /**
+     * @return 'asc'|'desc'
+     */
+    public function sortDirectionForQuery(): string
+    {
+        return $this->sortDirection === 'asc' ? 'asc' : 'desc';
+    }
+
+    /**
      * Validate and return sort column
      */
     private static function validateSortColumn(mixed $column): string
@@ -196,5 +199,42 @@ final readonly class JobFilterData
         $direction = strtolower((string) $direction);
 
         return in_array($direction, ['asc', 'desc'], true) ? $direction : 'desc';
+    }
+
+    /**
+     * @return array<JobStatus>|null
+     */
+    private static function parseStatuses(mixed $statuses): ?array
+    {
+        if (! is_array($statuses)) {
+            return null;
+        }
+
+        $parsed = [];
+        foreach ($statuses as $status) {
+            if (! is_scalar($status)) {
+                continue;
+            }
+
+            $enum = JobStatus::tryFrom((string) $status);
+            if ($enum !== null) {
+                $parsed[] = $enum;
+            }
+        }
+
+        return $parsed !== [] ? $parsed : null;
+    }
+
+    private static function parseDate(mixed $value): ?Carbon
+    {
+        if (! is_string($value) && ! is_numeric($value)) {
+            return null;
+        }
+
+        try {
+            return Carbon::parse($value);
+        } catch (\Throwable) {
+            return null;
+        }
     }
 }

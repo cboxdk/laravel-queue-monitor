@@ -1864,6 +1864,8 @@
                 // Auto-refresh
                 refreshInterval: null,
                 isLive: true,
+                inFlight: { overview: false, jobs: false, analytics: false, health: false, infrastructure: false, autoscale: false, detail: false, drillDown: false },
+                pendingRefresh: { overview: false, jobs: false, analytics: false, health: false, infrastructure: false, autoscale: false, detail: false, drillDown: false },
                 loading: { overview: true, jobs: false, analytics: false, health: false, infrastructure: false, autoscale: false, detail: false },
                 error: null,
                 retryCount: 0,
@@ -1945,7 +1947,7 @@
                             // Restore filters from URL on back/forward
                             this.filters = { search: '', statuses: [], queue: '', dateFrom: '', dateTo: '', showAdvanced: false, jobClass: '', server: '', minAttempts: '', minDuration: '' };
                             this.restoreFiltersFromUrl();
-                            if (this.activeTab === 'jobs') this.fetchJobs();
+                            this.refreshCurrentView();
                         }
                     });
 
@@ -1966,16 +1968,58 @@
                 startAutoRefresh() {
                     if (this.refreshInterval) clearInterval(this.refreshInterval);
                     this.refreshInterval = setInterval(() => {
-                        if (!this.isLive || this.jobView) return;
-                        if (this.drillDown) { this.refreshDrillDown(); return; }
-                        if (this.activeTab === 'overview') this.fetchOverview();
-                        else if (this.activeTab === 'jobs') this.fetchJobs();
-                        else if (this.activeTab === 'health') this.fetchHealth();
-                        else if (this.activeTab === 'autoscale') this.fetchAutoscale();
+                        if (!this.isLive) return;
+                        this.refreshCurrentView();
                     }, {{ config('queue-monitor.ui.refresh_interval', 3000) }});
                 },
 
-                toggleLive() { this.isLive = !this.isLive; },
+                toggleLive() {
+                    this.isLive = !this.isLive;
+                    if (this.isLive) this.refreshCurrentView();
+                },
+
+                refreshCurrentView() {
+                    if (this.jobView) { this.fetchJobDetail(this.jobView); return; }
+                    if (this.drillDown) { this.refreshDrillDown(); return; }
+                    if (this.activeTab === 'overview') { this.fetchOverview(); this.fetchHealth(); }
+                    else if (this.activeTab === 'jobs') this.fetchJobs();
+                    else if (this.activeTab === 'analytics') this.fetchAnalytics();
+                    else if (this.activeTab === 'health') this.fetchHealth();
+                    else if (this.activeTab === 'infrastructure') this.fetchInfrastructure();
+                    else if (this.activeTab === 'autoscale' && !this.autoscaleAutoRefresh) this.fetchAutoscale();
+                },
+
+                async runLatest(scope, callback) {
+                    if (this.inFlight[scope]) {
+                        this.pendingRefresh[scope] = true;
+                        return;
+                    }
+
+                    this.inFlight[scope] = true;
+                    this.pendingRefresh[scope] = false;
+
+                    try {
+                        await callback();
+                    } finally {
+                        this.inFlight[scope] = false;
+
+                        if (this.pendingRefresh[scope]) {
+                            this.pendingRefresh[scope] = false;
+                            this.refreshScope(scope);
+                        }
+                    }
+                },
+
+                refreshScope(scope) {
+                    if (scope === 'overview') this.fetchOverview();
+                    else if (scope === 'jobs') this.fetchJobs();
+                    else if (scope === 'analytics') this.fetchAnalytics();
+                    else if (scope === 'health') this.fetchHealth();
+                    else if (scope === 'infrastructure') this.fetchInfrastructure();
+                    else if (scope === 'autoscale') this.fetchAutoscale();
+                    else if (scope === 'detail' && this.jobView) this.fetchJobDetail(this.jobView);
+                    else if (scope === 'drillDown') this.refreshDrillDown();
+                },
 
                 // ========== NAVIGATION ==========
 
@@ -2055,24 +2099,27 @@
                 },
 
                 async fetchOverview() {
-                    try {
+                    return this.runLatest('overview', async () => {
+                        try {
                         const data = await this.fetchWithRetry('{{ route("queue-monitor.dashboard.metrics") }}');
                         this.overview.stats = data.stats || {};
                         this.overview.queues = data.queues || [];
                         this.overview.alerts = data.alerts || {};
                         this.overview.recentJobs = data.recent_jobs || [];
                         this.overview.charts = data.charts || {};
-                        const queueNames = (data.queues || []).map(q => q.queue);
-                        if (queueNames.length > this.availableQueues.length) this.availableQueues = queueNames;
+                        const queueNames = [...new Set((data.queues || []).map(q => q.queue).filter(Boolean))].sort();
+                        if (this.availableQueues.length === 0 && queueNames.length > 0) this.availableQueues = queueNames;
                         if (data.horizon_available !== undefined) this.horizonAvailable = data.horizon_available;
                         this.loading.overview = false;
                         this.$nextTick(() => { this.initThroughputChart(); this.updateThroughputChart(data.charts?.throughput); });
-                    } catch (e) { this.loading.overview = false; console.error('fetchOverview error:', e); }
+                        } catch (e) { this.loading.overview = false; console.error('fetchOverview error:', e); }
+                    });
                 },
 
                 async fetchJobs() {
-                    if (this.jobs.data.length === 0) this.loading.jobs = true;
-                    try {
+                    return this.runLatest('jobs', async () => {
+                        if (this.jobs.data.length === 0) this.loading.jobs = true;
+                        try {
                         const params = new URLSearchParams();
                         if (this.filters.search) params.append('search', this.filters.search);
                         this.filters.statuses.forEach(s => params.append('statuses[]', s));
@@ -2092,48 +2139,60 @@
                         this.jobs.meta = data.meta || {};
                         this.pagination.total = data.meta?.total || 0;
                         const metaQueues = data.meta?.available_queues || [];
-                        if (metaQueues.length > 0) this.availableQueues = metaQueues;
+                        if (Array.isArray(metaQueues)) this.availableQueues = metaQueues;
                         else if (this.availableQueues.length === 0 && this.jobs.data.length > 0) this.availableQueues = [...new Set(this.jobs.data.map(j => j.queue).filter(Boolean))].sort();
-                    } catch (e) { console.error('fetchJobs error:', e); } finally { this.loading.jobs = false; }
+                        } catch (e) { console.error('fetchJobs error:', e); } finally { this.loading.jobs = false; }
+                    });
                 },
 
                 async fetchJobDetail(uuid) {
-                    this.loading.detail = true;
-                    try {
+                    return this.runLatest('detail', async () => {
+                        this.loading.detail = true;
+                        try {
                         const url = '{{ route("queue-monitor.dashboard.job.detail", ["uuid" => "_UUID_"]) }}'.replace('_UUID_', uuid);
                         const data = await this.fetchWithRetry(url);
+                        if (this.jobView !== uuid) return;
                         this.jobDetail = data;
-                    } catch (e) { console.error('fetchJobDetail error:', e); } finally { this.loading.detail = false; }
+                        } catch (e) { console.error('fetchJobDetail error:', e); } finally { this.loading.detail = false; }
+                    });
                 },
 
                 async fetchAnalytics() {
-                    if (Object.keys(this.analytics).length === 0) this.loading.analytics = true;
-                    try {
+                    return this.runLatest('analytics', async () => {
+                        if (Object.keys(this.analytics).length === 0) this.loading.analytics = true;
+                        try {
                         const data = await this.fetchWithRetry('{{ route("queue-monitor.dashboard.analytics") }}');
                         this.analytics = data;
                         this.$nextTick(() => { this.initDistributionChart(); this.updateDistributionChart(data.job_classes); });
-                    } catch (e) { console.error('fetchAnalytics error:', e); } finally { this.loading.analytics = false; }
+                        } catch (e) { console.error('fetchAnalytics error:', e); } finally { this.loading.analytics = false; }
+                    });
                 },
 
                 async fetchHealth() {
-                    if (Object.keys(this.health).length === 0) this.loading.health = true;
-                    try { this.health = await this.fetchWithRetry('{{ route("queue-monitor.dashboard.health") }}'); } catch (e) { console.error('fetchHealth error:', e); } finally { this.loading.health = false; }
+                    return this.runLatest('health', async () => {
+                        if (Object.keys(this.health).length === 0) this.loading.health = true;
+                        try { this.health = await this.fetchWithRetry('{{ route("queue-monitor.dashboard.health") }}'); } catch (e) { console.error('fetchHealth error:', e); } finally { this.loading.health = false; }
+                    });
                 },
 
                 async fetchInfrastructure() {
-                    if (Object.keys(this.infrastructure).length === 0) this.loading.infrastructure = true;
-                    try { this.infrastructure = await this.fetchWithRetry('{{ route("queue-monitor.dashboard.infrastructure") }}'); } catch (e) { console.error('fetchInfrastructure error:', e); } finally { this.loading.infrastructure = false; }
+                    return this.runLatest('infrastructure', async () => {
+                        if (Object.keys(this.infrastructure).length === 0) this.loading.infrastructure = true;
+                        try { this.infrastructure = await this.fetchWithRetry('{{ route("queue-monitor.dashboard.infrastructure") }}'); } catch (e) { console.error('fetchInfrastructure error:', e); } finally { this.loading.infrastructure = false; }
+                    });
                 },
 
                 async fetchAutoscale() {
-                    if (Object.keys(this.autoscale).length === 0) this.loading.autoscale = true;
-                    try { this.autoscale = await this.fetchWithRetry('{{ route("queue-monitor.dashboard.autoscale") }}'); } catch (e) { console.error('fetchAutoscale error:', e); } finally { this.loading.autoscale = false; }
+                    return this.runLatest('autoscale', async () => {
+                        if (Object.keys(this.autoscale).length === 0) this.loading.autoscale = true;
+                        try { this.autoscale = await this.fetchWithRetry('{{ route("queue-monitor.dashboard.autoscale") }}'); } catch (e) { console.error('fetchAutoscale error:', e); } finally { this.loading.autoscale = false; }
+                    });
                 },
 
                 startAutoscaleAutoRefresh() {
                     this.stopAutoscaleAutoRefresh();
                     this.autoscaleRefreshInterval = setInterval(() => {
-                        if (this.activeTab === 'autoscale') this.fetchAutoscale();
+                        if (this.isLive && this.activeTab === 'autoscale') this.fetchAutoscale();
                     }, 5000);
                 },
 
@@ -2234,13 +2293,15 @@
 
                 async refreshDrillDown() {
                     if (!this.drillDown) return;
-                    const { type, value } = this.drillDown;
-                    try {
+                    return this.runLatest('drillDown', async () => {
+                        const { type, value } = this.drillDown;
+                        try {
                         const url = `{{ route('queue-monitor.dashboard.drill-down') }}?type=${type}&value=${encodeURIComponent(value)}`;
                         const data = await this.fetchWithRetry(url);
                         this.drillDownData = data;
                         this.updateDrillDownChart(data?.throughput);
-                    } catch (e) { console.error('refreshDrillDown error:', e); }
+                        } catch (e) { console.error('refreshDrillDown error:', e); }
+                    });
                 },
 
                 drillDownToJobs(type, value) {

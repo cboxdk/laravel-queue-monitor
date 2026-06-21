@@ -27,6 +27,29 @@ final class DashboardCacheService
         $cache->increment($versionKey);
     }
 
+    public function remember(string $key, \Closure $callback, ?int $ttl = null): mixed
+    {
+        if (! config('queue-monitor.cache.enabled', true)) {
+            return $callback();
+        }
+
+        /** @var int $cacheTtl */
+        $cacheTtl = config('queue-monitor.cache.ttl', 300);
+
+        $cache = $this->cacheStore();
+        $fullKey = $this->scopedKey($key);
+        $cached = $cache->get($fullKey);
+
+        if ($cached !== null) {
+            return $cached;
+        }
+
+        $value = $callback();
+        $cache->put($fullKey, $value, $ttl ?? $cacheTtl);
+
+        return $value;
+    }
+
     private function version(): int
     {
         if (! config('queue-monitor.cache.enabled', true)) {

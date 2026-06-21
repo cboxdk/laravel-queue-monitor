@@ -7,6 +7,7 @@ namespace Cbox\LaravelQueueMonitor\Http\Controllers;
 use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\StatisticsRepositoryContract;
 use Cbox\LaravelQueueMonitor\Repositories\Eloquent\EloquentStatisticsRepository;
+use Cbox\LaravelQueueMonitor\Services\DashboardCacheService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -22,6 +23,7 @@ class DashboardDrillDownController extends Controller
 {
     public function __construct(
         private readonly StatisticsRepositoryContract $statsRepository,
+        private readonly DashboardCacheService $dashboardCache,
     ) {}
 
     /**
@@ -41,137 +43,133 @@ class DashboardDrillDownController extends Controller
         $type = $validated['type'];
         /** @var string $value */
         $value = $validated['value'];
-        // Cache drill-down for 30s to prevent expensive repeated queries
-        $cacheKey = 'queue_monitor:drill_down:'.md5($type.':'.$value);
-        $cached = cache()->get($cacheKey);
-        if ($cached !== null) {
-            return response()->json($cached);
-        }
+        $cacheKey = 'drill_down_'.md5($type.':'.$value);
 
-        // Map type to database column
-        $column = match ($type) {
-            'queue' => 'queue',
-            'server' => 'server_name',
-            'job_class' => 'job_class',
-            default => 'queue',
-        };
+        $result = $this->dashboardCache->remember($cacheKey, function () use ($type, $value): array {
 
-        /** @var string $prefix */
-        $prefix = config('queue-monitor.database.table_prefix', 'queue_monitor_');
-        $table = $prefix.'jobs';
+            // Map type to database column
+            $column = match ($type) {
+                'queue' => 'queue',
+                'server' => 'server_name',
+                'job_class' => 'job_class',
+                default => 'queue',
+            };
 
-        // Stats
-        $completedValue = JobStatus::COMPLETED->value;
-        $failedValue = JobStatus::FAILED->value;
-        $timeoutValue = JobStatus::TIMEOUT->value;
+            /** @var string $prefix */
+            $prefix = config('queue-monitor.database.table_prefix', 'queue_monitor_');
+            $table = $prefix.'jobs';
 
-        $statsRow = DB::table($table)
-            ->selectRaw('COUNT(*) as total')
-            ->selectRaw('SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as completed', [$completedValue])
-            ->selectRaw('SUM(CASE WHEN status IN (?, ?) THEN 1 ELSE 0 END) as failed', [$failedValue, $timeoutValue])
-            ->selectRaw('AVG(CASE WHEN duration_ms IS NOT NULL THEN duration_ms END) as avg_duration_ms')
-            ->selectRaw('MAX(duration_ms) as max_duration_ms')
-            ->selectRaw('MIN(CASE WHEN duration_ms IS NOT NULL THEN duration_ms END) as min_duration_ms')
-            ->selectRaw('AVG(CASE WHEN memory_peak_mb IS NOT NULL THEN memory_peak_mb END) as avg_memory_mb')
-            ->where($column, $value)
-            ->first();
+            // Stats
+            $completedValue = JobStatus::COMPLETED->value;
+            $failedValue = JobStatus::FAILED->value;
+            $timeoutValue = JobStatus::TIMEOUT->value;
 
-        $total = $statsRow ? (int) $statsRow->total : 0;
-        $completed = $statsRow ? (int) $statsRow->completed : 0;
-        $failed = $statsRow ? (int) $statsRow->failed : 0;
-        $finished = $completed + $failed;
+            $statsRow = DB::table($table)
+                ->selectRaw('COUNT(*) as total')
+                ->selectRaw('SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as completed', [$completedValue])
+                ->selectRaw('SUM(CASE WHEN status IN (?, ?) THEN 1 ELSE 0 END) as failed', [$failedValue, $timeoutValue])
+                ->selectRaw('AVG(CASE WHEN duration_ms IS NOT NULL THEN duration_ms END) as avg_duration_ms')
+                ->selectRaw('MAX(duration_ms) as max_duration_ms')
+                ->selectRaw('MIN(CASE WHEN duration_ms IS NOT NULL THEN duration_ms END) as min_duration_ms')
+                ->selectRaw('AVG(CASE WHEN memory_peak_mb IS NOT NULL THEN memory_peak_mb END) as avg_memory_mb')
+                ->where($column, $value)
+                ->first();
 
-        // Percentiles via sampled duration values (bounded to 1000 rows for memory safety)
-        $durations = DB::table($table)
-            ->where($column, $value)
-            ->whereNotNull('duration_ms')
-            ->orderBy('duration_ms')
-            ->limit(1000)
-            ->pluck('duration_ms')
-            ->map(fn (mixed $v): int => is_numeric($v) ? (int) $v : 0)
-            ->values()
-            ->all();
+            $total = $statsRow ? (int) $statsRow->total : 0;
+            $completed = $statsRow ? (int) $statsRow->completed : 0;
+            $failed = $statsRow ? (int) $statsRow->failed : 0;
+            $finished = $completed + $failed;
 
-        $p50 = $this->percentile($durations, 50);
-        $p95 = $this->percentile($durations, 95);
-        $p99 = $this->percentile($durations, 99);
+            // Percentiles via sampled duration values (bounded to 1000 rows for memory safety)
+            $durations = DB::table($table)
+                ->where($column, $value)
+                ->whereNotNull('duration_ms')
+                ->orderBy('duration_ms')
+                ->limit(1000)
+                ->pluck('duration_ms')
+                ->map(fn (mixed $v): int => is_numeric($v) ? (int) $v : 0)
+                ->values()
+                ->all();
 
-        $stats = [
-            'total' => $total,
-            'completed' => $completed,
-            'failed' => $failed,
-            'success_rate' => $finished > 0 ? round(($completed / $finished) * 100, 2) : 0,
-            'avg_duration_ms' => $statsRow && $statsRow->avg_duration_ms !== null ? round((float) $statsRow->avg_duration_ms, 2) : null,
-            'max_duration_ms' => $statsRow && $statsRow->max_duration_ms !== null ? (int) $statsRow->max_duration_ms : null,
-            'min_duration_ms' => $statsRow && $statsRow->min_duration_ms !== null ? (int) $statsRow->min_duration_ms : null,
-            'avg_memory_mb' => $statsRow && $statsRow->avg_memory_mb !== null ? round((float) $statsRow->avg_memory_mb, 2) : null,
-            'p50_duration_ms' => $p50,
-            'p95_duration_ms' => $p95,
-            'p99_duration_ms' => $p99,
-        ];
+            $p50 = $this->percentile($durations, 50);
+            $p95 = $this->percentile($durations, 95);
+            $p99 = $this->percentile($durations, 99);
 
-        // Throughput (per-minute for this entity)
-        /** @var EloquentStatisticsRepository $statsRepo */
-        $statsRepo = $this->statsRepository;
-        $throughput = $statsRepo->computeThroughputByMinute(60, [$column => $value]);
+            $stats = [
+                'total' => $total,
+                'completed' => $completed,
+                'failed' => $failed,
+                'success_rate' => $finished > 0 ? round(($completed / $finished) * 100, 2) : 0,
+                'avg_duration_ms' => $statsRow && $statsRow->avg_duration_ms !== null ? round((float) $statsRow->avg_duration_ms, 2) : null,
+                'max_duration_ms' => $statsRow && $statsRow->max_duration_ms !== null ? (int) $statsRow->max_duration_ms : null,
+                'min_duration_ms' => $statsRow && $statsRow->min_duration_ms !== null ? (int) $statsRow->min_duration_ms : null,
+                'avg_memory_mb' => $statsRow && $statsRow->avg_memory_mb !== null ? round((float) $statsRow->avg_memory_mb, 2) : null,
+                'p50_duration_ms' => $p50,
+                'p95_duration_ms' => $p95,
+                'p99_duration_ms' => $p99,
+            ];
 
-        // Recent jobs (last 20) with identifiable summary from payload
-        $recentJobs = DB::table($table)
-            ->where($column, $value)
-            ->orderByDesc('queued_at')
-            ->limit(20)
-            ->get()
-            ->map(function ($job) {
-                $summary = $this->extractJobSummary($job->payload, $job->display_name);
+            // Throughput (per-minute for this entity)
+            /** @var EloquentStatisticsRepository $statsRepo */
+            $statsRepo = $this->statsRepository;
+            $throughput = $statsRepo->computeThroughputByMinute(60, [$column => $value]);
 
-                return [
-                    'uuid' => $job->uuid,
-                    'job_class' => class_basename($job->job_class),
-                    'summary' => $summary,
-                    'queue' => $job->queue,
-                    'status' => $job->status,
-                    'attempt' => $job->attempt,
-                    'server' => $job->server_name,
-                    'duration_ms' => $job->duration_ms !== null ? (int) $job->duration_ms : null,
-                    'duration' => $job->duration_ms !== null ? number_format((int) $job->duration_ms).'ms' : '-',
-                    'queued_at' => $job->queued_at,
-                    'error' => $job->exception_message,
-                ];
-            })
-            ->values()
-            ->all();
+            // Recent jobs (last 20) with identifiable summary from payload
+            $recentJobs = DB::table($table)
+                ->where($column, $value)
+                ->orderByDesc('queued_at')
+                ->limit(20)
+                ->get()
+                ->map(function ($job) {
+                    $summary = $this->extractJobSummary($job->payload, $job->display_name);
 
-        // Failure patterns (top exception classes for this entity)
-        $failurePatterns = DB::table($table)
-            ->select([
-                'exception_class',
-                DB::raw('COUNT(*) as count'),
-            ])
-            ->where($column, $value)
-            ->whereNotNull('exception_class')
-            ->groupBy('exception_class')
-            ->orderByDesc('count')
-            ->limit(10)
-            ->get()
-            ->map(fn ($row) => [
-                'exception_class' => $row->exception_class,
-                'count' => (int) $row->count,
-            ])
-            ->values()
-            ->all();
+                    return [
+                        'uuid' => $job->uuid,
+                        'job_class' => class_basename($job->job_class),
+                        'summary' => $summary,
+                        'queue' => $job->queue,
+                        'status' => $job->status,
+                        'attempt' => $job->attempt,
+                        'server' => $job->server_name,
+                        'duration_ms' => $job->duration_ms !== null ? (int) $job->duration_ms : null,
+                        'duration' => $job->duration_ms !== null ? number_format((int) $job->duration_ms).'ms' : '-',
+                        'queued_at' => $job->queued_at,
+                        'error' => $job->exception_message,
+                    ];
+                })
+                ->values()
+                ->all();
 
-        $result = [
-            'entity' => [
-                'type' => $type,
-                'value' => $value,
-            ],
-            'stats' => $stats,
-            'throughput' => $throughput,
-            'recent_jobs' => $recentJobs,
-            'failure_patterns' => $failurePatterns,
-        ];
+            // Failure patterns (top exception classes for this entity)
+            $failurePatterns = DB::table($table)
+                ->select([
+                    'exception_class',
+                    DB::raw('COUNT(*) as count'),
+                ])
+                ->where($column, $value)
+                ->whereNotNull('exception_class')
+                ->groupBy('exception_class')
+                ->orderByDesc('count')
+                ->limit(10)
+                ->get()
+                ->map(fn ($row) => [
+                    'exception_class' => $row->exception_class,
+                    'count' => (int) $row->count,
+                ])
+                ->values()
+                ->all();
 
-        cache()->put($cacheKey, $result, 30);
+            return [
+                'entity' => [
+                    'type' => $type,
+                    'value' => $value,
+                ],
+                'stats' => $stats,
+                'throughput' => $throughput,
+                'recent_jobs' => $recentJobs,
+                'failure_patterns' => $failurePatterns,
+            ];
+        }, 30);
 
         return response()->json($result);
     }

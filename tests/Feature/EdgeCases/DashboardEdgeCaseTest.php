@@ -133,6 +133,23 @@ test('jobs endpoint handles multiple status filters', function () {
     expect($response->json('meta.total'))->toBe(3);
 });
 
+test('jobs endpoint ignores invalid filter values', function () {
+    JobMonitor::factory()->count(2)->create(['status' => JobStatus::COMPLETED]);
+    JobMonitor::factory()->count(1)->create(['status' => JobStatus::FAILED]);
+
+    $response = getJson(route('queue-monitor.dashboard.jobs', [
+        'statuses' => ['failed', 'not-a-status'],
+        'queued_after' => 'not-a-date',
+        'limit' => 0,
+        'offset' => -10,
+    ]));
+
+    $response->assertOk();
+    expect($response->json('meta.total'))->toBe(1);
+    expect($response->json('meta.limit'))->toBe(1);
+    expect($response->json('meta.offset'))->toBe(0);
+});
+
 // Deleted/renamed job class
 test('job detail works when job class no longer exists', function () {
     $job = JobMonitor::factory()->create([
