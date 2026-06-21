@@ -136,9 +136,7 @@ class LaravelQueueMonitorServiceProvider extends PackageServiceProvider
         ];
 
         foreach ($autoscaleEvents as $eventClass => $method) {
-            if (class_exists($eventClass)) {
-                Event::listen($eventClass, [ScalingEventListener::class, $method]);
-            }
+            Event::listen($eventClass, [ScalingEventListener::class, $method]);
         }
     }
 

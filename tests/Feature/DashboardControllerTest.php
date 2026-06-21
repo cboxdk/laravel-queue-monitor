@@ -172,6 +172,24 @@ test('drill-down endpoint returns queue detail', function () {
     expect($response->json('stats.total'))->toBe(7);
 });
 
+test('drill-down cache refreshes after repository update', function () {
+    config()->set('queue-monitor.cache.enabled', true);
+
+    $job = JobMonitor::factory()->create(['queue' => 'alpha']);
+
+    $first = getJson(route('queue-monitor.dashboard.drill-down', ['type' => 'queue', 'value' => 'alpha']));
+    $first->assertOk();
+    expect($first->json('stats.total'))->toBe(1);
+
+    app(JobMonitorRepositoryContract::class)->update($job->uuid, [
+        'queue' => 'beta',
+    ]);
+
+    $second = getJson(route('queue-monitor.dashboard.drill-down', ['type' => 'queue', 'value' => 'alpha']));
+    $second->assertOk();
+    expect($second->json('stats.total'))->toBe(0);
+});
+
 test('drill-down endpoint returns server detail', function () {
     JobMonitor::factory()->count(3)->create(['server_name' => 'prod-01']);
 

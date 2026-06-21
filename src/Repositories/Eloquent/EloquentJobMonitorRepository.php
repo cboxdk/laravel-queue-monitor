@@ -97,7 +97,7 @@ final class EloquentJobMonitorRepository implements JobMonitorRepositoryContract
         $this->applyFilters($query, $filters);
 
         return $query
-            ->orderBy($filters->sortBy, $filters->sortDirection)
+            ->orderBy($filters->sortBy, $filters->sortDirectionForQuery())
             ->limit($filters->limit)
             ->offset($filters->offset)
             ->get();
