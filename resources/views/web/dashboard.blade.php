@@ -28,6 +28,832 @@
     <style>
         [x-cloak] { display: none !important; }
 
+        :root {
+            --qm-bg: #f5f6f8;
+            --qm-surface: #ffffff;
+            --qm-surface-subtle: #f0f3f6;
+            --qm-border: #d9e0e8;
+            --qm-border-strong: #c5ced9;
+            --qm-text: #151a23;
+            --qm-muted: #697386;
+            --qm-soft: #8b95a5;
+            --qm-blue: #2563eb;
+            --qm-blue-soft: #e9efff;
+            --qm-teal: #0f766e;
+            --qm-teal-soft: #e4f5f2;
+            --qm-amber: #b7791f;
+            --qm-amber-soft: #fff4dc;
+            --qm-red: #b42318;
+            --qm-red-soft: #ffebe7;
+            --qm-green: #16875b;
+            --qm-green-soft: #e5f6ed;
+            --qm-shadow: 0 10px 30px rgba(21, 26, 35, 0.08);
+        }
+
+        body.qm-modern {
+            margin: 0;
+            min-height: 100vh;
+            background: var(--qm-bg);
+            color: var(--qm-text);
+            letter-spacing: 0;
+        }
+
+        .qm-app {
+            display: grid;
+            grid-template-columns: 248px minmax(0, 1fr);
+            min-height: 100vh;
+        }
+
+        .qm-sidebar {
+            background: #101722;
+            color: #f8fafc;
+            padding: 22px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 22px;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+        }
+
+        .qm-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 0 8px;
+            min-height: 40px;
+            color: inherit;
+            text-decoration: none;
+        }
+
+        .qm-brand-mark {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: grid;
+            place-items: center;
+            background: #f8fafc;
+            color: #101722;
+            font-weight: 800;
+        }
+
+        .qm-brand strong,
+        .qm-brand span {
+            display: block;
+        }
+
+        .qm-brand strong {
+            font-size: 15px;
+            line-height: 1.2;
+        }
+
+        .qm-brand span {
+            color: #9aa6b6;
+            font-size: 12px;
+            margin-top: 2px;
+        }
+
+        .qm-nav-section {
+            display: grid;
+            gap: 6px;
+        }
+
+        .qm-nav-title {
+            color: #738094;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 0 10px 6px;
+            text-transform: uppercase;
+        }
+
+        .qm-nav-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-height: 38px;
+            border: 0;
+            border-radius: 8px;
+            padding: 0 10px;
+            color: #c9d3df;
+            background: transparent;
+            font-size: 14px;
+            text-align: left;
+            cursor: pointer;
+        }
+
+        .qm-nav-item:hover {
+            background: #182231;
+            color: #ffffff;
+        }
+
+        .qm-nav-item.active {
+            background: #202b3a;
+            color: #ffffff;
+            box-shadow: inset 3px 0 0 var(--qm-blue);
+        }
+
+        .qm-icon,
+        .qm-nav-item svg,
+        .qm-search svg,
+        .qm-icon-button svg,
+        .qm-chip svg {
+            width: 16px;
+            height: 16px;
+            stroke: currentColor;
+            stroke-width: 2;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            flex: 0 0 auto;
+        }
+
+        .qm-sidebar-footer {
+            margin-top: auto;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .qm-sidebar-footer strong {
+            display: block;
+            font-size: 13px;
+            margin-bottom: 6px;
+        }
+
+        .qm-sidebar-footer span {
+            display: block;
+            color: #9aa6b6;
+            font-size: 12px;
+            line-height: 1.45;
+        }
+
+        .qm-main {
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .qm-topbar {
+            min-height: 72px;
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--qm-border);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 0 28px;
+            position: sticky;
+            top: 0;
+            z-index: 30;
+        }
+
+        .qm-page-title {
+            min-width: 190px;
+        }
+
+        .qm-page-title h1 {
+            margin: 0;
+            font-size: 20px;
+            line-height: 1.2;
+            font-weight: 800;
+            color: var(--qm-text);
+        }
+
+        .qm-page-title p {
+            margin: 4px 0 0;
+            color: var(--qm-muted);
+            font-size: 13px;
+        }
+
+        .qm-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-left: auto;
+            min-width: 0;
+        }
+
+        .qm-search {
+            width: min(360px, 28vw);
+            min-width: 220px;
+            height: 40px;
+            border: 1px solid var(--qm-border);
+            border-radius: 8px;
+            background: var(--qm-surface-subtle);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 0 12px;
+            color: var(--qm-muted);
+        }
+
+        .qm-search input {
+            border: 0;
+            outline: 0;
+            background: transparent;
+            min-width: 0;
+            flex: 1;
+            color: var(--qm-text);
+        }
+
+        .qm-select,
+        .qm-chip,
+        .qm-icon-button {
+            height: 40px;
+            border: 1px solid var(--qm-border);
+            border-radius: 8px;
+            background: var(--qm-surface);
+            color: var(--qm-text);
+        }
+
+        .qm-select {
+            padding: 0 12px;
+            min-width: 132px;
+        }
+
+        .qm-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 0 12px;
+            font-size: 13px;
+            white-space: nowrap;
+        }
+
+        .qm-chip.live {
+            color: var(--qm-green);
+            background: var(--qm-green-soft);
+            border-color: #bee7d0;
+            font-weight: 700;
+        }
+
+        .qm-icon-button {
+            width: 40px;
+            display: grid;
+            place-items: center;
+            cursor: pointer;
+        }
+
+        .qm-content {
+            padding: 24px 28px 34px;
+            display: grid;
+            gap: 18px;
+            width: 100%;
+            min-width: 0;
+        }
+
+        .qm-metrics {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(160px, 1fr));
+            gap: 12px;
+        }
+
+        .qm-metric,
+        .qm-panel,
+        .qm-health-panel {
+            background: var(--qm-surface);
+            border: 1px solid var(--qm-border);
+            border-radius: 8px;
+        }
+
+        .qm-metric {
+            padding: 14px;
+            min-height: 112px;
+            box-shadow: 0 1px 0 rgba(21, 26, 35, 0.03);
+        }
+
+        .qm-metric-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            color: var(--qm-muted);
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .qm-metric-value {
+            margin-top: 14px;
+            font-size: 28px;
+            font-weight: 780;
+            line-height: 1;
+        }
+
+        .qm-metric-foot {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 12px;
+            color: var(--qm-muted);
+            font-size: 13px;
+        }
+
+        .qm-delta,
+        .qm-status {
+            display: inline-flex;
+            align-items: center;
+            border-radius: 999px;
+            font-weight: 800;
+        }
+
+        .qm-delta {
+            padding: 2px 7px;
+            font-size: 12px;
+        }
+
+        .qm-status {
+            min-height: 24px;
+            padding: 0 8px;
+            font-size: 12px;
+        }
+
+        .qm-good { color: var(--qm-green); background: var(--qm-green-soft); }
+        .qm-warn { color: var(--qm-amber); background: var(--qm-amber-soft); }
+        .qm-bad { color: var(--qm-red); background: var(--qm-red-soft); }
+        .qm-info { color: var(--qm-blue); background: var(--qm-blue-soft); }
+
+        .qm-dashboard-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1.45fr) minmax(360px, 0.72fr);
+            gap: 18px;
+            align-items: start;
+        }
+
+        .qm-stack {
+            display: grid;
+            gap: 18px;
+            min-width: 0;
+        }
+
+        .qm-panel,
+        .qm-health-panel {
+            box-shadow: var(--qm-shadow);
+            min-width: 0;
+        }
+
+        .qm-panel-head {
+            min-height: 58px;
+            border-bottom: 1px solid var(--qm-border);
+            padding: 0 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .qm-panel-title strong {
+            display: block;
+            font-size: 15px;
+            line-height: 1.25;
+            color: var(--qm-text);
+        }
+
+        .qm-panel-title span {
+            display: block;
+            margin-top: 2px;
+            color: var(--qm-muted);
+            font-size: 12px;
+        }
+
+        .qm-segmented {
+            display: inline-grid;
+            grid-auto-flow: column;
+            gap: 2px;
+            padding: 3px;
+            border: 1px solid var(--qm-border);
+            border-radius: 8px;
+            background: var(--qm-surface-subtle);
+        }
+
+        .qm-segment {
+            border: 0;
+            border-radius: 6px;
+            min-width: 58px;
+            height: 30px;
+            padding: 0 10px;
+            color: var(--qm-muted);
+            background: transparent;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .qm-segment.active {
+            color: var(--qm-text);
+            background: var(--qm-surface);
+            box-shadow: 0 1px 2px rgba(21, 26, 35, 0.1);
+        }
+
+        .qm-chart-area {
+            padding: 18px 16px 16px;
+        }
+
+        .qm-chart {
+            height: 232px;
+        }
+
+        .qm-queue-bars {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 10px;
+            margin-top: 16px;
+        }
+
+        .qm-queue-bar {
+            display: grid;
+            gap: 8px;
+        }
+
+        .qm-queue-bar span {
+            color: var(--qm-muted);
+            font-size: 12px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .qm-bar-track {
+            height: 8px;
+            border-radius: 999px;
+            background: var(--qm-surface-subtle);
+            overflow: hidden;
+        }
+
+        .qm-bar-fill {
+            display: block;
+            height: 100%;
+            border-radius: inherit;
+            background: var(--qm-teal);
+        }
+
+        .qm-bar-fill.warn { background: var(--qm-amber); }
+        .qm-bar-fill.bad { background: var(--qm-red); }
+
+        .qm-table-wrap {
+            overflow-x: auto;
+        }
+
+        .qm-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 850px;
+        }
+
+        .qm-table th,
+        .qm-table td {
+            padding: 13px 16px;
+            border-bottom: 1px solid var(--qm-border);
+            text-align: left;
+            font-size: 13px;
+            white-space: nowrap;
+        }
+
+        .qm-table th {
+            color: var(--qm-muted);
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            background: #fbfcfd;
+        }
+
+        .qm-table tr.selected td {
+            background: #f7faff;
+        }
+
+        .qm-table td strong,
+        .qm-table td span {
+            display: block;
+        }
+
+        .qm-table td strong {
+            color: var(--qm-text);
+            font-size: 13px;
+        }
+
+        .qm-table td span {
+            margin-top: 3px;
+            color: var(--qm-muted);
+            font-size: 12px;
+        }
+
+        .qm-inspector {
+            position: sticky;
+            top: 90px;
+        }
+
+        .qm-detail {
+            padding: 16px;
+            display: grid;
+            gap: 16px;
+        }
+
+        .qm-detail-hero {
+            border-bottom: 1px solid var(--qm-border);
+            padding-bottom: 16px;
+        }
+
+        .qm-detail-hero strong {
+            display: block;
+            font-size: 16px;
+            line-height: 1.3;
+            word-break: break-word;
+        }
+
+        .qm-detail-hero span {
+            display: block;
+            margin-top: 5px;
+            color: var(--qm-muted);
+            font-size: 13px;
+            word-break: break-word;
+        }
+
+        .qm-kv {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .qm-kv div {
+            border-bottom: 1px solid var(--qm-border);
+            padding-bottom: 10px;
+        }
+
+        .qm-kv span {
+            display: block;
+            color: var(--qm-muted);
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        .qm-kv strong {
+            display: block;
+            margin-top: 5px;
+            font-size: 13px;
+        }
+
+        .qm-trace {
+            border: 1px solid var(--qm-border);
+            border-radius: 8px;
+            background: #fbfcfd;
+            padding: 12px;
+            color: #475569;
+            font-family: "JetBrains Mono", Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+            font-size: 12px;
+            line-height: 1.55;
+            overflow-wrap: anywhere;
+        }
+
+        .qm-action-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        .qm-action-button {
+            height: 36px;
+            border: 1px solid var(--qm-border);
+            border-radius: 8px;
+            background: var(--qm-surface);
+            color: var(--qm-text);
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .qm-action-button.primary {
+            color: #ffffff;
+            background: var(--qm-blue);
+            border-color: var(--qm-blue);
+        }
+
+        .qm-health-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 18px;
+        }
+
+        .qm-health-panel {
+            min-height: 210px;
+            box-shadow: 0 8px 26px rgba(21, 26, 35, 0.06);
+        }
+
+        .qm-health-list {
+            padding: 12px 16px 16px;
+            display: grid;
+            gap: 10px;
+        }
+
+        .qm-health-item {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 10px;
+            align-items: center;
+            min-height: 34px;
+        }
+
+        .qm-health-item strong {
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .qm-health-item span {
+            color: var(--qm-muted);
+            font-size: 12px;
+        }
+
+        /*
+         * Legacy tab normalization.
+         * The package dashboard is intentionally a single Blade/Alpine surface. These
+         * rules bring the older Jobs, Analytics, Health, Infrastructure, Autoscale,
+         * job-detail, and drill-down sections onto the same visual system as Overview.
+         */
+        .qm-content .bg-white {
+            background: var(--qm-surface) !important;
+        }
+
+        .qm-content .rounded-xl {
+            border-radius: 8px !important;
+        }
+
+        .qm-content .rounded-lg {
+            border-radius: 8px !important;
+        }
+
+        .qm-content .shadow-sm {
+            box-shadow: var(--qm-shadow) !important;
+        }
+
+        .qm-content .border-gray-200\/80,
+        .qm-content .border-gray-200,
+        .qm-content .border-gray-100 {
+            border-color: var(--qm-border) !important;
+        }
+
+        .qm-content .bg-gray-50\/60,
+        .qm-content .bg-gray-50\/80,
+        .qm-content .bg-gray-50\/40,
+        .qm-content .bg-gray-50 {
+            background: #fbfcfd !important;
+        }
+
+        .qm-content .text-gray-900 {
+            color: var(--qm-text) !important;
+        }
+
+        .qm-content .text-gray-500,
+        .qm-content .text-gray-400 {
+            color: var(--qm-muted) !important;
+        }
+
+        .qm-content h3,
+        .qm-content h4 {
+            letter-spacing: 0;
+        }
+
+        .qm-content table:not(.qm-table) {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .qm-content table:not(.qm-table) th {
+            color: var(--qm-muted) !important;
+            font-size: 11px !important;
+            font-weight: 800 !important;
+            text-transform: uppercase;
+            background: #fbfcfd !important;
+        }
+
+        .qm-content table:not(.qm-table) th,
+        .qm-content table:not(.qm-table) td {
+            border-bottom: 1px solid var(--qm-border) !important;
+        }
+
+        .qm-content table:not(.qm-table) tbody tr:hover td {
+            background: #f7faff;
+        }
+
+        .qm-content input[type="text"],
+        .qm-content input[type="datetime-local"],
+        .qm-content select {
+            border-color: var(--qm-border) !important;
+            background: #fbfcfd;
+            border-radius: 8px !important;
+            color: var(--qm-text);
+        }
+
+        .qm-content input[type="checkbox"] {
+            border-color: var(--qm-border-strong);
+        }
+
+        .qm-content button {
+            border-radius: 8px;
+        }
+
+        .qm-content .bg-brand-faint,
+        .qm-content .bg-brand-faint\/40 {
+            background: #f7faff !important;
+        }
+
+        .qm-content .text-brand {
+            color: var(--qm-blue) !important;
+        }
+
+        .qm-content .border-brand,
+        .qm-content .border-brand\/20 {
+            border-color: rgba(37, 99, 235, 0.28) !important;
+        }
+
+        .qm-content .bg-brand,
+        .qm-content .bg-brand\/50 {
+            background-color: var(--qm-blue) !important;
+        }
+
+        .qm-content .bg-brand\/10 {
+            background-color: var(--qm-blue-soft) !important;
+        }
+
+        @media (max-width: 1180px) {
+            .qm-app {
+                grid-template-columns: 86px minmax(0, 1fr);
+            }
+
+            .qm-brand div:last-child,
+            .qm-nav-title,
+            .qm-nav-item span,
+            .qm-sidebar-footer {
+                display: none;
+            }
+
+            .qm-nav-item {
+                justify-content: center;
+                padding: 0;
+            }
+
+            .qm-metrics {
+                grid-template-columns: repeat(3, minmax(160px, 1fr));
+            }
+
+            .qm-dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .qm-inspector {
+                position: static;
+            }
+        }
+
+        @media (max-width: 760px) {
+            .qm-app {
+                grid-template-columns: 1fr;
+            }
+
+            .qm-sidebar {
+                display: none;
+            }
+
+            .qm-topbar {
+                position: static;
+                flex-wrap: wrap;
+                padding: 16px;
+            }
+
+            .qm-toolbar {
+                width: 100%;
+                flex-wrap: wrap;
+                margin-left: 0;
+            }
+
+            .qm-search,
+            .qm-select,
+            .qm-chip {
+                width: 100%;
+                min-width: 0;
+            }
+
+            .qm-content {
+                padding: 16px;
+            }
+
+            .qm-metrics,
+            .qm-health-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .qm-chart {
+                height: 210px;
+            }
+
+            .qm-queue-bars {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .qm-action-row,
+            .qm-kv {
+                grid-template-columns: 1fr;
+            }
+        }
+
         /* Shimmer loading skeleton */
         .shimmer {
             background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%);
@@ -84,293 +910,288 @@
         }
     </style>
 </head>
-<body class="min-h-full bg-[#e4e9f2] bg-fixed bg-gradient-to-br from-[#eaeff7] via-[#e0e6f2] to-[#e8e2f5]"
-      x-data="dashboard()" x-init="init()" x-cloak>
-    <div class="min-h-full relative z-10">
-
-        {{-- ==================== HEADER ==================== --}}
-        <header class="bg-white/95 backdrop-blur-sm border-b border-gray-200/80 sticky top-0 z-30">
-            <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex h-14 items-center justify-between">
-                    <div class="flex items-center gap-3">
-                        <a :href="dashboardUrl" class="flex items-center gap-3 group">
-                            <svg class="h-7 w-7 text-brand transition-transform group-hover:scale-105" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                            </svg>
-                            <span class="text-[15px] font-semibold text-gray-900 tracking-tight">Queue Monitor</span>
-                        </a>
-                        {{-- Health badge: uses health.status when available, falls back to success_rate --}}
-                        <button x-show="overview.stats.total !== undefined"
-                              @click="navigateTo('health'); $nextTick(() => fetchHealth())"
-                              class="text-[11px] font-semibold px-2.5 py-0.5 rounded-full border transition-colors cursor-pointer hover:opacity-80"
-                              :class="{
-                                  'bg-emerald-50 text-emerald-700 border-emerald-200': healthBadge() === 'healthy',
-                                  'bg-amber-50 text-amber-700 border-amber-200': healthBadge() === 'degraded',
-                                  'bg-red-50 text-red-700 border-red-200': healthBadge() === 'unhealthy',
-                              }"
-                              :title="healthBadge() === 'healthy' ? 'All systems healthy' : ((overview.stats.failed ?? 0) + ' failed jobs')"
-                              x-text="healthBadge() === 'healthy' ? 'Healthy' : (healthBadge() === 'degraded' ? 'Degraded' : 'Unhealthy')">
-                        </button>
-                    </div>
-                    <div class="flex items-center gap-4">
-                        <span class="text-[11px] text-gray-400 font-mono tabular-nums" x-data x-init="setInterval(() => $el.textContent = new Date().toLocaleTimeString(), 1000)" x-text="new Date().toLocaleTimeString()"></span>
-                        <button @click="toggleLive()" class="flex items-center gap-2 text-[11px] font-semibold px-3 py-1.5 rounded-full transition-all"
-                                :class="isLive ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-sm shadow-emerald-100' : 'bg-gray-100 text-gray-500 border border-gray-200'">
-                            <span class="relative flex h-2 w-2">
-                                <span x-show="isLive" class="pulse-dot absolute inline-flex h-full w-full rounded-full bg-emerald-500"></span>
-                                <span class="relative inline-flex rounded-full h-2 w-2" :class="isLive ? 'bg-emerald-500' : 'bg-gray-400'"></span>
-                            </span>
-                            <span x-text="isLive ? 'Live' : 'Paused'"></span>
-                        </button>
-                        <div x-show="error" x-transition class="flex items-center gap-2 text-[11px] font-medium px-3 py-1.5 rounded-full bg-red-50 text-red-700 border border-red-200">
-                            <svg class="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path></svg>
-                            <span x-text="error"></span>
-                        </div>
-                    </div>
+<body class="qm-modern" x-data="dashboard()" x-init="init()">
+    <div class="qm-app">
+        <aside class="qm-sidebar">
+            <a :href="dashboardUrl" class="qm-brand">
+                <div class="qm-brand-mark">Q</div>
+                <div>
+                    <strong>Queue Monitor</strong>
+                    <span>Production</span>
                 </div>
-            </div>
-        </header>
+            </a>
 
-        {{-- ==================== TAB NAVIGATION (always visible) ==================== --}}
-        <nav class="bg-white/95 backdrop-blur-sm border-b border-gray-200/80">
-            <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex gap-0 overflow-x-auto" role="tablist">
-                    <template x-for="tab in [{id:'overview',label:'Overview',icon:'chart'},{id:'jobs',label:'Jobs',icon:'list'},{id:'analytics',label:'Analytics',icon:'pie'},{id:'health',label:'Health',icon:'heart'},{id:'autoscale',label:'Autoscale',icon:'scale'},{id:'infrastructure',label:'Horizon',icon:'server',horizon:true}]" :key="tab.id">
-                        <button @click="navigateTo(tab.id)" role="tab"
-                                x-show="!tab.horizon || horizonAvailable"
-                                :aria-selected="activeTab === tab.id"
-                                class="relative flex items-center gap-2 px-5 py-3 text-sm font-medium whitespace-nowrap transition-colors border-b-2"
-                                :class="activeTab === tab.id ? 'text-brand border-brand' : 'text-gray-500 border-transparent hover:text-gray-700 hover:border-gray-300'">
-                            <template x-if="tab.icon === 'chart'">
-                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" /></svg>
-                            </template>
-                            <template x-if="tab.icon === 'list'">
-                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM3.75 12h.007v.008H3.75V12zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm-.375 5.25h.007v.008H3.75v-.008zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" /></svg>
-                            </template>
-                            <template x-if="tab.icon === 'pie'">
-                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6a7.5 7.5 0 107.5 7.5h-7.5V6z" /><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 10.5H21A7.5 7.5 0 0013.5 3v7.5z" /></svg>
-                            </template>
-                            <template x-if="tab.icon === 'heart'">
-                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" /></svg>
-                            </template>
-                            <template x-if="tab.icon === 'server'">
-                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M5.25 14.25h13.5m-13.5 0a3 3 0 01-3-3m3 3a3 3 0 100 6h13.5a3 3 0 100-6m-16.5-3a3 3 0 013-3h13.5a3 3 0 013 3m-19.5 0a4.5 4.5 0 01.9-2.7L5.737 5.1a3.375 3.375 0 012.7-1.35h7.126c1.062 0 2.062.5 2.7 1.35l2.587 3.45a4.5 4.5 0 01.9 2.7m0 0a3 3 0 01-3 3m0 3h.008v.008h-.008v-.008zm0-6h.008v.008h-.008v-.008zm-3 6h.008v.008h-.008v-.008zm0-6h.008v.008h-.008v-.008z" /></svg>
-                            </template>
-                            <template x-if="tab.icon === 'scale'">
-                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7.5L7.5 3m0 0L12 7.5M7.5 3v13.5m13.5 0L16.5 21m0 0L12 16.5m4.5 4.5V7.5" /></svg>
-                            </template>
-                            <span x-text="tab.label"></span>
-                        </button>
-                    </template>
+            <nav class="qm-nav-section" aria-label="Primary navigation">
+                <div class="qm-nav-title">Monitor</div>
+                <template x-for="tab in sidebarTabs" :key="tab.id">
+                    <button type="button" class="qm-nav-item" :class="{ 'active': activeTab === tab.id && !jobView && !drillDown }" x-show="!tab.horizon || horizonAvailable" @click="navigateTo(tab.id)">
+                        <svg viewBox="0 0 24 24" x-html="tab.svg"></svg>
+                        <span x-text="tab.label"></span>
+                    </button>
+                </template>
+            </nav>
+
+            <nav class="qm-nav-section" aria-label="Administration navigation">
+                <div class="qm-nav-title">Admin</div>
+                <button type="button" class="qm-nav-item" @click="navigateTo('health')">
+                    <svg viewBox="0 0 24 24"><path d="M12 15.5A3.5 3.5 0 1 0 12 8a3.5 3.5 0 0 0 0 7.5z"></path><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.7 1.7 0 0 0 15 19.37a1.7 1.7 0 0 0-1 .28 1.7 1.7 0 0 0-.8 1.45V21a2 2 0 0 1-4 0v-.09a1.7 1.7 0 0 0-.8-1.45 1.7 1.7 0 0 0-1-.28 1.7 1.7 0 0 0-1.88.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.63 15a1.7 1.7 0 0 0-.28-1 1.7 1.7 0 0 0-1.45-.8H3a2 2 0 0 1 0-4h.09a1.7 1.7 0 0 0 1.45-.8 1.7 1.7 0 0 0 .28-1 1.7 1.7 0 0 0-.34-1.88l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.63a1.7 1.7 0 0 0 1-.28 1.7 1.7 0 0 0 .8-1.45V3a2 2 0 0 1 4 0v.09a1.7 1.7 0 0 0 .8 1.45 1.7 1.7 0 0 0 1 .28 1.7 1.7 0 0 0 1.88-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.37 9c0 .36.1.7.28 1 .3.5.84.8 1.45.8H21a2 2 0 0 1 0 4h-.09a1.7 1.7 0 0 0-1.45.8 1.7 1.7 0 0 0-.06.4z"></path></svg>
+                    <span>Settings</span>
+                </button>
+            </nav>
+
+            <div class="qm-sidebar-footer">
+                <strong>Refresh contract</strong>
+                <span>Live views update one active surface at a time. Paused mode freezes all panels consistently.</span>
+            </div>
+        </aside>
+
+        <div class="qm-main">
+            <header class="qm-topbar">
+                <div class="qm-page-title">
+                    <h1 x-text="pageTitle()">Overview</h1>
+                    <p x-text="pageSubtitle()">Live queue operations across workers</p>
                 </div>
-            </div>
-        </nav>
 
-        {{-- ==================== MAIN CONTENT ==================== --}}
-        <main class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
+                <div class="qm-toolbar">
+                    <label class="qm-search">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21 21-4.3-4.3"></path><circle cx="11" cy="11" r="7"></circle></svg>
+                        <input type="text" x-model="filters.search" @keydown.enter.prevent="navigateTo('jobs'); resetPaginationAndFetch()" placeholder="Search job, queue, UUID">
+                    </label>
+
+                    <select class="qm-select" aria-label="Environment">
+                        <option>Production</option>
+                    </select>
+
+                    <button type="button" class="qm-chip live" @click="toggleLive()">
+                        <svg viewBox="0 0 24 24"><path d="M5 12h4l3-8 3 16 3-8h1"></path></svg>
+                        <span x-text="isLive ? 'Live' : 'Paused'">Live</span>
+                    </button>
+
+                    <span class="qm-chip" x-text="lastRefreshLabel()">Last refresh pending</span>
+
+                    <button type="button" class="qm-icon-button" title="Pause refresh" aria-label="Pause refresh" @click="toggleLive()">
+                        <svg x-show="isLive" viewBox="0 0 24 24"><path d="M8 5v14"></path><path d="M16 5v14"></path></svg>
+                        <svg x-show="!isLive" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"></path></svg>
+                    </button>
+                    <button type="button" class="qm-icon-button" title="Refresh now" aria-label="Refresh now" @click="refreshCurrentView()">
+                        <svg viewBox="0 0 24 24" :class="{ 'animate-spin': anyLoading() }"><path d="M21 12a9 9 0 0 1-15.5 6.2"></path><path d="M3 12A9 9 0 0 1 18.5 5.8"></path><path d="M18 2v4h4"></path><path d="M6 22v-4H2"></path></svg>
+                    </button>
+                </div>
+            </header>
+
+            <main class="qm-content">
 
             {{-- ==================== TAB CONTENT (hidden when viewing job detail or drill-down) ==================== --}}
             <div x-show="!jobView && !drillDown">
 
             {{-- ==================== OVERVIEW TAB ==================== --}}
             <div x-show="activeTab === 'overview'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0">
-
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-sm font-semibold text-gray-900">Overview</h3>
-                    <button @click="fetchOverview()" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition">
-                        <svg class="h-3.5 w-3.5" :class="loading.overview && 'animate-spin'" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" /></svg>
-                        Refresh
-                    </button>
+                <div class="qm-metrics">
+                    <article class="qm-metric">
+                        <div class="qm-metric-head"><span>Failed jobs</span><span class="qm-status qm-bad" x-text="formatNumber(overview.stats.failed || 0)">0</span></div>
+                        <div class="qm-metric-value" x-text="failureRateLabel()">0%</div>
+                        <div class="qm-metric-foot"><span class="qm-delta" :class="(overview.stats.failed || 0) > 0 ? 'qm-bad' : 'qm-good'" x-text="(overview.stats.failed || 0) > 0 ? 'Watch' : 'Clean'">Clean</span><span>last 24h failure share</span></div>
+                    </article>
+                    <article class="qm-metric">
+                        <div class="qm-metric-head"><span>Backlog</span><span class="qm-status" :class="queueBacklogSeverity()" x-text="queueBacklogLabel()">OK</span></div>
+                        <div class="qm-metric-value" x-text="formatNumber(overview.stats.queue_backlog || 0)">0</div>
+                        <div class="qm-metric-foot"><span class="qm-delta" :class="queueBacklogSeverity()" x-text="queueBacklogTrendLabel()">Stable</span><span>queued across tracked queues</span></div>
+                    </article>
+                    <article class="qm-metric">
+                        <div class="qm-metric-head"><span>Queue latency</span><span class="qm-status qm-info">Avg</span></div>
+                        <div class="qm-metric-value" x-text="formatDuration(overview.stats.avg_duration_ms)">0ms</div>
+                        <div class="qm-metric-foot"><span class="qm-delta" :class="(overview.stats.avg_duration_ms || 0) > 8000 ? 'qm-warn' : 'qm-good'" x-text="(overview.stats.avg_duration_ms || 0) > 8000 ? 'Above target' : 'On target'">On target</span><span>average runtime</span></div>
+                    </article>
+                    <article class="qm-metric">
+                        <div class="qm-metric-head"><span>Workers</span><span class="qm-status qm-good" x-text="workerStatusLabel()">Healthy</span></div>
+                        <div class="qm-metric-value" x-text="workerCountLabel()">-</div>
+                        <div class="qm-metric-foot"><span class="qm-delta qm-good" x-text="autoscaleStatusLabel()">Ready</span><span>autoscale signal</span></div>
+                    </article>
+                    <article class="qm-metric">
+                        <div class="qm-metric-head"><span>Throughput</span><span class="qm-status qm-good">Stable</span></div>
+                        <div class="qm-metric-value" x-text="formatCompact(throughputTotal())">0</div>
+                        <div class="qm-metric-foot"><span class="qm-delta qm-good" x-text="formatNumber(overview.stats.total || 0)">0</span><span>jobs in current window</span></div>
+                    </article>
                 </div>
 
-                {{-- Stats Grid --}}
-                <div class="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6 stagger-in">
-                    <div class="bg-white border border-gray-200/80 border-l-4 border-l-brand rounded-xl shadow-sm p-4 card-hover">
-                        <div class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Total Jobs (24h)</div>
-                        <template x-if="loading.overview"><div class="h-9 w-20 shimmer rounded"></div></template>
-                        <template x-if="!loading.overview">
-                            <div class="text-2xl lg:text-4xl font-bold text-gray-900 tabular-nums" x-text="formatNumber(overview.stats.total)">0</div>
-                        </template>
-                    </div>
-                    <div class="bg-white border border-gray-200/80 border-l-4 border-l-emerald-500 rounded-xl shadow-sm p-4 card-hover">
-                        <div class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Success Rate</div>
-                        <template x-if="loading.overview"><div class="h-9 w-20 shimmer rounded"></div></template>
-                        <template x-if="!loading.overview">
-                            <div class="text-2xl lg:text-4xl font-bold tabular-nums" :class="overview.stats.success_rate >= 95 ? 'text-emerald-600' : overview.stats.success_rate >= 80 ? 'text-amber-600' : 'text-red-600'">
-                                <span x-text="formatNumber(overview.stats.success_rate, 1)">0</span><span class="text-lg font-normal">%</span>
+                <div class="qm-dashboard-grid">
+                    <div class="qm-stack">
+                        <section class="qm-panel">
+                            <div class="qm-panel-head">
+                                <div class="qm-panel-title">
+                                    <strong>Queue latency and backlog</strong>
+                                    <span>Processing trend over the last 60 minutes</span>
+                                </div>
+                                <div class="qm-segmented" aria-label="Time range">
+                                    <button type="button" class="qm-segment">15m</button>
+                                    <button type="button" class="qm-segment active">1h</button>
+                                    <button type="button" class="qm-segment">6h</button>
+                                    <button type="button" class="qm-segment">24h</button>
+                                </div>
                             </div>
-                        </template>
-                    </div>
-                    <div class="bg-white border border-gray-200/80 border-l-4 border-l-red-500 rounded-xl shadow-sm p-4 card-hover">
-                        <div class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Failed</div>
-                        <template x-if="loading.overview"><div class="h-9 w-20 shimmer rounded"></div></template>
-                        <template x-if="!loading.overview">
-                            <div class="text-2xl lg:text-4xl font-bold tabular-nums" :class="overview.stats.failed > 0 ? 'text-red-600' : 'text-gray-900'" x-text="formatNumber(overview.stats.failed)">0</div>
-                        </template>
-                    </div>
-                    <div class="bg-white border border-gray-200/80 border-l-4 border-l-amber-500 rounded-xl shadow-sm p-4 card-hover">
-                        <div class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Avg Duration</div>
-                        <template x-if="loading.overview"><div class="h-9 w-20 shimmer rounded"></div></template>
-                        <template x-if="!loading.overview">
-                            <div class="text-2xl lg:text-4xl font-bold text-gray-900 font-mono tabular-nums" x-text="formatDuration(overview.stats.avg_duration_ms)">0ms</div>
-                        </template>
-                    </div>
-                    <div class="bg-white border border-gray-200/80 border-l-4 border-l-purple-500 rounded-xl shadow-sm p-4 col-span-2 lg:col-span-1 card-hover">
-                        <div class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Queue Backlog</div>
-                        <template x-if="loading.overview"><div class="h-9 w-20 shimmer rounded"></div></template>
-                        <template x-if="!loading.overview">
-                            <div class="text-2xl lg:text-4xl font-bold tabular-nums" :class="overview.stats.queue_backlog > 50 ? 'text-amber-600' : 'text-gray-900'" x-text="formatNumber(overview.stats.queue_backlog || 0)">0</div>
-                        </template>
-                    </div>
-                </div>
+                            <div class="qm-chart-area">
+                                <div id="throughput-chart" class="qm-chart"></div>
+                                <div class="qm-queue-bars">
+                                    <template x-for="q in overview.queues.slice(0, 6)" :key="q.queue">
+                                        <button type="button" class="qm-queue-bar" @click="openDrillDown('queue', q.queue)">
+                                            <span x-text="q.queue"></span>
+                                            <div class="qm-bar-track"><i class="qm-bar-fill" :class="queueFillClass(q)" :style="'width: ' + queueFillWidth(q) + '%'"></i></div>
+                                        </button>
+                                    </template>
+                                    <template x-if="!loading.overview && overview.queues.length === 0">
+                                        <div class="qm-queue-bar"><span>default</span><div class="qm-bar-track"><i class="qm-bar-fill" style="width: 12%"></i></div></div>
+                                    </template>
+                                </div>
+                            </div>
+                        </section>
 
-                {{-- Two column layout --}}
-                <div class="flex flex-col lg:flex-row gap-6">
-                    {{-- Left: Recent Jobs Table --}}
-                    <div class="flex-1 min-w-0">
-                        <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm overflow-hidden">
-                            <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-                                <h3 class="text-sm font-semibold text-gray-900">Recent Jobs</h3>
-                                <button @click="navigateTo('jobs')" class="text-[11px] font-semibold text-brand hover:text-brand-dark transition drill-arrow">View all</button>
+                        <section class="qm-panel">
+                            <div class="qm-panel-head">
+                                <div class="qm-panel-title">
+                                    <strong>Jobs requiring attention</strong>
+                                    <span>Sorted by failure state, attempts, and newest activity</span>
+                                </div>
+                                <button type="button" class="qm-chip" @click="navigateTo('jobs')" x-text="formatNumber(attentionJobs().length) + ' visible'">0 visible</button>
                             </div>
-                            <div class="overflow-x-auto">
-                                <table class="min-w-full divide-y divide-gray-100">
+                            <div class="qm-table-wrap">
+                                <table class="qm-table">
                                     <thead>
-                                        <tr class="bg-gray-50/60">
-                                            <th class="px-4 py-2.5 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider">Status</th>
-                                            <th class="px-4 py-2.5 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider">Job</th>
-                                            <th class="px-4 py-2.5 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider">Queue</th>
-                                            <th class="px-4 py-2.5 text-right text-[10px] font-bold text-gray-400 uppercase tracking-wider">Duration</th>
-                                            <th class="px-4 py-2.5 text-right text-[10px] font-bold text-gray-400 uppercase tracking-wider">CPU</th>
-                                            <th class="px-4 py-2.5 text-right text-[10px] font-bold text-gray-400 uppercase tracking-wider">Memory</th>
-                                            <th class="px-4 py-2.5 text-right text-[10px] font-bold text-gray-400 uppercase tracking-wider">Time</th>
-                                            <th class="px-4 py-2.5 w-10"></th>
+                                        <tr>
+                                            <th>Status</th>
+                                            <th>Job</th>
+                                            <th>Queue</th>
+                                            <th>Attempts</th>
+                                            <th>Latency</th>
+                                            <th>Runtime</th>
+                                            <th>Worker</th>
+                                            <th>Updated</th>
                                         </tr>
                                     </thead>
-                                    <tbody class="divide-y divide-gray-50">
-                                        <template x-if="loading.overview">
-                                            <template x-for="i in 5" :key="'skel-'+i">
-                                                <tr><td class="px-4 py-3"><div class="h-5 w-16 shimmer rounded-full"></div></td><td class="px-4 py-3"><div class="h-4 w-32 shimmer rounded"></div></td><td class="px-4 py-3"><div class="h-4 w-16 shimmer rounded"></div></td><td class="px-4 py-3"><div class="h-4 w-12 shimmer rounded ml-auto"></div></td><td class="px-4 py-3"><div class="h-4 w-16 shimmer rounded ml-auto"></div></td><td></td></tr>
-                                            </template>
-                                        </template>
-                                        <template x-if="!loading.overview">
-                                            <template x-for="job in overview.recentJobs.slice(0, 15)" :key="job.uuid">
-                                                <tr class="group hover:bg-brand-faint/40 cursor-pointer transition-colors" @click="openJobView(job.uuid)">
-                                                    <td class="px-4 py-2.5 whitespace-nowrap">
-                                                        <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold" :class="statusClass(job.status.value)" x-text="job.status.label"></span>
-                                                    </td>
-                                                    <td class="px-4 py-2.5 whitespace-nowrap">
-                                                        <div class="flex items-center gap-1.5">
-                                                            <span class="text-sm font-mono text-brand hover:underline drill-arrow" x-text="job.job_class" @click.stop="openDrillDown('job_class', job.full_job_class || job.job_class)"></span>
-                                                            <span x-show="job.attempt > 1" class="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-semibold rounded-full bg-amber-100 text-amber-800 border border-amber-200" x-text="'x' + job.attempt" :title="'Attempt ' + job.attempt"></span>
-                                                        </div>
-                                                    </td>
-                                                    <td class="px-4 py-2.5 whitespace-nowrap text-sm text-brand hover:underline drill-arrow" x-text="job.queue" @click.stop="openDrillDown('queue', job.queue)"></td>
-                                                    <td class="px-4 py-2.5 whitespace-nowrap text-sm text-gray-500 text-right font-mono tabular-nums" x-text="formatDuration(job.duration_ms)"></td>
-                                                    <td class="px-4 py-2.5 whitespace-nowrap text-sm text-right font-mono tabular-nums" :class="cpuColor(job.cpu_time_ms, job.duration_ms)" x-text="formatCpu(job.cpu_time_ms, job.duration_ms)"></td>
-                                                    <td class="px-4 py-2.5 whitespace-nowrap text-sm text-right font-mono tabular-nums" :class="memoryColor(job.memory_peak_mb, job.worker_memory_limit_mb)" x-text="formatMemoryShort(job.memory_peak_mb, job.worker_memory_limit_mb)"></td>
-                                                    <td class="px-4 py-2.5 whitespace-nowrap text-[11px] text-gray-400 text-right" x-text="job.queued_at"></td>
-                                                    <td class="px-4 py-2.5 whitespace-nowrap text-right">
-                                                        <button x-show="job.is_failed" @click.stop="replayJob(job.uuid)" class="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-medium text-amber-700 bg-amber-50 rounded-md hover:bg-amber-100 border border-amber-200 transition">
-                                                            <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" /></svg>
-                                                            Replay
-                                                        </button>
-                                                        <button x-show="!job.is_failed" @click.stop="replayJob(job.uuid)" class="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-medium text-amber-700 bg-amber-50 rounded-md hover:bg-amber-100 border border-amber-200 transition opacity-0 group-hover:opacity-100">
-                                                            <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" /></svg>
-                                                            Replay
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                            </template>
+                                    <tbody>
+                                        <template x-for="job in attentionJobs().slice(0, 6)" :key="job.uuid">
+                                            <tr class="cursor-pointer" :class="{ 'selected': selectedOverviewJob()?.uuid === job.uuid }" @click="openJobView(job.uuid)">
+                                                <td><span class="qm-status" :class="statusTone(job.status?.value)" x-text="job.status?.label || job.status?.value || 'Unknown'"></span></td>
+                                                <td><strong x-text="job.job_class"></strong><span x-text="job.uuid ? 'uuid ' + job.uuid.slice(0, 8) : ''"></span></td>
+                                                <td x-text="job.queue || '-'"></td>
+                                                <td x-text="attemptLabel(job)"></td>
+                                                <td x-text="formatDuration(job.pickup_time_ms || job.duration_ms)"></td>
+                                                <td x-text="formatDuration(job.duration_ms)"></td>
+                                                <td x-text="job.server || job.server_name || '-'"></td>
+                                                <td x-text="job.queued_at || '-'"></td>
+                                            </tr>
                                         </template>
                                     </tbody>
                                 </table>
-                                <div x-show="!loading.overview && overview.recentJobs.length === 0" class="px-6 py-16 text-center">
-                                    <div class="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gray-100 mb-3">
-                                        <svg class="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 00.75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 00-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0112 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 01-.673-.38m0 0A2.18 2.18 0 013 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 013.413-.387m7.5 0V5.25A2.25 2.25 0 0013.5 3h-3a2.25 2.25 0 00-2.25 2.25v.894m7.5 0a48.667 48.667 0 00-7.5 0" /></svg>
-                                    </div>
-                                    <p class="text-sm font-medium text-gray-500">No jobs recorded yet</p>
-                                    <p class="text-[11px] text-gray-400 mt-1">Jobs will appear here once they're dispatched</p>
-                                </div>
                             </div>
-                        </div>
+                            <div x-show="!loading.overview && attentionJobs().length === 0" class="px-6 py-10 text-center text-sm text-gray-500">No jobs require attention.</div>
+                        </section>
                     </div>
 
-                    {{-- Right: Sidebar --}}
-                    <div class="w-full lg:w-[380px] flex-shrink-0 space-y-6">
-                        {{-- Queue Health --}}
-                        <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm overflow-hidden">
-                            <div class="px-5 py-4 border-b border-gray-100">
-                                <h3 class="text-sm font-semibold text-gray-900">Queue Health</h3>
+                    <aside class="qm-panel qm-inspector">
+                        <div class="qm-panel-head">
+                            <div class="qm-panel-title">
+                                <strong>Selected job</strong>
+                                <span>Current execution context</span>
                             </div>
-                            <div class="divide-y divide-gray-50">
-                                <template x-if="loading.overview">
-                                    <template x-for="i in 3" :key="'qskel-'+i">
-                                        <div class="px-5 py-3 flex items-center justify-between"><div class="h-4 w-24 shimmer rounded"></div><div class="h-4 w-16 shimmer rounded"></div></div>
-                                    </template>
-                                </template>
-                                <template x-if="!loading.overview">
-                                    <template x-for="q in overview.queues" :key="q.queue">
-                                        <div class="px-5 py-3">
-                                            <div class="flex items-center justify-between mb-1.5">
-                                                <div class="flex items-center gap-2.5">
-                                                    <span class="flex h-2 w-2 rounded-full" :class="q.status === 'healthy' ? 'bg-emerald-400' : 'bg-red-400'"></span>
-                                                    <span class="text-sm font-medium text-brand hover:underline cursor-pointer drill-arrow" x-text="q.queue" @click="openDrillDown('queue', q.queue)"></span>
-                                                </div>
-                                                <div class="flex items-center gap-3 text-[11px] text-gray-500">
-                                                    <span x-text="q.total_last_hour + '/hr'"></span>
-                                                    <span x-show="q.processing > 0" class="text-blue-600 font-semibold" x-text="q.processing + ' active'"></span>
-                                                    <span x-show="q.failed > 0" class="text-red-600 font-semibold" x-text="q.failed + ' failed'"></span>
-                                                </div>
-                                            </div>
-                                            <div class="w-full bg-gray-100 rounded-full h-1.5">
-                                                <div class="h-1.5 rounded-full transition-all duration-500" :class="q.failed > 0 ? 'bg-red-400' : 'bg-brand/50'" :style="'width: ' + Math.min(100, Math.max(2, (q.total_last_hour / Math.max(1, ...overview.queues.map(x => x.total_last_hour))) * 100)) + '%'"></div>
-                                            </div>
-                                        </div>
-                                    </template>
-                                </template>
-                            </div>
-                            <div x-show="!loading.overview && overview.queues.length === 0" class="py-10 text-center">
-                                <div class="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-gray-100 mb-2">
-                                    <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25" /></svg>
-                                </div>
-                                <p class="text-sm text-gray-400">No active queues</p>
-                            </div>
+                            <span class="qm-status" :class="statusTone(selectedOverviewJob()?.status?.value)" x-text="selectedOverviewJob()?.status?.label || 'None'">None</span>
                         </div>
+                        <div class="qm-detail" x-show="selectedOverviewJob()">
+                            <div class="qm-detail-hero">
+                                <strong x-text="selectedOverviewJob()?.job_class"></strong>
+                                <span x-text="selectedOverviewJob()?.full_job_class || selectedOverviewJob()?.uuid"></span>
+                            </div>
 
-                        {{-- Active Alerts --}}
-                        <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm overflow-hidden">
-                            <div class="px-5 py-4 border-b border-gray-100">
-                                <h3 class="text-sm font-semibold text-gray-900">Active Alerts</h3>
+                            <div class="qm-kv">
+                                <div><span>Queue</span><strong x-text="selectedOverviewJob()?.queue || '-'"></strong></div>
+                                <div><span>Attempts</span><strong x-text="attemptLabel(selectedOverviewJob())"></strong></div>
+                                <div><span>Server</span><strong x-text="selectedOverviewJob()?.server || selectedOverviewJob()?.server_name || '-'"></strong></div>
+                                <div><span>Updated</span><strong x-text="selectedOverviewJob()?.queued_at || '-'"></strong></div>
+                                <div><span>Runtime</span><strong x-text="formatDuration(selectedOverviewJob()?.duration_ms)"></strong></div>
+                                <div><span>Impact</span><strong x-text="selectedOverviewJob()?.is_failed ? 'Retry required' : 'Monitor'"></strong></div>
                             </div>
-                            <div class="divide-y divide-gray-50">
-                                <template x-for="alert in (overview.alerts?.active || [])" :key="alert.message">
-                                    <div class="px-5 py-3 flex items-start gap-3">
-                                        <span class="mt-0.5 inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-bold uppercase"
-                                              :class="{ 'bg-red-100 text-red-700': alert.severity === 'critical', 'bg-amber-100 text-amber-700': alert.severity === 'warning', 'bg-blue-100 text-blue-700': alert.severity === 'info' }" x-text="alert.severity"></span>
-                                        <span class="text-sm text-gray-700" x-text="alert.message"></span>
-                                    </div>
-                                </template>
-                            </div>
-                            <div x-show="!overview.alerts?.active?.length" class="py-10 text-center">
-                                <div class="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-emerald-50 mb-2">
-                                    <svg class="h-5 w-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                </div>
-                                <p class="text-sm text-gray-400">No active alerts</p>
-                            </div>
-                        </div>
 
-                        {{-- Throughput Chart --}}
-                        <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm overflow-hidden">
-                            <div class="px-5 py-4 border-b border-gray-100">
-                                <h3 class="text-sm font-semibold text-gray-900">Throughput <span class="text-gray-400 font-normal">(1h)</span></h3>
+                            <div class="qm-panel-title">
+                                <strong>Recommended action</strong>
+                                <span x-text="selectedOverviewJob()?.is_failed ? 'Inspect the exception and retry after correction.' : 'Continue monitoring current throughput.'"></span>
                             </div>
-                            <div class="p-4">
-                                <div id="throughput-chart" style="height: 180px;"></div>
+
+                            <div class="qm-trace" x-text="selectedOverviewJob()?.error || selectedOverviewJob()?.uuid || 'No exception captured for this job.'"></div>
+
+                            <div class="qm-action-row">
+                                <button type="button" class="qm-action-button primary" @click="replayJob(selectedOverviewJob()?.uuid)">Retry</button>
+                                <button type="button" class="qm-action-button" @click="openJobView(selectedOverviewJob()?.uuid)">Inspect</button>
+                                <button type="button" class="qm-action-button" @click="confirmDeleteJob(selectedOverviewJob()?.uuid)">Ignore</button>
                             </div>
                         </div>
-                    </div>
+                        <div class="qm-detail" x-show="!selectedOverviewJob()">
+                            <div class="qm-trace">No jobs are available yet.</div>
+                        </div>
+                    </aside>
                 </div>
+
+                <section class="qm-health-grid">
+                    <article class="qm-health-panel">
+                        <div class="qm-panel-head">
+                            <div class="qm-panel-title">
+                                <strong>Autoscale</strong>
+                                <span>Worker allocation by queue group</span>
+                            </div>
+                            <span class="qm-status qm-good" x-text="autoscaleStatusLabel()">Ready</span>
+                        </div>
+                        <div class="qm-health-list">
+                            <template x-for="q in overview.queues.slice(0, 3)" :key="'auto-' + q.queue">
+                                <div class="qm-health-item">
+                                    <div><strong x-text="q.queue"></strong><span x-text="(q.processing || 0) + ' processing, ' + (q.total_last_hour || 0) + '/hr'"></span></div>
+                                    <span class="qm-status" :class="queueStatusTone(q)" x-text="queueShortStatus(q)">OK</span>
+                                </div>
+                            </template>
+                        </div>
+                    </article>
+
+                    <article class="qm-health-panel">
+                        <div class="qm-panel-head">
+                            <div class="qm-panel-title">
+                                <strong>Infrastructure health</strong>
+                                <span>Signals that affect queue throughput</span>
+                            </div>
+                            <span class="qm-status" :class="healthTone()" x-text="healthBadgeLabel()">Unknown</span>
+                        </div>
+                        <div class="qm-health-list">
+                            <template x-for="check in healthChecksList().slice(0, 3)" :key="check.name">
+                                <div class="qm-health-item">
+                                    <div><strong x-text="check.name || check.label"></strong><span x-text="check.message || check.description || 'No details'"></span></div>
+                                    <span class="qm-status" :class="check.healthy ? 'qm-good' : 'qm-bad'" x-text="check.healthy ? 'OK' : 'Fail'">OK</span>
+                                </div>
+                            </template>
+                            <div class="qm-health-item" x-show="healthChecksList().length === 0">
+                                <div><strong>Health checks</strong><span>No health check data loaded yet</span></div>
+                                <span class="qm-status qm-info">Info</span>
+                            </div>
+                        </div>
+                    </article>
+
+                    <article class="qm-health-panel">
+                        <div class="qm-panel-head">
+                            <div class="qm-panel-title">
+                                <strong>Alerts</strong>
+                                <span>Recent operational events</span>
+                            </div>
+                            <span class="qm-status qm-info" x-text="formatNumber((overview.alerts?.active || []).length) + ' open'">0 open</span>
+                        </div>
+                        <div class="qm-health-list">
+                            <template x-for="alert in (overview.alerts?.active || []).slice(0, 3)" :key="alert.message">
+                                <div class="qm-health-item">
+                                    <div><strong x-text="alert.message"></strong><span x-text="alert.type || 'queue monitor'"></span></div>
+                                    <span class="qm-status" :class="alert.severity === 'critical' ? 'qm-bad' : (alert.severity === 'warning' ? 'qm-warn' : 'qm-info')" x-text="alert.severity || 'info'"></span>
+                                </div>
+                            </template>
+                            <div class="qm-health-item" x-show="!(overview.alerts?.active || []).length">
+                                <div><strong>No active alerts</strong><span>Current queue signals are within thresholds</span></div>
+                                <span class="qm-status qm-good">OK</span>
+                            </div>
+                        </div>
+                    </article>
+                </section>
             </div>
 
             {{-- ==================== JOBS TAB ==================== --}}
@@ -1816,6 +2637,7 @@
 
         </main>
     </div>
+    </div>
 
     {{-- ==================== CONFIRM DELETE DIALOG ==================== --}}
     <div x-show="confirmDelete" x-cloak class="relative z-50">
@@ -1883,6 +2705,17 @@
                 // Chart instances
                 throughputChart: null,
                 distributionChart: null,
+                lastRefreshAt: null,
+                clock: Date.now(),
+                clockInterval: null,
+                sidebarTabs: [
+                    { id: 'overview', label: 'Overview', svg: '<path d="M3 13h8V3H3z"></path><path d="M13 21h8V11h-8z"></path><path d="M13 9h8V3h-8z"></path><path d="M3 21h8v-6H3z"></path>' },
+                    { id: 'jobs', label: 'Jobs', svg: '<path d="M4 7h16"></path><path d="M4 12h16"></path><path d="M4 17h10"></path>' },
+                    { id: 'analytics', label: 'Analytics', svg: '<path d="M10.5 6a7.5 7.5 0 1 0 7.5 7.5h-7.5z"></path><path d="M13.5 3v7.5H21A7.5 7.5 0 0 0 13.5 3z"></path>' },
+                    { id: 'health', label: 'Health', svg: '<path d="M20 13c0 5-3.5 7.5-8 9-4.5-1.5-8-4-8-9V5l8-3 8 3z"></path><path d="m9 12 2 2 4-5"></path>' },
+                    { id: 'autoscale', label: 'Autoscale', svg: '<path d="M4 17V7"></path><path d="M20 17V7"></path><path d="M12 21V3"></path><path d="m8 7 4-4 4 4"></path><path d="m8 17 4 4 4-4"></path>' },
+                    { id: 'infrastructure', label: 'Infrastructure', svg: '<path d="M4 6h16"></path><path d="M4 12h16"></path><path d="M4 18h16"></path><path d="M8 6v12"></path><path d="M16 6v12"></path>', horizon: true },
+                ],
 
                 // Metric color thresholds (configurable via queue-monitor.ui)
                 cpuWarning: {{ config('queue-monitor.ui.cpu_thresholds.warning', 50) }},
@@ -1900,8 +2733,11 @@
                 },
 
                 init() {
+                    this.clockInterval = setInterval(() => { this.clock = Date.now(); }, 1000);
                     this.fetchOverview();
                     this.fetchHealth();
+                    this.fetchInfrastructure();
+                    this.fetchAutoscale();
                     this.startAutoRefresh();
 
                     // Deep-link: auto-open job, drill-down, or tab from URL
@@ -1987,6 +2823,171 @@
                     else if (this.activeTab === 'health') this.fetchHealth();
                     else if (this.activeTab === 'infrastructure') this.fetchInfrastructure();
                     else if (this.activeTab === 'autoscale' && !this.autoscaleAutoRefresh) this.fetchAutoscale();
+                },
+
+                pageTitle() {
+                    if (this.jobView) return 'Selected job';
+                    if (this.drillDown) return this.drillDown?.type === 'job_class' ? this.shortClass(this.drillDown?.value) : (this.drillDown?.value || 'Drill-down');
+                    const labels = { overview: 'Overview', jobs: 'Jobs', analytics: 'Analytics', health: 'Health', autoscale: 'Autoscale', infrastructure: 'Infrastructure' };
+                    return labels[this.activeTab] || 'Overview';
+                },
+
+                pageSubtitle() {
+                    if (this.jobView) return 'Current failure context and payload';
+                    if (this.drillDown) return 'Focused queue monitor breakdown';
+                    const subtitles = {
+                        overview: 'Live queue operations across workers',
+                        jobs: 'Search, filter, replay, and inspect jobs',
+                        analytics: 'Queue, server, and failure pattern analysis',
+                        health: 'Health checks and stuck job signals',
+                        autoscale: 'Worker capacity and scaling decisions',
+                        infrastructure: 'Worker utilization and SLA signals',
+                    };
+                    return subtitles[this.activeTab] || subtitles.overview;
+                },
+
+                lastRefreshLabel() {
+                    if (!this.lastRefreshAt) return 'Last refresh pending';
+                    const seconds = Math.max(0, Math.floor((this.clock - this.lastRefreshAt) / 1000));
+                    if (seconds < 2) return 'Last refresh now';
+                    if (seconds < 60) return `Last refresh ${seconds}s ago`;
+                    return `Last refresh ${Math.floor(seconds / 60)}m ago`;
+                },
+
+                anyLoading() {
+                    return Object.values(this.loading).some(Boolean) || this.drillDownLoading;
+                },
+
+                healthChecksList() {
+                    return Object.entries(this.health.checks || {}).map(([name, check]) => ({
+                        name: name.replace(/_/g, ' '),
+                        healthy: Boolean(check?.healthy),
+                        message: check?.message || '',
+                    }));
+                },
+
+                attentionJobs() {
+                    const jobs = this.overview.recentJobs || [];
+                    const weighted = [...jobs].sort((a, b) => {
+                        const aScore = (a.is_failed ? 100 : 0) + ((a.status?.value === 'timeout') ? 80 : 0) + ((a.attempt || 0) * 3);
+                        const bScore = (b.is_failed ? 100 : 0) + ((b.status?.value === 'timeout') ? 80 : 0) + ((b.attempt || 0) * 3);
+                        return bScore - aScore;
+                    });
+                    return weighted;
+                },
+
+                selectedOverviewJob() {
+                    return this.attentionJobs()[0] || null;
+                },
+
+                failureRateLabel() {
+                    const total = Number(this.overview.stats.total || 0);
+                    const failed = Number(this.overview.stats.failed || 0);
+                    if (total <= 0) return '0%';
+                    return `${this.formatNumber((failed / total) * 100, 2)}%`;
+                },
+
+                queueBacklogSeverity() {
+                    const backlog = Number(this.overview.stats.queue_backlog || 0);
+                    if (backlog >= 100) return 'qm-bad';
+                    if (backlog >= 25) return 'qm-warn';
+                    return 'qm-good';
+                },
+
+                queueBacklogLabel() {
+                    const backlog = Number(this.overview.stats.queue_backlog || 0);
+                    if (backlog >= 100) return 'High';
+                    if (backlog >= 25) return 'Hot';
+                    return 'OK';
+                },
+
+                queueBacklogTrendLabel() {
+                    const backlog = Number(this.overview.stats.queue_backlog || 0);
+                    if (backlog >= 100) return 'Action';
+                    if (backlog >= 25) return 'Rising';
+                    return 'Stable';
+                },
+
+                workerCountLabel() {
+                    return this.autoscale.live?.total_workers
+                        ?? this.autoscale.cluster?.scaling_signal?.current_capacity
+                        ?? this.infrastructure.scaling?.utilization?.total_workers
+                        ?? '-';
+                },
+
+                workerStatusLabel() {
+                    const utilization = this.autoscale.live?.utilization_percent ?? this.infrastructure.scaling?.utilization?.percentage;
+                    if (utilization == null) return 'Ready';
+                    if (utilization >= 90) return 'Hot';
+                    if (utilization >= 70) return 'Busy';
+                    return 'Healthy';
+                },
+
+                autoscaleStatusLabel() {
+                    if (this.autoscale.cluster?.scaling_signal?.action) {
+                        return this.autoscale.cluster.scaling_signal.action.replace('_', ' ');
+                    }
+                    if (this.autoscale.available === false) return 'Optional';
+                    return this.autoscale.available ? 'Active' : 'Ready';
+                },
+
+                throughputTotal() {
+                    const points = this.overview.charts?.throughput || [];
+                    return points.reduce((sum, item) => sum + Number(item.completed || 0) + Number(item.failed || 0), 0);
+                },
+
+                queueFillWidth(queue) {
+                    const queues = this.overview.queues || [];
+                    const max = Math.max(1, ...queues.map(q => Number(q.total_last_hour || 0) + Number(q.processing || 0) + Number(q.failed || 0)));
+                    const value = Number(queue.total_last_hour || 0) + Number(queue.processing || 0) + Number(queue.failed || 0);
+                    return Math.min(100, Math.max(4, Math.round((value / max) * 100)));
+                },
+
+                queueFillClass(queue) {
+                    if ((queue.failed || 0) > 0) return 'bad';
+                    if ((queue.processing || 0) > 0 || (queue.total_last_hour || 0) > 50) return 'warn';
+                    return '';
+                },
+
+                queueStatusTone(queue) {
+                    if ((queue.failed || 0) > 0 || queue.status === 'unhealthy') return 'qm-bad';
+                    if ((queue.processing || 0) > 0 || queue.status === 'degraded') return 'qm-warn';
+                    return 'qm-good';
+                },
+
+                queueShortStatus(queue) {
+                    if ((queue.failed || 0) > 0 || queue.status === 'unhealthy') return 'High';
+                    if ((queue.processing || 0) > 0 || queue.status === 'degraded') return 'Hot';
+                    return 'OK';
+                },
+
+                healthTone() {
+                    const status = this.healthBadge();
+                    if (status === 'healthy') return 'qm-good';
+                    if (status === 'degraded') return 'qm-warn';
+                    return 'qm-bad';
+                },
+
+                healthBadgeLabel() {
+                    const status = this.healthBadge();
+                    return status.charAt(0).toUpperCase() + status.slice(1);
+                },
+
+                attemptLabel(job) {
+                    if (!job) return '-';
+                    return `${job.attempt || 1}${job.max_attempts ? ' / ' + job.max_attempts : ''}`;
+                },
+
+                statusTone(status) {
+                    const classes = {
+                        completed: 'qm-good',
+                        failed: 'qm-bad',
+                        timeout: 'qm-bad',
+                        processing: 'qm-info',
+                        queued: 'qm-warn',
+                        debounced: 'qm-info',
+                    };
+                    return classes[status] || 'qm-info';
                 },
 
                 async runLatest(scope, callback) {
@@ -2085,6 +3086,8 @@
                         if (!response.ok) throw new Error(`HTTP ${response.status}`);
                         this.error = null;
                         this.retryCount = 0;
+                        this.lastRefreshAt = Date.now();
+                        this.clock = this.lastRefreshAt;
                         return await response.json();
                     } catch (err) {
                         if (retries < this.maxRetries) {
@@ -2455,13 +3458,13 @@
                     try {
                         const labels = data.map(d => { const parts = (d.minute || '').split(' '); return parts.length > 1 ? parts[1] : d.minute; });
                         this.throughputChart.setOption({
-                            tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, formatter: (params) => { let html = `<div style="font-size:12px;font-weight:600;margin-bottom:4px">${params[0]?.axisValue || ''}</div>`; params.forEach(p => { html += `<div style="font-size:11px">${p.marker} ${p.seriesName}: ${p.value}</div>`; }); return html; } },
-                            grid: { top: 10, right: 10, bottom: 24, left: 36 },
-                            xAxis: { type: 'category', data: labels, axisLine: { lineStyle: { color: '#e5e7eb' } }, axisLabel: { fontSize: 10, color: '#9ca3af', interval: Math.max(0, Math.floor(labels.length / 8) - 1) } },
-                            yAxis: { type: 'value', axisLine: { show: false }, axisTick: { show: false }, splitLine: { lineStyle: { color: '#f3f4f6' } }, axisLabel: { fontSize: 10, color: '#9ca3af' } },
+                            tooltip: { trigger: 'axis', axisPointer: { type: 'line' }, formatter: (params) => { let html = `<div style="font-size:12px;font-weight:600;margin-bottom:4px">${params[0]?.axisValue || ''}</div>`; params.forEach(p => { html += `<div style="font-size:11px">${p.marker} ${p.seriesName}: ${p.value}</div>`; }); return html; } },
+                            grid: { top: 12, right: 10, bottom: 24, left: 42 },
+                            xAxis: { type: 'category', data: labels, boundaryGap: false, axisLine: { lineStyle: { color: '#d9e0e8' } }, axisTick: { show: false }, axisLabel: { fontSize: 11, color: '#697386', interval: Math.max(0, Math.floor(labels.length / 8) - 1) } },
+                            yAxis: { type: 'value', axisLine: { show: false }, axisTick: { show: false }, splitLine: { lineStyle: { color: '#d9e0e8' } }, axisLabel: { fontSize: 11, color: '#697386' } },
                             series: [
-                                { name: 'Completed', type: 'bar', stack: 'throughput', data: data.map(d => d.completed || 0), itemStyle: { color: '#4f6df5' }, barMaxWidth: 20 },
-                                { name: 'Failed', type: 'bar', stack: 'throughput', data: data.map(d => d.failed || 0), itemStyle: { color: '#ef4444', borderRadius: [3, 3, 0, 0] }, barMaxWidth: 20 },
+                                { name: 'Completed', type: 'line', smooth: true, showSymbol: false, data: data.map(d => d.completed || 0), lineStyle: { color: '#2563eb', width: 4 }, areaStyle: { color: 'rgba(37, 99, 235, 0.08)' } },
+                                { name: 'Failed', type: 'line', smooth: true, showSymbol: false, data: data.map(d => d.failed || 0), lineStyle: { color: '#0f766e', width: 4 }, areaStyle: { color: 'rgba(15, 118, 110, 0.04)' } },
                             ],
                         });
                     } catch (e) { console.warn('Throughput chart error:', e.message); }
@@ -2506,6 +3509,11 @@
                 formatNumber(num, decimals = 0) {
                     if (num === undefined || num === null) return '0';
                     return new Intl.NumberFormat('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }).format(num);
+                },
+
+                formatCompact(num) {
+                    if (num === undefined || num === null) return '0';
+                    return new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 }).format(num);
                 },
 
                 formatDuration(ms) {
