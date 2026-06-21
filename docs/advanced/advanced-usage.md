@@ -605,40 +605,33 @@ Schedule::job(new PruneQueueMonitorJob)->daily();
 ### Building Custom Reports
 
 ```php
-use Cbox\LaravelQueueMonitor\Utilities\DatabaseExpressionHelper;
-use Illuminate\Support\Facades\DB;
+use Cbox\LaravelQueueMonitor\Enums\JobStatus;
+use Cbox\LaravelQueueMonitor\Models\JobMonitor;
 
 class CustomQueueAnalytics
 {
     public function getHourlyJobCount(): array
     {
-        $prefix = config('queue-monitor.database.table_prefix', 'queue_monitor_');
-        $hourExpression = DatabaseExpressionHelper::hourBucket('queued_at', DB::connection()->getDriverName());
-
-        return DB::table($prefix.'jobs')
-            ->select([
-                DB::raw("{$hourExpression} as hour"),
-                DB::raw('COUNT(*) as count'),
-                DB::raw('AVG(duration_ms) as avg_duration'),
-            ])
+        return JobMonitor::query()
             ->whereBetween('queued_at', [now()->subDay(), now()])
-            ->groupBy(DB::raw($hourExpression))
-            ->orderBy(DB::raw($hourExpression))
-            ->get()
+            ->get(['queued_at', 'duration_ms'])
+            ->groupBy(fn (JobMonitor $job): string => $job->queued_at->format('Y-m-d H:00'))
+            ->map(fn ($jobs, string $hour): array => [
+                'hour' => $hour,
+                'count' => $jobs->count(),
+                'avg_duration' => $jobs->avg('duration_ms'),
+            ])
+            ->values()
             ->toArray();
     }
 
     public function getTopFailingJobs(int $limit = 10): array
     {
-        $prefix = config('queue-monitor.database.table_prefix', 'queue_monitor_');
-
-        return DB::table($prefix.'jobs')
-            ->select([
-                'job_class',
-                DB::raw('COUNT(*) as failure_count'),
-                DB::raw('MAX(completed_at) as last_failure'),
-            ])
-            ->where('status', 'failed')
+        return JobMonitor::query()
+            ->select('job_class')
+            ->selectRaw('COUNT(*) as failure_count')
+            ->selectRaw('MAX(completed_at) as last_failure')
+            ->where('status', JobStatus::FAILED->value)
             ->whereDate('completed_at', '>=', now()->subDays(7))
             ->groupBy('job_class')
             ->orderByDesc('failure_count')

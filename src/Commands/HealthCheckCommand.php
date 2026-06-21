@@ -12,6 +12,7 @@ class HealthCheckCommand extends Command
 {
     public $signature = 'queue-monitor:health
                         {--alerts : Show only active alerts}
+                        {--readiness : Check production readiness configuration}
                         {--json : Output as JSON}';
 
     public $description = 'Check queue monitor system health';
@@ -20,6 +21,21 @@ class HealthCheckCommand extends Command
     {
         if ($this->option('alerts')) {
             return $this->showAlerts($alerting);
+        }
+
+        if ($this->option('readiness')) {
+            $readiness = $healthCheck->readiness();
+
+            if ($this->option('json')) {
+                $json = json_encode($readiness, JSON_PRETTY_PRINT);
+                $this->line($json !== false ? $json : '{}');
+
+                return self::SUCCESS;
+            }
+
+            $this->displayReadinessStatus($readiness);
+
+            return $readiness['status'] === 'ready' ? self::SUCCESS : self::FAILURE;
         }
 
         $health = $healthCheck->check();
@@ -58,6 +74,33 @@ class HealthCheckCommand extends Command
             $message = $check['message'];
             $rows[] = [
                 $icon,
+                ucwords(str_replace('_', ' ', $name)),
+                $message,
+            ];
+        }
+
+        $this->table(['Status', 'Check', 'Details'], $rows);
+    }
+
+    /**
+     * Display readiness status in table format
+     *
+     * @param  array{status: string, checks: array<string, array<string, mixed>>}  $readiness
+     */
+    private function displayReadinessStatus(array $readiness): void
+    {
+        $this->info('Production Readiness: '.strtoupper($readiness['status']));
+        $this->newLine();
+
+        $rows = [];
+
+        foreach ($readiness['checks'] as $name => $check) {
+            /** @var bool $isHealthy */
+            $isHealthy = $check['healthy'];
+            /** @var string $message */
+            $message = $check['message'];
+            $rows[] = [
+                $isHealthy ? 'OK' : 'ACTION',
                 ucwords(str_replace('_', ' ', $name)),
                 $message,
             ];

@@ -14,12 +14,13 @@ All notable changes to `laravel-queue-monitor` will be documented in this file.
 - Add configurable dashboard asset loading modes (`inline`, `public`, `none`) and publishable asset sources for app-level builds.
 - Default payload storage to enabled in `local` and disabled outside `local` unless `QUEUE_MONITOR_STORE_PAYLOAD` is explicitly set.
 - Default REST API route registration to enabled in `local` and disabled outside `local` unless `QUEUE_MONITOR_API_ENABLED` is explicitly set.
+- Add `queue-monitor:health --readiness` for launch configuration checks and make health thresholds configurable.
 - Expand CI coverage for Laravel 13/PHP 8.5 and dashboard asset builds.
 
 ### Documentation
 
 - Align documented requirements with the current Composer constraints: Laravel 11+ and `cboxdk/laravel-queue-metrics` `^3.0`.
-- Add production-readiness notes for auth, pruning, payload/API defaults, dashboard assets, published config/views, local asset builds, and Horizon integration.
+- Add production-readiness notes for auth, pruning, payload/API defaults, health readiness checks, dashboard assets, published config/views, local asset builds, and Horizon integration.
 
 ## v1.7.3 — Persist autoscale scaling decisions - 2026-05-19
 

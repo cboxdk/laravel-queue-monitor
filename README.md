@@ -261,6 +261,7 @@ return [
 - If you published `config/queue-monitor.php` before this default changed, update the published `storage.store_payload` and `api.enabled` entries manually.
 - Review Content Security Policy. The bundled dashboard uses package-local CSS and JavaScript, inlined from `resources/dist`; publish `queue-monitor-assets` and customize the view if your CSP disallows inline assets.
 - If you have published `queue-monitor-views`, remove or republish them after package upgrades to pick up dashboard fixes.
+- Run `php artisan queue-monitor:health --readiness` in staging or production to catch unsafe launch configuration.
 
 ### Dashboard Authentication
 

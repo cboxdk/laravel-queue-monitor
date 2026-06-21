@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Cbox\LaravelQueueMonitor\LaravelQueueMonitor;
 use Cbox\LaravelQueueMonitor\Models\JobMonitor;
 use Cbox\LaravelQueueMonitor\Services\HealthCheckService;
 
@@ -68,4 +69,63 @@ test('isHealthy returns correct boolean', function () {
     $service = app(HealthCheckService::class);
 
     expect($service->isHealthy())->toBeTrue();
+});
+
+test('readiness returns production readiness checks', function () {
+    $service = app(HealthCheckService::class);
+    $result = $service->readiness();
+
+    expect($result)->toHaveKeys(['status', 'checks', 'timestamp']);
+    expect($result['checks'])->toHaveKeys([
+        'access_control',
+        'api_middleware',
+        'payload_storage',
+        'retention',
+        'horizon_timeouts',
+    ]);
+});
+
+test('readiness passes for protected production configuration', function () {
+    app()->detectEnvironment(fn (): string => 'production');
+    LaravelQueueMonitor::auth(fn (): bool => true);
+
+    config()->set('queue-monitor.api.enabled', true);
+    config()->set('queue-monitor.api.middleware', ['api', 'auth:sanctum']);
+    config()->set('queue-monitor.storage.store_payload', false);
+
+    $service = app(HealthCheckService::class);
+    $result = $service->readiness();
+
+    expect($result['status'])->toBe('ready');
+    expect($result['checks']['access_control']['healthy'])->toBeTrue();
+    expect($result['checks']['api_middleware']['healthy'])->toBeTrue();
+    expect($result['checks']['payload_storage']['healthy'])->toBeTrue();
+});
+
+test('readiness flags missing production authorization callback', function () {
+    app()->detectEnvironment(fn (): string => 'production');
+    LaravelQueueMonitor::$authUsing = null;
+
+    config()->set('queue-monitor.api.enabled', false);
+    config()->set('queue-monitor.storage.store_payload', false);
+
+    $service = app(HealthCheckService::class);
+    $result = $service->readiness();
+
+    expect($result['status'])->toBe('attention');
+    expect($result['checks']['access_control']['healthy'])->toBeFalse();
+});
+
+test('readiness flags production payload storage', function () {
+    app()->detectEnvironment(fn (): string => 'production');
+    LaravelQueueMonitor::auth(fn (): bool => true);
+
+    config()->set('queue-monitor.api.enabled', false);
+    config()->set('queue-monitor.storage.store_payload', true);
+
+    $service = app(HealthCheckService::class);
+    $result = $service->readiness();
+
+    expect($result['status'])->toBe('attention');
+    expect($result['checks']['payload_storage']['healthy'])->toBeFalse();
 });

@@ -133,6 +133,22 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Health Checks
+    |--------------------------------------------------------------------------
+    |
+    | Tune health thresholds for different queue volumes and environments.
+    |
+    */
+    'health' => [
+        'stuck_job_minutes' => env('QUEUE_MONITOR_HEALTH_STUCK_JOB_MINUTES', 30),
+        'error_rate_threshold' => env('QUEUE_MONITOR_HEALTH_ERROR_RATE_THRESHOLD', 10.0),
+        'queued_jobs_threshold' => env('QUEUE_MONITOR_HEALTH_QUEUED_JOBS_THRESHOLD', 1000),
+        'processing_jobs_threshold' => env('QUEUE_MONITOR_HEALTH_PROCESSING_JOBS_THRESHOLD', 100),
+        'storage_max_mb' => env('QUEUE_MONITOR_HEALTH_STORAGE_MAX_MB', 1000),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Metrics Time Window
     |--------------------------------------------------------------------------
     |

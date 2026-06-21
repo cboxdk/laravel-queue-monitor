@@ -164,6 +164,7 @@ return [
 - If you published `config/queue-monitor.php` before this default changed, update the published `storage.store_payload` and `api.enabled` entries manually.
 - Review Content Security Policy. The bundled dashboard uses package-local CSS and JavaScript, inlined from `resources/dist`; publish `queue-monitor-assets` and customize the view if your CSP disallows inline assets.
 - If you have published `queue-monitor-views`, remove or republish them after package upgrades to pick up dashboard fixes.
+- Run `php artisan queue-monitor:health --readiness` in staging or production to catch unsafe launch configuration.
 
 ## Environment Variables
 
@@ -172,6 +173,11 @@ return [
 QUEUE_MONITOR_ENABLED=true
 QUEUE_MONITOR_STORE_PAYLOAD=false # defaults true only in local
 QUEUE_MONITOR_API_ENABLED=false   # defaults true only in local
+QUEUE_MONITOR_HEALTH_STUCK_JOB_MINUTES=30
+QUEUE_MONITOR_HEALTH_ERROR_RATE_THRESHOLD=10
+QUEUE_MONITOR_HEALTH_QUEUED_JOBS_THRESHOLD=1000
+QUEUE_MONITOR_HEALTH_PROCESSING_JOBS_THRESHOLD=100
+QUEUE_MONITOR_HEALTH_STORAGE_MAX_MB=1000
 
 # Metrics Storage (from laravel-queue-metrics)
 QUEUE_METRICS_STORAGE=redis          # redis (default) or database

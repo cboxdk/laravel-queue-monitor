@@ -181,11 +181,13 @@ foreach ($health as $queue) {
 ### Top Failing Jobs
 
 ```php
-use Illuminate\Support\Facades\DB;
+use Cbox\LaravelQueueMonitor\Enums\JobStatus;
+use Cbox\LaravelQueueMonitor\Models\JobMonitor;
 
-$topFailures = DB::table('queue_monitor_jobs')
-    ->select('job_class', DB::raw('COUNT(*) as failure_count'))
-    ->where('status', 'failed')
+$topFailures = JobMonitor::query()
+    ->select('job_class')
+    ->selectRaw('COUNT(*) as failure_count')
+    ->where('status', JobStatus::FAILED->value)
     ->whereDate('completed_at', '>=', now()->subDays(7))
     ->groupBy('job_class')
     ->orderByDesc('failure_count')
@@ -396,22 +398,20 @@ echo "Deleted {$deleted} old successful jobs\n";
 ### Export Data for Charts
 
 ```php
-use Cbox\LaravelQueueMonitor\Utilities\DatabaseExpressionHelper;
-use Illuminate\Support\Facades\DB;
+use Cbox\LaravelQueueMonitor\Enums\JobStatus;
+use Cbox\LaravelQueueMonitor\Models\JobMonitor;
 
-$hourExpression = DatabaseExpressionHelper::hourBucket('queued_at', DB::connection()->getDriverName());
-
-$hourlyStats = DB::table('queue_monitor_jobs')
-    ->select([
-        DB::raw("{$hourExpression} as hour"),
-        DB::raw('COUNT(*) as total'),
-        DB::raw('SUM(CASE WHEN status = "completed" THEN 1 ELSE 0 END) as completed'),
-        DB::raw('SUM(CASE WHEN status = "failed" THEN 1 ELSE 0 END) as failed'),
-    ])
+$hourlyStats = JobMonitor::query()
     ->whereBetween('queued_at', [now()->subDay(), now()])
-    ->groupBy(DB::raw($hourExpression))
-    ->orderBy(DB::raw($hourExpression))
-    ->get();
+    ->get(['queued_at', 'status'])
+    ->groupBy(fn (JobMonitor $job): string => $job->queued_at->format('Y-m-d H:00'))
+    ->map(fn ($jobs, string $hour): array => [
+        'hour' => $hour,
+        'total' => $jobs->count(),
+        'completed' => $jobs->filter(fn (JobMonitor $job): bool => $job->status === JobStatus::COMPLETED)->count(),
+        'failed' => $jobs->filter(fn (JobMonitor $job): bool => $job->status === JobStatus::FAILED)->count(),
+    ])
+    ->values();
 
 // Return as JSON for chart library
 return response()->json($hourlyStats);
