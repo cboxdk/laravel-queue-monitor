@@ -75,11 +75,11 @@ Retrieve a paginated list of jobs.
 
 ### 2. Get Job Details
 
-Retrieve full details for a specific job, including payload and exception trace.
+Retrieve full details for a specific job, including the redacted payload and exception summary.
 
 **Endpoint:** `GET /jobs/{uuid}`
 
-**Security Note:** Sensitive keys in the payload (like `password` or `token`) are automatically masked based on the `api.sensitive_keys` configuration.
+**Security Note:** Sensitive keys in the payload (like `password`, `token`, or Laravel's serialized `command` payload) are automatically masked based on the `api.sensitive_keys` configuration.
 
 **Response:**
 
@@ -94,8 +94,7 @@ Retrieve full details for a specific job, including payload and exception trace.
         },
         "exception": {
             "class": "Exception",
-            "message": "Payment failed",
-            "trace": "..."
+            "message": "Payment failed"
         }
     }
 }

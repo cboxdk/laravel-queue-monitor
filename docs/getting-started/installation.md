@@ -138,11 +138,25 @@ return [
         'prune_statuses' => ['completed'],
     ],
 
+    // Batch operation limits
+    'batch' => [
+        'chunk_size' => env('QUEUE_MONITOR_BATCH_CHUNK_SIZE', 100),
+        'max_jobs' => env('QUEUE_MONITOR_BATCH_MAX_JOBS', 1000),
+    ],
+
     // REST API settings
     'api' => [
         'enabled' => env('QUEUE_MONITOR_API_ENABLED', env('APP_ENV') === 'local'),
         'prefix' => 'api/queue-monitor',
         'middleware' => ['api'],
+        'default_limit' => env('QUEUE_MONITOR_API_DEFAULT_LIMIT', 50),
+        'max_limit' => env('QUEUE_MONITOR_API_MAX_LIMIT', 1000),
+    ],
+
+    // Export limits
+    'export' => [
+        'default_limit' => env('QUEUE_MONITOR_EXPORT_DEFAULT_LIMIT', 1000),
+        'max_rows' => env('QUEUE_MONITOR_EXPORT_MAX_ROWS', 5000),
     ],
 
     // Web dashboard assets
@@ -173,6 +187,12 @@ return [
 QUEUE_MONITOR_ENABLED=true
 QUEUE_MONITOR_STORE_PAYLOAD=false # defaults true only in local
 QUEUE_MONITOR_API_ENABLED=false   # defaults true only in local
+QUEUE_MONITOR_API_DEFAULT_LIMIT=50
+QUEUE_MONITOR_API_MAX_LIMIT=1000
+QUEUE_MONITOR_EXPORT_DEFAULT_LIMIT=1000
+QUEUE_MONITOR_EXPORT_MAX_ROWS=5000
+QUEUE_MONITOR_BATCH_CHUNK_SIZE=100
+QUEUE_MONITOR_BATCH_MAX_JOBS=1000
 QUEUE_MONITOR_HEALTH_STUCK_JOB_MINUTES=30
 QUEUE_MONITOR_HEALTH_ERROR_RATE_THRESHOLD=10
 QUEUE_MONITOR_HEALTH_QUEUED_JOBS_THRESHOLD=1000

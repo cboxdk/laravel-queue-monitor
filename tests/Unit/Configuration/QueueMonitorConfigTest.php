@@ -112,3 +112,20 @@ test('explicit api env disables api in local environments', function () {
 
     expect($config['api']['enabled'])->toBeFalse();
 });
+
+test('api response redaction masks serialized commands by default', function () {
+    $config = queueMonitorConfigWithEnv('local');
+
+    expect($config['api']['sensitive_keys'])->toContain('command');
+});
+
+test('api and export limits have safe defaults', function () {
+    $config = queueMonitorConfigWithEnv('local');
+
+    expect($config['api']['default_limit'])->toBe(50);
+    expect($config['api']['max_limit'])->toBe(1000);
+    expect($config['export']['default_limit'])->toBe(1000);
+    expect($config['export']['max_rows'])->toBe(5000);
+    expect($config['batch']['chunk_size'])->toBe(100);
+    expect($config['batch']['max_jobs'])->toBe(1000);
+});

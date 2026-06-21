@@ -230,6 +230,11 @@ return [
         'prune_statuses' => ['completed'],
     ],
 
+    'batch' => [
+        'chunk_size' => env('QUEUE_MONITOR_BATCH_CHUNK_SIZE', 100),
+        'max_jobs' => env('QUEUE_MONITOR_BATCH_MAX_JOBS', 1000),
+    ],
+
     // Web dashboard
     'ui' => [
         'enabled' => true,
@@ -245,6 +250,14 @@ return [
         'enabled' => env('QUEUE_MONITOR_API_ENABLED', env('APP_ENV') === 'local'),
         'prefix' => 'api/queue-monitor',
         'middleware' => ['api', 'auth:sanctum'],
+        'default_limit' => env('QUEUE_MONITOR_API_DEFAULT_LIMIT', 50),
+        'max_limit' => env('QUEUE_MONITOR_API_MAX_LIMIT', 1000),
+        'sensitive_keys' => ['password', 'token', 'secret', 'key', 'authorization', 'api_key', 'credit_card', 'cvv', 'ssn', 'private_key', 'command'],
+    ],
+
+    'export' => [
+        'default_limit' => env('QUEUE_MONITOR_EXPORT_DEFAULT_LIMIT', 1000),
+        'max_rows' => env('QUEUE_MONITOR_EXPORT_MAX_ROWS', 5000),
     ],
 ];
 ```
@@ -277,7 +290,7 @@ LaravelQueueMonitor::auth(function ($request) {
 
 ### API Authentication
 
-The REST API exposes job payloads and exception traces. Always add auth middleware in production:
+The REST API exposes job payloads and operational failure data. Always add auth middleware in production:
 
 ```php
 'api' => [
@@ -287,7 +300,7 @@ The REST API exposes job payloads and exception traces. Always add auth middlewa
 
 ### Payload Redaction
 
-The API automatically masks sensitive keys (`password`, `token`, `secret`, etc.). Raw payloads are stored for replay; only API responses are redacted.
+The API automatically masks sensitive keys (`password`, `token`, `secret`, serialized Laravel `command` payloads, etc.). Raw payloads are stored for replay; only API/dashboard responses are redacted.
 
 ## Architecture
 

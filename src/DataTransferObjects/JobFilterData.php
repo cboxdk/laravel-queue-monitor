@@ -69,8 +69,13 @@ final readonly class JobFilterData
      *
      * @param  array<string, mixed>  $data
      */
-    public static function fromRequest(array $data): self
+    public static function fromRequest(array $data, ?int $maxLimit = null, ?int $defaultLimit = null): self
     {
+        $configuredMaxLimit = $maxLimit ?? self::intConfig('queue-monitor.api.max_limit', 1000);
+        $configuredDefaultLimit = $defaultLimit ?? self::intConfig('queue-monitor.api.default_limit', 50);
+        $maxLimit = max(1, $configuredMaxLimit);
+        $defaultLimit = max(1, min($configuredDefaultLimit, $maxLimit));
+
         return new self(
             statuses: self::parseStatuses($data['statuses'] ?? null),
             queues: isset($data['queues']) && is_array($data['queues'])
@@ -98,7 +103,7 @@ final readonly class JobFilterData
             maxDurationMs: isset($data['max_duration_ms']) && is_numeric($data['max_duration_ms']) ? (int) $data['max_duration_ms'] : null,
             minAttempts: isset($data['min_attempts']) && is_numeric($data['min_attempts']) ? (int) $data['min_attempts'] : null,
             search: isset($data['search']) && is_scalar($data['search']) ? (string) $data['search'] : null,
-            limit: isset($data['limit']) && is_numeric($data['limit']) ? max(1, min((int) $data['limit'], 1000)) : 50,
+            limit: isset($data['limit']) && is_numeric($data['limit']) ? max(1, min((int) $data['limit'], $maxLimit)) : $defaultLimit,
             offset: isset($data['offset']) && is_numeric($data['offset']) ? max(0, (int) $data['offset']) : 0,
             sortBy: self::validateSortColumn($data['sort_by'] ?? null),
             sortDirection: self::validateSortDirection($data['sort_direction'] ?? null),
@@ -199,6 +204,13 @@ final readonly class JobFilterData
         $direction = strtolower((string) $direction);
 
         return in_array($direction, ['asc', 'desc'], true) ? $direction : 'desc';
+    }
+
+    private static function intConfig(string $key, int $default): int
+    {
+        $value = config($key, $default);
+
+        return is_numeric($value) ? (int) $value : $default;
     }
 
     /**

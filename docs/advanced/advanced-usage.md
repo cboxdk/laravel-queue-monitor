@@ -449,7 +449,7 @@ $filters = new JobFilterData(
         null,
     queues: request('queues'),
     search: request('search'),
-    limit: min(request('limit', 50), 1000)
+    limit: min(request('limit', 50), config('queue-monitor.api.max_limit', 1000))
 );
 
 $jobs = QueueMonitor::getJobs($filters);

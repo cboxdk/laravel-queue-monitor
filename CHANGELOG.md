@@ -15,6 +15,8 @@ All notable changes to `laravel-queue-monitor` will be documented in this file.
 - Default payload storage to enabled in `local` and disabled outside `local` unless `QUEUE_MONITOR_STORE_PAYLOAD` is explicitly set.
 - Default REST API route registration to enabled in `local` and disabled outside `local` unless `QUEUE_MONITOR_API_ENABLED` is explicitly set.
 - Add `queue-monitor:health --readiness` for launch configuration checks and make health thresholds configurable.
+- Mask serialized Laravel command payloads in API/dashboard responses by default.
+- Add configurable API, export, and batch-operation limits to keep expensive requests bounded.
 - Expand CI coverage for Laravel 13/PHP 8.5 and dashboard asset builds.
 
 ### Documentation

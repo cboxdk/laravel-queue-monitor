@@ -84,8 +84,7 @@ class JobMonitorController extends Controller
      */
     public function failed(Request $request): JobMonitorCollection
     {
-        $limitValue = $request->input('limit', 100);
-        $limit = is_numeric($limitValue) ? min(max((int) $limitValue, 1), 1000) : 100;
+        $limit = $this->boundedLimit($request->input('limit'), 100);
 
         $jobs = $this->repository->getFailedJobs($limit);
 
@@ -97,11 +96,18 @@ class JobMonitorController extends Controller
      */
     public function recent(Request $request): JobMonitorCollection
     {
-        $limitValue = $request->input('limit', 100);
-        $limit = is_numeric($limitValue) ? min(max((int) $limitValue, 1), 1000) : 100;
+        $limit = $this->boundedLimit($request->input('limit'), 100);
 
         $jobs = $this->repository->getRecentJobs($limit);
 
         return new JobMonitorCollection($jobs);
+    }
+
+    private function boundedLimit(mixed $value, int $default): int
+    {
+        $maxLimit = config('queue-monitor.api.max_limit', 1000);
+        $maxLimit = is_numeric($maxLimit) ? max(1, (int) $maxLimit) : 1000;
+
+        return is_numeric($value) ? min(max((int) $value, 1), $maxLimit) : min($default, $maxLimit);
     }
 }

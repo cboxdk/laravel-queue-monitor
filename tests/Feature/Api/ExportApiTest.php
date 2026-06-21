@@ -72,3 +72,20 @@ test('export csv respects filters', function () {
 
     expect(substr_count($content, "\n"))->toBe(6); // Header + 5 jobs
 });
+
+test('export endpoints clamp requested rows to configured maximum', function () {
+    config()->set('queue-monitor.export.max_rows', 3);
+    config()->set('queue-monitor.export.default_limit', 3);
+
+    JobMonitor::factory()->count(5)->create();
+
+    $csvResponse = $this->get('/api/queue-monitor/export/csv?limit=100');
+    $jsonResponse = $this->getJson('/api/queue-monitor/export/json?limit=100');
+
+    $csvResponse->assertOk();
+    $jsonResponse->assertOk();
+
+    expect(substr_count($csvResponse->getContent(), "\n"))->toBe(4);
+    expect($jsonResponse->json('data'))->toHaveCount(3);
+    expect($jsonResponse->json('meta.count'))->toBe(3);
+});

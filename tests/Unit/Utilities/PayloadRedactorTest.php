@@ -105,3 +105,20 @@ test('handles deeply nested structures', function () {
     expect($result['level1']['level2']['level3']['secret'])->toBe('*****');
     expect($result['level1']['level2']['level3']['safe'])->toBe('visible');
 });
+
+test('redacts sensitive array values before traversing nested payloads', function () {
+    $payload = [
+        'data' => [
+            'commandName' => 'App\\Jobs\\ImportUsers',
+            'command' => [
+                'public' => 'visible',
+                'password' => 'secret',
+            ],
+        ],
+    ];
+
+    $result = PayloadRedactor::redact($payload, ['command', 'password']);
+
+    expect($result['data']['commandName'])->toBe('*****');
+    expect($result['data']['command'])->toBe('*****');
+});

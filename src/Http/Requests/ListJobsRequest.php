@@ -49,7 +49,7 @@ class ListJobsRequest extends FormRequest
             'max_duration_ms' => 'sometimes|integer|min:0',
             'min_attempts' => 'sometimes|integer|min:1',
             'search' => 'sometimes|string|max:255',
-            'limit' => 'sometimes|integer|min:1|max:1000',
+            'limit' => 'sometimes|integer|min:1|max:'.$this->maxLimit(),
             'offset' => 'sometimes|integer|min:0',
             'sort_by' => 'sometimes|string|in:queued_at,started_at,completed_at,duration_ms,created_at',
             'sort_direction' => 'sometimes|string|in:asc,desc',
@@ -66,8 +66,15 @@ class ListJobsRequest extends FormRequest
         return [
             'statuses.*.in' => 'Invalid job status. Must be one of: '.implode(', ', JobStatus::values()),
             'worker_type.in' => 'Invalid worker type. Must be one of: '.implode(', ', WorkerType::values()),
-            'limit.max' => 'Maximum limit is 1000 jobs per request',
+            'limit.max' => 'Maximum limit is '.$this->maxLimit().' jobs per request',
             'sort_by.in' => 'Invalid sort field. Must be one of: queued_at, started_at, completed_at, duration_ms, created_at',
         ];
+    }
+
+    private function maxLimit(): int
+    {
+        $value = config('queue-monitor.api.max_limit', 1000);
+
+        return is_numeric($value) ? max(1, (int) $value) : 1000;
     }
 }
