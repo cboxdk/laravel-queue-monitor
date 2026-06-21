@@ -54,6 +54,14 @@ final class LaravelQueueMonitor
     }
 
     /**
+     * Determine whether an explicit authorization callback has been registered.
+     */
+    public static function hasAuthCallback(): bool
+    {
+        return self::$authUsing !== null;
+    }
+
+    /**
      * Check if the given request is authorized.
      */
     public static function check(Request $request): bool

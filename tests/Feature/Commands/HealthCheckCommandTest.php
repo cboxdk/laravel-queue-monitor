@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
+use Cbox\LaravelQueueMonitor\LaravelQueueMonitor;
 use Cbox\LaravelQueueMonitor\Models\JobMonitor;
+use Illuminate\Support\Facades\Artisan;
 
 test('health check command displays status', function () {
     JobMonitor::factory()->count(5)->create();
@@ -35,4 +37,40 @@ test('health check command fails when system degraded', function () {
     // Command should fail (return 1) when degraded
     $this->artisan('queue-monitor:health')
         ->assertFailed();
+});
+
+test('health check command shows readiness output', function () {
+    app()->detectEnvironment(fn (): string => 'local');
+    LaravelQueueMonitor::auth(fn (): bool => true);
+
+    config()->set('queue-monitor.storage.store_payload', false);
+
+    $this->artisan('queue-monitor:health --readiness')
+        ->expectsOutputToContain('Production Readiness')
+        ->assertSuccessful();
+});
+
+test('health check command readiness fails for unsafe production configuration', function () {
+    app()->detectEnvironment(fn (): string => 'production');
+    LaravelQueueMonitor::$authUsing = null;
+
+    config()->set('queue-monitor.api.enabled', true);
+    config()->set('queue-monitor.api.middleware', ['api']);
+    config()->set('queue-monitor.storage.store_payload', true);
+
+    $this->artisan('queue-monitor:health --readiness')
+        ->expectsOutputToContain('Production Readiness')
+        ->assertFailed();
+});
+
+test('health check command readiness supports json output', function () {
+    app()->detectEnvironment(fn (): string => 'local');
+    LaravelQueueMonitor::auth(fn (): bool => true);
+
+    $exitCode = Artisan::call('queue-monitor:health', ['--readiness' => true, '--json' => true]);
+    $output = Artisan::output();
+
+    expect($exitCode)->toBe(0);
+    expect($output)->toContain('"status"');
+    expect($output)->toContain('"access_control"');
 });

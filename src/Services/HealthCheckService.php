@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Cbox\LaravelQueueMonitor\Services;
 
 use Cbox\LaravelQueueMonitor\Enums\JobStatus;
+use Cbox\LaravelQueueMonitor\LaravelQueueMonitor;
 use Cbox\LaravelQueueMonitor\Models\JobMonitor;
 use Cbox\LaravelQueueMonitor\Utilities\QueryBuilderHelper;
 use Illuminate\Support\Facades\Cache;
@@ -52,6 +53,30 @@ final class HealthCheckService
         }
 
         return $result;
+    }
+
+    /**
+     * Check production readiness configuration.
+     *
+     * @return array{status: string, checks: array<string, array<string, mixed>>, timestamp: string}
+     */
+    public function readiness(): array
+    {
+        $checks = [
+            'access_control' => $this->checkAccessControlReadiness(),
+            'api_middleware' => $this->checkApiMiddlewareReadiness(),
+            'payload_storage' => $this->checkPayloadStorageReadiness(),
+            'retention' => $this->checkRetentionReadiness(),
+            'horizon_timeouts' => $this->checkHorizonTimeoutReadiness(),
+        ];
+
+        $ready = collect($checks)->every(fn (array $check): bool => (bool) $check['healthy']);
+
+        return [
+            'status' => $ready ? 'ready' : 'attention',
+            'checks' => $checks,
+            'timestamp' => now()->toIso8601String(),
+        ];
     }
 
     /**
@@ -111,7 +136,9 @@ final class HealthCheckService
      */
     private function checkStuckJobs(): array
     {
-        $stuckJobs = QueryBuilderHelper::stuck(30)
+        $thresholdMinutes = $this->intConfig('queue-monitor.health.stuck_job_minutes', 30);
+
+        $stuckJobs = QueryBuilderHelper::stuck($thresholdMinutes)
             ->select(['uuid', 'job_class', 'queue', 'server_name', 'started_at', 'attempt'])
             ->limit(10)
             ->get();
@@ -126,7 +153,7 @@ final class HealthCheckService
                 : 'No stuck jobs detected',
             'details' => [
                 'stuck_count' => $stuck,
-                'threshold_minutes' => 30,
+                'threshold_minutes' => $thresholdMinutes,
                 'stuck_jobs' => $stuckJobs->map(fn ($job) => [
                     'uuid' => $job->uuid,
                     'job_class' => $job->job_class,
@@ -146,13 +173,14 @@ final class HealthCheckService
      */
     private function checkErrorRate(): array
     {
+        $threshold = $this->floatConfig('queue-monitor.health.error_rate_threshold', 10.0);
         $recentTotal = QueryBuilderHelper::lastHours(1)->count();
         $recentFailed = QueryBuilderHelper::lastHours(1)
             ->whereIn('status', [JobStatus::FAILED->value, JobStatus::TIMEOUT->value])
             ->count();
 
         $errorRate = $recentTotal > 0 ? ($recentFailed / $recentTotal) * 100 : 0;
-        $healthy = $errorRate < 10; // < 10% error rate
+        $healthy = $errorRate < $threshold;
 
         return [
             'healthy' => $healthy,
@@ -161,7 +189,7 @@ final class HealthCheckService
                 'error_rate' => round($errorRate, 2),
                 'total_jobs' => $recentTotal,
                 'failed_jobs' => $recentFailed,
-                'threshold' => 10.0,
+                'threshold' => $threshold,
             ],
         ];
     }
@@ -173,10 +201,12 @@ final class HealthCheckService
      */
     private function checkQueueBacklog(): array
     {
+        $queuedThreshold = $this->intConfig('queue-monitor.health.queued_jobs_threshold', 1000);
+        $processingThreshold = $this->intConfig('queue-monitor.health.processing_jobs_threshold', 100);
         $processing = JobMonitor::where('status', JobStatus::PROCESSING)->count();
         $queued = JobMonitor::where('status', JobStatus::QUEUED)->count();
 
-        $healthy = $queued < 1000 && $processing < 100;
+        $healthy = $queued < $queuedThreshold && $processing < $processingThreshold;
 
         return [
             'healthy' => $healthy,
@@ -185,6 +215,8 @@ final class HealthCheckService
                 'queued' => $queued,
                 'processing' => $processing,
                 'total_pending' => $queued + $processing,
+                'queued_threshold' => $queuedThreshold,
+                'processing_threshold' => $processingThreshold,
             ],
         ];
     }
@@ -198,9 +230,25 @@ final class HealthCheckService
     {
         /** @var string $prefix */
         $prefix = config('queue-monitor.database.table_prefix', 'queue_monitor_');
+        /** @var string|null $connection */
+        $connection = config('queue-monitor.database.connection');
+        $maxMb = $this->floatConfig('queue-monitor.health.storage_max_mb', 1000.0);
 
         try {
-            $tableSize = DB::select(
+            $database = DB::connection($connection);
+
+            if (! in_array($database->getDriverName(), ['mysql', 'mariadb'], true)) {
+                return [
+                    'healthy' => true,
+                    'message' => 'Storage check not available for this database driver',
+                    'details' => [
+                        'connection' => $connection ?? 'default',
+                        'driver' => $database->getDriverName(),
+                    ],
+                ];
+            }
+
+            $tableSize = $database->select(
                 'SELECT
                     ROUND((DATA_LENGTH + INDEX_LENGTH) / 1024 / 1024, 2) as size_mb,
                     TABLE_ROWS as row_count
@@ -220,7 +268,7 @@ final class HealthCheckService
             $sizeMb = $tableSize[0]->size_mb ?? 0;
             $rows = $tableSize[0]->row_count ?? 0;
 
-            $healthy = $sizeMb < 1000; // < 1GB
+            $healthy = $sizeMb < $maxMb;
 
             return [
                 'healthy' => $healthy,
@@ -228,7 +276,8 @@ final class HealthCheckService
                 'details' => [
                     'size_mb' => $sizeMb,
                     'row_count' => $rows,
-                    'threshold_mb' => 1000,
+                    'threshold_mb' => $maxMb,
+                    'connection' => $connection ?? 'default',
                 ],
             ];
         } catch (\Throwable $e) {
@@ -259,5 +308,241 @@ final class HealthCheckService
     public function isHealthy(): bool
     {
         return $this->check()['status'] === 'healthy';
+    }
+
+    /**
+     * @return array{healthy: bool, message: string, details?: array<string, mixed>}
+     */
+    private function checkAccessControlReadiness(): array
+    {
+        if (app()->environment('local')) {
+            return [
+                'healthy' => true,
+                'message' => 'Local environment uses the built-in local-only access fallback',
+            ];
+        }
+
+        $surfaceEnabled = (bool) config('queue-monitor.ui.enabled', true)
+            || (bool) config('queue-monitor.api.enabled', app()->environment('local'));
+
+        if (! $surfaceEnabled) {
+            return [
+                'healthy' => true,
+                'message' => 'Dashboard and API surfaces are disabled',
+            ];
+        }
+
+        $hasCallback = LaravelQueueMonitor::hasAuthCallback();
+
+        return [
+            'healthy' => $hasCallback,
+            'message' => $hasCallback
+                ? 'Explicit authorization callback registered'
+                : 'Register LaravelQueueMonitor::auth(...) before exposing Queue Monitor outside local',
+        ];
+    }
+
+    /**
+     * @return array{healthy: bool, message: string, details?: array<string, mixed>}
+     */
+    private function checkApiMiddlewareReadiness(): array
+    {
+        $apiEnabled = (bool) config('queue-monitor.api.enabled', app()->environment('local'));
+
+        if (! $apiEnabled) {
+            return [
+                'healthy' => true,
+                'message' => 'API routes are disabled',
+            ];
+        }
+
+        if (app()->environment('local')) {
+            return [
+                'healthy' => true,
+                'message' => 'API is enabled for local development',
+            ];
+        }
+
+        $middleware = $this->middlewareList(config('queue-monitor.api.middleware', []));
+        $hasProtectiveMiddleware = collect($middleware)
+            ->contains(fn (string $entry): bool => str_starts_with($entry, 'auth')
+                || str_starts_with($entry, 'can:')
+                || str_contains($entry, 'Authenticate'));
+
+        return [
+            'healthy' => $hasProtectiveMiddleware,
+            'message' => $hasProtectiveMiddleware
+                ? 'API middleware includes an authentication or authorization layer'
+                : 'Add auth middleware before enabling the API outside local',
+            'details' => [
+                'middleware' => $middleware,
+            ],
+        ];
+    }
+
+    /**
+     * @return array{healthy: bool, message: string, details?: array<string, mixed>}
+     */
+    private function checkPayloadStorageReadiness(): array
+    {
+        $storePayload = (bool) config('queue-monitor.storage.store_payload', app()->environment('local'));
+
+        if (app()->environment('local') || ! $storePayload) {
+            return [
+                'healthy' => true,
+                'message' => $storePayload
+                    ? 'Payload storage is enabled for local development'
+                    : 'Payload storage is disabled outside local',
+            ];
+        }
+
+        return [
+            'healthy' => false,
+            'message' => 'Payload storage is enabled outside local; confirm this is required for replay and acceptable for stored data',
+        ];
+    }
+
+    /**
+     * @return array{healthy: bool, message: string, details?: array<string, mixed>}
+     */
+    private function checkRetentionReadiness(): array
+    {
+        $days = config('queue-monitor.retention.days');
+        $maxRows = config('queue-monitor.retention.max_rows');
+
+        $hasLimit = (is_numeric($days) && (int) $days > 0) || (is_numeric($maxRows) && (int) $maxRows > 0);
+
+        return [
+            'healthy' => $hasLimit,
+            'message' => $hasLimit
+                ? 'Retention limits are configured; schedule queue-monitor:prune in production'
+                : 'Configure a retention day or row limit before production use',
+            'details' => [
+                'days' => $days,
+                'max_rows' => $maxRows,
+            ],
+        ];
+    }
+
+    /**
+     * @return array{healthy: bool, message: string, details?: array<string, mixed>}
+     */
+    private function checkHorizonTimeoutReadiness(): array
+    {
+        $timeouts = $this->horizonTimeouts();
+        $retryAfterValues = $this->queueRetryAfterValues();
+
+        if ($timeouts === [] || $retryAfterValues === []) {
+            return [
+                'healthy' => true,
+                'message' => 'No Horizon timeout and queue retry_after pair found to validate',
+                'details' => [
+                    'horizon_timeouts' => $timeouts,
+                    'queue_retry_after' => $retryAfterValues,
+                ],
+            ];
+        }
+
+        $maxTimeout = max($timeouts);
+        $minRetryAfter = min($retryAfterValues);
+        $healthy = $maxTimeout < $minRetryAfter;
+
+        return [
+            'healthy' => $healthy,
+            'message' => $healthy
+                ? 'Horizon timeout values are lower than queue retry_after values'
+                : 'Horizon timeout must be lower than queue retry_after to avoid duplicate processing',
+            'details' => [
+                'max_horizon_timeout' => $maxTimeout,
+                'min_queue_retry_after' => $minRetryAfter,
+            ],
+        ];
+    }
+
+    /**
+     * @return array<int, int>
+     */
+    private function horizonTimeouts(): array
+    {
+        $timeouts = [];
+        $this->collectTimeouts(config('horizon.defaults', []), $timeouts);
+        $this->collectTimeouts(config('horizon.environments', []), $timeouts);
+
+        return array_values(array_unique($timeouts));
+    }
+
+    /**
+     * @param  array<int, int>  $timeouts
+     */
+    private function collectTimeouts(mixed $value, array &$timeouts): void
+    {
+        if (! is_array($value)) {
+            return;
+        }
+
+        foreach ($value as $key => $item) {
+            if ($key === 'timeout' && is_numeric($item)) {
+                $timeouts[] = (int) $item;
+
+                continue;
+            }
+
+            $this->collectTimeouts($item, $timeouts);
+        }
+    }
+
+    /**
+     * @return array<int, int>
+     */
+    private function queueRetryAfterValues(): array
+    {
+        $connections = config('queue.connections', []);
+
+        if (! is_array($connections)) {
+            return [];
+        }
+
+        $values = [];
+
+        foreach ($connections as $connection) {
+            if (is_array($connection) && isset($connection['retry_after']) && is_numeric($connection['retry_after'])) {
+                $values[] = (int) $connection['retry_after'];
+            }
+        }
+
+        return array_values(array_unique($values));
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function middlewareList(mixed $middleware): array
+    {
+        if (is_string($middleware)) {
+            return [$middleware];
+        }
+
+        if (! is_array($middleware)) {
+            return [];
+        }
+
+        return array_values(array_filter(
+            array_map(fn (mixed $entry): string => is_string($entry) ? $entry : '', $middleware),
+            fn (string $entry): bool => $entry !== ''
+        ));
+    }
+
+    private function intConfig(string $key, int $default): int
+    {
+        $value = config($key, $default);
+
+        return is_numeric($value) ? (int) $value : $default;
+    }
+
+    private function floatConfig(string $key, float $default): float
+    {
+        $value = config($key, $default);
+
+        return is_numeric($value) ? (float) $value : $default;
     }
 }

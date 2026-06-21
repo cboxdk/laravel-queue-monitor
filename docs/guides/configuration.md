@@ -121,6 +121,29 @@ Control how the built-in dashboard loads CSS and JavaScript:
 
 Use `inline` for zero setup, `public` after publishing `queue-monitor-assets`, and `none` when a published/custom dashboard view loads assets from your application's own build. See [Dashboard Assets](dashboard-assets) for the full override workflow.
 
+## Health Checks
+
+Tune health thresholds for your workload:
+
+```php
+'health' => [
+    'stuck_job_minutes' => env('QUEUE_MONITOR_HEALTH_STUCK_JOB_MINUTES', 30),
+    'error_rate_threshold' => env('QUEUE_MONITOR_HEALTH_ERROR_RATE_THRESHOLD', 10.0),
+    'queued_jobs_threshold' => env('QUEUE_MONITOR_HEALTH_QUEUED_JOBS_THRESHOLD', 1000),
+    'processing_jobs_threshold' => env('QUEUE_MONITOR_HEALTH_PROCESSING_JOBS_THRESHOLD', 100),
+    'storage_max_mb' => env('QUEUE_MONITOR_HEALTH_STORAGE_MAX_MB', 1000),
+],
+```
+
+Use the readiness mode before launch:
+
+```bash
+php artisan queue-monitor:health --readiness
+php artisan queue-monitor:health --readiness --json
+```
+
+Readiness checks validate production-sensitive configuration such as access control, API middleware, payload storage, retention limits, and Horizon timeout alignment.
+
 ## Metrics Storage
 
 Queue Monitor depends on [laravel-queue-metrics](https://github.com/cboxdk/laravel-queue-metrics) for per-job CPU and memory instrumentation. Queue-metrics also provides aggregate persistence (worker heartbeats, throughput, baselines), but Queue Monitor doesn't need it.
