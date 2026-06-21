@@ -19,6 +19,8 @@ Configure which database connection to use for monitoring data:
 
 This allows you to store monitoring data separately from your application data if desired.
 
+Dashboard analytics generate database-specific SQL for timestamp bucketing and queue pickup latency. The package supports MySQL/MariaDB, PostgreSQL, SQL Server, and SQLite for those expressions.
+
 ## Payload Storage
 
 Control how job payloads are stored for replay functionality:

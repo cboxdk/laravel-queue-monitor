@@ -10,7 +10,7 @@ weight: 2
 
 - PHP 8.3+
 - Laravel 11+
-- [cboxdk/laravel-queue-metrics](https://github.com/cboxdk/laravel-queue-metrics) ^2.3 (installed automatically)
+- [cboxdk/laravel-queue-metrics](https://github.com/cboxdk/laravel-queue-metrics) ^3.0 (installed automatically)
 
 ## Installation Steps
 
@@ -32,10 +32,11 @@ php artisan vendor:publish --tag="queue-monitor-config"
 php artisan migrate
 ```
 
-The package will create three tables:
+The package will create four tables:
 - `queue_monitor_jobs`: Stores individual job records
 - `queue_monitor_tags`: Normalized tag storage for analytics
 - `queue_monitor_scaling_events`: Autoscale integration (if used)
+- `queue_monitor_cluster_events`: Autoscale v3 cluster orchestration events (if used)
 
 ### 4. Configure Metrics Storage
 
@@ -95,6 +96,8 @@ Publish views for customization:
 php artisan vendor:publish --tag="queue-monitor-views"
 ```
 
+Published views are copied into your application and will not receive package UI updates automatically. After upgrading Queue Monitor, remove or republish customized views if you want the latest dashboard.
+
 ## Configuration
 
 The configuration file is published to `config/queue-monitor.php`. Key settings include:
@@ -123,6 +126,15 @@ return [
     ],
 ];
 ```
+
+## Production Checklist
+
+- Add framework auth middleware to the UI and API routes.
+- Register `LaravelQueueMonitor::auth(...)` with an explicit admin/internal access rule.
+- Schedule `queue-monitor:prune` so retention settings actually run.
+- Decide whether `QUEUE_MONITOR_STORE_PAYLOAD=true` is acceptable for your data. Payload redaction only applies to API/dashboard responses; raw payloads are stored for replay.
+- Review Content Security Policy and outbound network restrictions. The bundled dashboard currently loads fonts and frontend libraries from public CDNs unless you publish and customize the view.
+- If you have published `queue-monitor-views`, remove or republish them after package upgrades to pick up dashboard fixes.
 
 ## Environment Variables
 
