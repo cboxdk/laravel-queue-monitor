@@ -9,6 +9,7 @@ use Carbon\CarbonPeriod;
 use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\StatisticsRepositoryContract;
 use Cbox\LaravelQueueMonitor\Services\DashboardCacheService;
+use Cbox\LaravelQueueMonitor\Utilities\DatabaseExpressionHelper;
 use Illuminate\Contracts\Cache\LockProvider;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\Cache;
@@ -33,7 +34,7 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
         /** @var string $prefix */
         $prefix = config('queue-monitor.database.table_prefix', 'queue_monitor_');
 
-        $query = DB::table($prefix.'jobs')
+        $query = $this->table($prefix.'jobs')
             ->select([
                 DB::raw('COUNT(*) as total'),
                 DB::raw('SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as completed'),
@@ -115,7 +116,7 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
         /** @var string $prefix */
         $prefix = config('queue-monitor.database.table_prefix', 'queue_monitor_');
 
-        $query = DB::table($prefix.'jobs')
+        $query = $this->table($prefix.'jobs')
             ->select([
                 'server_name',
                 DB::raw('COUNT(*) as total'),
@@ -178,7 +179,7 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
         /** @var string $prefix */
         $prefix = config('queue-monitor.database.table_prefix', 'queue_monitor_');
 
-        $query = DB::table($prefix.'jobs')
+        $query = $this->table($prefix.'jobs')
             ->select([
                 'queue',
                 'connection',
@@ -246,7 +247,7 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
         /** @var string $prefix */
         $prefix = config('queue-monitor.database.table_prefix', 'queue_monitor_');
 
-        $query = DB::table($prefix.'jobs')
+        $query = $this->table($prefix.'jobs')
             ->select([
                 'job_class',
                 DB::raw('COUNT(*) as total'),
@@ -307,7 +308,7 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
         /** @var string $prefix */
         $prefix = config('queue-monitor.database.table_prefix', 'queue_monitor_');
 
-        $query = DB::table($prefix.'jobs')
+        $query = $this->table($prefix.'jobs')
             ->select([
                 'exception_class',
                 DB::raw('COUNT(*) as count'),
@@ -353,7 +354,7 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
         $prefix = config('queue-monitor.database.table_prefix', 'queue_monitor_');
 
         /** @var array<int, array<string, mixed>> $queueHealth */
-        $queueHealth = DB::table($prefix.'jobs')
+        $queueHealth = $this->table($prefix.'jobs')
             ->select([
                 'queue',
                 DB::raw('COUNT(*) as total'),
@@ -413,12 +414,9 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
         /** @var string $prefix */
         $prefix = config('queue-monitor.database.table_prefix', 'queue_monitor_');
 
-        $driver = DB::connection()->getDriverName();
-        $dateFormat = $driver === 'sqlite'
-            ? "strftime('%Y-%m-%d %H:%M', queued_at)"
-            : "DATE_FORMAT(queued_at, '%Y-%m-%d %H:%i')";
+        $dateFormat = DatabaseExpressionHelper::minuteBucket('queued_at', $this->databaseDriver());
 
-        $query = DB::table($prefix.'jobs')
+        $query = $this->table($prefix.'jobs')
             ->select([
                 DB::raw("{$dateFormat} as minute"),
                 DB::raw('COUNT(*) as total'),
@@ -477,6 +475,24 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
         if ($hours !== null && $hours > 0) {
             $query->where('created_at', '>=', now()->subHours($hours));
         }
+    }
+
+    private function table(string $table): Builder
+    {
+        return DB::connection($this->databaseConnectionName())->table($table);
+    }
+
+    private function databaseDriver(): string
+    {
+        return DB::connection($this->databaseConnectionName())->getDriverName();
+    }
+
+    private function databaseConnectionName(): ?string
+    {
+        /** @var string|null $connection */
+        $connection = config('queue-monitor.database.connection');
+
+        return $connection;
     }
 
     /**

@@ -84,6 +84,8 @@ echo "Success Rate: {$stats['success_rate']}%\n";
 - [Quick Start](getting-started/quickstart) - Common usage patterns
 - [Authentication & Access Control](guides/authentication) - Secure the dashboard and REST API
 - [Configuration](guides/configuration) - Customize behavior
+- [Laravel Horizon Integration](guides/horizon) - Horizon compatibility and responsibility split
+- [Dashboard Assets](guides/dashboard-assets) - Publish, override, and rebuild dashboard assets
 
 ### Core Features
 - [Facade Usage](guides/facade-usage) - Programmatic API
@@ -110,8 +112,8 @@ Built on solid patterns for maintainability:
 ## Requirements
 
 - PHP 8.3+
-- Laravel 10.0+
-- cboxdk/laravel-queue-metrics ^1.0
+- Laravel 11.0+
+- cboxdk/laravel-queue-metrics ^3.0
 
 ## Features at a Glance
 

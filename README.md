@@ -42,7 +42,7 @@ Works with Horizon and enriches the experience with worker supervisor data, but 
 
 - PHP 8.3+
 - Laravel 11+
-- [cboxdk/laravel-queue-metrics](https://github.com/cboxdk/laravel-queue-metrics) ^2.3 (installed automatically)
+- [cboxdk/laravel-queue-metrics](https://github.com/cboxdk/laravel-queue-metrics) ^3.0 (installed automatically)
 
 ## Installation
 
@@ -100,6 +100,28 @@ php artisan migrate
 ```bash
 php artisan vendor:publish --tag="queue-monitor-views"
 ```
+
+Published views are copied into your application and will not receive package UI updates automatically. After upgrading Queue Monitor, remove or republish customized views if you want the latest dashboard.
+
+The dashboard ships with precompiled package-local CSS and JavaScript. If your CSP requires external static files instead of inline package assets, publish them with:
+
+```bash
+php artisan vendor:publish --tag="queue-monitor-assets"
+```
+
+Then set:
+
+```env
+QUEUE_MONITOR_ASSET_MODE=public
+```
+
+For a full app-level build override, also publish the source asset files:
+
+```bash
+php artisan vendor:publish --tag="queue-monitor-asset-sources"
+```
+
+See the Dashboard Assets guide for `inline`, `public`, and `none` asset modes.
 
 ## Quick Start
 
@@ -171,6 +193,8 @@ GET  /api/queue-monitor/statistics/queue-health
 | `beanstalkd` | yes | yes | yes | yes | yes |
 | Custom drivers | yes | yes | yes | yes | yes |
 
+Dashboard analytics are tested against SQLite in the package suite and generate driver-specific SQL for MySQL/MariaDB, PostgreSQL, SQL Server, and SQLite when bucketing timestamps or calculating pickup latency.
+
 **With Horizon (optional):** adds worker supervisor data, workload metrics, jobs/minute, busy/total workers.
 
 **With [cboxdk/laravel-queue-autoscale](https://github.com/cboxdk/laravel-queue-autoscale) (optional):** adds scaling timeline, SLA breach/recovery tracking, scaling decision history.
@@ -197,7 +221,7 @@ return [
     'enabled' => env('QUEUE_MONITOR_ENABLED', true),
 
     'storage' => [
-        'store_payload' => env('QUEUE_MONITOR_STORE_PAYLOAD', true),
+        'store_payload' => env('QUEUE_MONITOR_STORE_PAYLOAD', env('APP_ENV') === 'local'),
         'payload_max_size' => 65535,
     ],
 
@@ -211,6 +235,9 @@ return [
         'enabled' => true,
         'route_prefix' => 'queue-monitor',
         'middleware' => ['web'],
+        'assets' => [
+            'mode' => env('QUEUE_MONITOR_ASSET_MODE', 'inline'),
+        ],
     ],
 
     // REST API
@@ -223,6 +250,15 @@ return [
 ```
 
 ## Security
+
+### Production Checklist
+
+- Add framework auth middleware to the UI and API routes.
+- Register `LaravelQueueMonitor::auth(...)` with an explicit admin/internal access rule.
+- Schedule `queue-monitor:prune` so retention settings actually run.
+- Decide whether `QUEUE_MONITOR_STORE_PAYLOAD=true` is acceptable for your data. Payload storage defaults on in `local` and off outside `local` unless the env var is explicitly set. Payload redaction only applies to API/dashboard responses; raw payloads are stored for replay.
+- Review Content Security Policy. The bundled dashboard uses package-local CSS and JavaScript, inlined from `resources/dist`; publish `queue-monitor-assets` and customize the view if your CSP disallows inline assets.
+- If you have published `queue-monitor-views`, remove or republish them after package upgrades to pick up dashboard fixes.
 
 ### Dashboard Authentication
 

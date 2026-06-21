@@ -39,6 +39,7 @@ class LaravelQueueMonitorServiceProvider extends PackageServiceProvider
             ->hasMigration('extend_autoscale_v3_support')
             ->runsMigrations()
             ->hasViews()
+            ->hasAssets()
             ->hasCommands([
                 LaravelQueueMonitorCommand::class,
                 PruneJobsCommand::class,
@@ -62,6 +63,7 @@ class LaravelQueueMonitorServiceProvider extends PackageServiceProvider
         $this->registerEventListeners();
         $this->registerRoutes();
         $this->registerUiRoutes();
+        $this->registerDashboardAssetSourcePublishing();
     }
 
     /**
@@ -90,6 +92,18 @@ class LaravelQueueMonitorServiceProvider extends PackageServiceProvider
         if (file_exists(__DIR__.'/../routes/ui.php')) {
             $this->loadRoutesFrom(__DIR__.'/../routes/ui.php');
         }
+    }
+
+    protected function registerDashboardAssetSourcePublishing(): void
+    {
+        if (! $this->app->runningInConsole()) {
+            return;
+        }
+
+        $this->publishes([
+            __DIR__.'/../resources/css/queue-monitor.css' => resource_path('vendor/queue-monitor/queue-monitor.css'),
+            __DIR__.'/../tailwind.config.js' => resource_path('vendor/queue-monitor/tailwind.config.js'),
+        ], 'queue-monitor-asset-sources');
     }
 
     /**

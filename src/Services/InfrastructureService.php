@@ -7,6 +7,8 @@ namespace Cbox\LaravelQueueMonitor\Services;
 use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\Models\ClusterEvent;
 use Cbox\LaravelQueueMonitor\Models\ScalingEvent;
+use Cbox\LaravelQueueMonitor\Utilities\DatabaseExpressionHelper;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -80,12 +82,9 @@ final class InfrastructureService
      */
     public function getWorkerTypeBreakdown(): array
     {
-        /** @var string $prefix */
-        $prefix = config('queue-monitor.database.table_prefix', 'queue_monitor_');
-
         // Per worker_type + queue: job count, avg duration, failure rate
         /** @var array<int, array<string, mixed>> $breakdown */
-        $breakdown = DB::table($prefix.'jobs')
+        $breakdown = $this->jobTable()
             ->selectRaw('worker_type, queue, COUNT(*) as total,
                 SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as completed,
                 SUM(CASE WHEN status IN (?, ?) THEN 1 ELSE 0 END) as failed,
@@ -194,20 +193,20 @@ final class InfrastructureService
      */
     public function getSlaData(): array
     {
-        /** @var string $prefix */
-        $prefix = config('queue-monitor.database.table_prefix', 'queue_monitor_');
-        $driver = DB::connection()->getDriverName();
+        $driver = $this->databaseDriver();
 
         // Get SLA targets from autoscale config (per queue)
         $slaTargets = $this->getAutoscaleSlaTargets();
         $defaultTarget = $slaTargets['*'] ?? 30;
 
         // Single aggregation query: count total and within-SLA per queue
-        $pickupExpr = $driver === 'sqlite'
-            ? '(julianday(started_at) - julianday(COALESCE(available_at, queued_at))) * 86400'
-            : 'TIMESTAMPDIFF(SECOND, COALESCE(available_at, queued_at), started_at)';
+        $pickupExpr = DatabaseExpressionHelper::secondsBetween(
+            'COALESCE(available_at, queued_at)',
+            'started_at',
+            $driver
+        );
 
-        $rows = DB::table($prefix.'jobs')
+        $rows = $this->jobTable()
             ->selectRaw('queue, COUNT(*) as total')
             ->whereNotNull('started_at')
             ->where('created_at', '>=', now()->subHour())
@@ -220,7 +219,7 @@ final class InfrastructureService
 
         // For per-queue SLA with different targets, we need pickup times per queue.
         // Use a single query to get all pickup seconds, grouped by queue.
-        $allPickups = DB::table($prefix.'jobs')
+        $allPickups = $this->jobTable()
             ->selectRaw("queue, {$pickupExpr} as pickup_seconds")
             ->whereNotNull('started_at')
             ->where('created_at', '>=', now()->subHour())
@@ -293,13 +292,13 @@ final class InfrastructureService
         $prefix = config('queue-monitor.database.table_prefix', 'queue_monitor_');
 
         // Worker utilization from job data
-        $totalProcessingMs = (int) DB::table($prefix.'jobs')
+        $totalProcessingMs = (int) $this->jobTable()
             ->whereNotNull('duration_ms')
             ->where('started_at', '>=', now()->subHour())
             ->sum('duration_ms');
 
         // Busy workers = unique workers that processed jobs in the last hour
-        $busyWorkers = (int) DB::table($prefix.'jobs')
+        $busyWorkers = (int) $this->jobTable()
             ->where('started_at', '>=', now()->subHour())
             ->distinct()
             ->count('worker_id');
@@ -401,13 +400,9 @@ final class InfrastructureService
      */
     public function getCapacityData(): array
     {
-        /** @var string $prefix */
-        $prefix = config('queue-monitor.database.table_prefix', 'queue_monitor_');
+        $dateFormat = DatabaseExpressionHelper::minuteBucket('queued_at', $this->databaseDriver());
 
-        $driver = DB::connection()->getDriverName();
-        $dateFormat = $driver === 'sqlite' ? "strftime('%Y-%m-%d %H:%M', queued_at)" : "DATE_FORMAT(queued_at, '%Y-%m-%d %H:%i')";
-
-        $peakThroughput = DB::table($prefix.'jobs')
+        $peakThroughput = $this->jobTable()
             ->selectRaw("queue, $dateFormat as minute, COUNT(*) as job_count")
             ->where('queued_at', '>=', now()->subHour())
             ->groupBy('queue', DB::raw($dateFormat))
@@ -427,7 +422,7 @@ final class InfrastructureService
             }
         }
 
-        $avgDurations = DB::table($prefix.'jobs')
+        $avgDurations = $this->jobTable()
             ->selectRaw('queue, AVG(duration_ms) as avg_ms, COUNT(DISTINCT worker_id) as workers')
             ->whereNotNull('duration_ms')
             ->where('started_at', '>=', now()->subHour())
@@ -734,5 +729,26 @@ final class InfrastructureService
         } catch (\Throwable) {
             return 0;
         }
+    }
+
+    private function jobTable(): Builder
+    {
+        /** @var string $prefix */
+        $prefix = config('queue-monitor.database.table_prefix', 'queue_monitor_');
+
+        return DB::connection($this->databaseConnectionName())->table($prefix.'jobs');
+    }
+
+    private function databaseDriver(): string
+    {
+        return DB::connection($this->databaseConnectionName())->getDriverName();
+    }
+
+    private function databaseConnectionName(): ?string
+    {
+        /** @var string|null $connection */
+        $connection = config('queue-monitor.database.connection');
+
+        return $connection;
     }
 }

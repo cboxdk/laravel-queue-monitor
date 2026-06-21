@@ -5,26 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Queue Monitor</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        brand: { DEFAULT: '#4f6df5', light: '#7b91f7', dark: '#3b57d4', faint: '#eef1fe' },
-                    },
-                    fontFamily: {
-                        sans: ['DM Sans', 'system-ui', 'sans-serif'],
-                        mono: ['JetBrains Mono', 'Menlo', 'monospace'],
-                    },
-                }
-            }
-        }
-    </script>
+    {!! app(\Cbox\LaravelQueueMonitor\Support\DashboardAssets::class)->styles() !!}
     <style>
         [x-cloak] { display: none !important; }
 
@@ -3981,5 +3962,6 @@
             }
         }
     </script>
+    {!! app(\Cbox\LaravelQueueMonitor\Support\DashboardAssets::class)->scripts() !!}
 </body>
 </html>

@@ -58,8 +58,9 @@ return [
     |
     */
     'storage' => [
-        // Store complete job payload for replay capability
-        'store_payload' => env('QUEUE_MONITOR_STORE_PAYLOAD', true),
+        // Store complete job payload for replay capability.
+        // Defaults to enabled in local only; set QUEUE_MONITOR_STORE_PAYLOAD explicitly to override.
+        'store_payload' => env('QUEUE_MONITOR_STORE_PAYLOAD', env('APP_ENV') === 'local'),
 
         // Maximum payload size in bytes (default: 64KB)
         'payload_max_size' => env('QUEUE_MONITOR_PAYLOAD_MAX_SIZE', 65535),
@@ -187,6 +188,20 @@ return [
         'middleware' => ['web'],
         'per_page' => 35,
         'refresh_interval' => 3000, // ms
+
+        // Dashboard asset loading strategy:
+        // - inline: load precompiled package assets directly from vendor resources/dist (default, zero setup)
+        // - public: load files from public/vendor/queue-monitor after publishing queue-monitor-assets
+        // - none: emit no package assets; use a published/custom view and your own app build
+        'assets' => [
+            'mode' => env('QUEUE_MONITOR_ASSET_MODE', 'inline'),
+            'url' => env('QUEUE_MONITOR_ASSET_URL'), // null defaults to asset('vendor/queue-monitor')
+            'paths' => [
+                'css' => 'queue-monitor.css',
+                'echarts' => 'echarts.min.js',
+                'alpine' => 'alpine.min.js',
+            ],
+        ],
 
         // Color thresholds for CPU and memory utilization in the job list.
         // Values are percentages. Below 'warning' = green, warning–critical = amber, above 'critical' = red.

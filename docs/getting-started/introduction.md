@@ -76,7 +76,7 @@ echo "Average Duration: {$stats['avg_duration_ms']}ms\n";
 
 - PHP 8.3+
 - Laravel 11+
-- [cboxdk/laravel-queue-metrics](https://github.com/cboxdk/laravel-queue-metrics) ^2.3 (installed automatically)
+- [cboxdk/laravel-queue-metrics](https://github.com/cboxdk/laravel-queue-metrics) ^3.0 (installed automatically)
 - Redis (default for metrics storage) or database (for low-scale workloads)
 
 ## Next Steps

@@ -328,7 +328,7 @@ tests/
 ## Integration Points
 
 **Required**
-- cboxdk/laravel-queue-metrics ^1.0
+- cboxdk/laravel-queue-metrics ^3.0
 
 **Automatic**
 - Laravel Queue events (JobQueued, JobProcessing, etc.)

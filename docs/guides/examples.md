@@ -396,17 +396,21 @@ echo "Deleted {$deleted} old successful jobs\n";
 ### Export Data for Charts
 
 ```php
+use Cbox\LaravelQueueMonitor\Utilities\DatabaseExpressionHelper;
 use Illuminate\Support\Facades\DB;
+
+$hourExpression = DatabaseExpressionHelper::hourBucket('queued_at', DB::connection()->getDriverName());
 
 $hourlyStats = DB::table('queue_monitor_jobs')
     ->select([
-        DB::raw('DATE_FORMAT(queued_at, "%Y-%m-%d %H:00") as hour'),
+        DB::raw("{$hourExpression} as hour"),
         DB::raw('COUNT(*) as total'),
         DB::raw('SUM(CASE WHEN status = "completed" THEN 1 ELSE 0 END) as completed'),
         DB::raw('SUM(CASE WHEN status = "failed" THEN 1 ELSE 0 END) as failed'),
     ])
     ->whereBetween('queued_at', [now()->subDay(), now()])
-    ->groupBy('hour')
+    ->groupBy(DB::raw($hourExpression))
+    ->orderBy(DB::raw($hourExpression))
     ->get();
 
 // Return as JSON for chart library

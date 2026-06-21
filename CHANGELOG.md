@@ -2,6 +2,21 @@
 
 All notable changes to `laravel-queue-monitor` will be documented in this file.
 
+## Unreleased
+
+### Fixes
+
+- Make dashboard analytics SQL portable across MySQL/MariaDB, PostgreSQL, SQL Server, and SQLite for minute bucketing and pickup-latency calculations.
+- Respect the configured `queue-monitor.database.connection` in infrastructure and statistics dashboard queries.
+- Ship precompiled package-local dashboard CSS and JavaScript instead of loading Tailwind, Alpine, ECharts, and fonts from public CDNs.
+- Add configurable dashboard asset loading modes (`inline`, `public`, `none`) and publishable asset sources for app-level builds.
+- Default payload storage to enabled in `local` and disabled outside `local` unless `QUEUE_MONITOR_STORE_PAYLOAD` is explicitly set.
+
+### Documentation
+
+- Align documented requirements with the current Composer constraints: Laravel 11+ and `cboxdk/laravel-queue-metrics` `^3.0`.
+- Add production-readiness notes for auth, pruning, payload storage, dashboard assets, published views, local asset builds, and Horizon integration.
+
 ## v1.7.3 — Persist autoscale scaling decisions - 2026-05-19
 
 ### Fixes

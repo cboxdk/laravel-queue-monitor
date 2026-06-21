@@ -301,7 +301,7 @@ try {
 ### Automatic Pruning
 
 ```php
-// app/Console/Kernel.php (Laravel 10) or routes/console.php (Laravel 11+)
+// routes/console.php
 
 use Illuminate\Support\Facades\Schedule;
 
@@ -503,7 +503,7 @@ JobMonitor::successful()
 
 ### Payload Redaction
 
-While the package stores full payloads by default, you can implement custom redaction:
+When payload storage is enabled, you can implement custom redaction:
 
 ```php
 // In your job class
@@ -605,6 +605,7 @@ Schedule::job(new PruneQueueMonitorJob)->daily();
 ### Building Custom Reports
 
 ```php
+use Cbox\LaravelQueueMonitor\Utilities\DatabaseExpressionHelper;
 use Illuminate\Support\Facades\DB;
 
 class CustomQueueAnalytics
@@ -612,16 +613,17 @@ class CustomQueueAnalytics
     public function getHourlyJobCount(): array
     {
         $prefix = config('queue-monitor.database.table_prefix', 'queue_monitor_');
+        $hourExpression = DatabaseExpressionHelper::hourBucket('queued_at', DB::connection()->getDriverName());
 
         return DB::table($prefix.'jobs')
             ->select([
-                DB::raw('DATE_FORMAT(queued_at, "%Y-%m-%d %H:00:00") as hour'),
+                DB::raw("{$hourExpression} as hour"),
                 DB::raw('COUNT(*) as count'),
                 DB::raw('AVG(duration_ms) as avg_duration'),
             ])
             ->whereBetween('queued_at', [now()->subDay(), now()])
-            ->groupBy('hour')
-            ->orderBy('hour')
+            ->groupBy(DB::raw($hourExpression))
+            ->orderBy(DB::raw($hourExpression))
             ->get()
             ->toArray();
     }
