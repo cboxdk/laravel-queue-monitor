@@ -108,9 +108,17 @@ class JobMonitorFactory extends Factory
      */
     public function withTags(array $tags): static
     {
-        return $this->state(fn (array $attributes) => [
-            'tags' => $tags,
-        ]);
+        $tags = array_values(array_filter($tags, fn (string $tag): bool => $tag !== ''));
+
+        return $this
+            ->state(fn (array $attributes) => [
+                'tags' => $tags,
+            ])
+            ->afterCreating(function (JobMonitor $jobMonitor) use ($tags): void {
+                foreach ($tags as $tag) {
+                    $jobMonitor->tagRecords()->create(['tag' => $tag]);
+                }
+            });
     }
 
     public function slow(int $durationMs = 10000): static

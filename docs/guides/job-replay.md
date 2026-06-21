@@ -21,6 +21,8 @@ Job replay requires payload storage to be enabled:
 
 **Important**: Payloads are stored as-is, including all job properties and data. Ensure your payload size doesn't exceed the configured limit (default: 64KB).
 
+Payload storage defaults to enabled only in `local`. Set `QUEUE_MONITOR_STORE_PAYLOAD=true` explicitly in staging or production if replay is required. If you already published `config/queue-monitor.php` before this default changed, update the published `storage.store_payload` entry manually.
+
 ## How It Works
 
 1. When a job is queued, the package stores its complete serialized payload

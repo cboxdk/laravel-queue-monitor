@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Cbox\LaravelQueueMonitor\Jobs;
 
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\TagRepositoryContract;
+use Cbox\LaravelQueueMonitor\Traits\MonitorsJobs;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -21,6 +22,7 @@ final class StoreJobTagsJob implements ShouldQueue
 {
     use Dispatchable;
     use InteractsWithQueue;
+    use MonitorsJobs;
     use Queueable;
     use SerializesModels;
 
@@ -41,5 +43,15 @@ final class StoreJobTagsJob implements ShouldQueue
     public function handle(TagRepositoryContract $tagRepository): void
     {
         $tagRepository->storeTags($this->jobMonitorId, $this->tags);
+    }
+
+    public function shouldBeMonitored(): bool
+    {
+        return false;
+    }
+
+    public function shouldStorePayload(): bool
+    {
+        return false;
     }
 }

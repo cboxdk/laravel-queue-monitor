@@ -50,6 +50,7 @@ The config defaults are:
 
 ```php
 'api' => [
+    'enabled' => env('QUEUE_MONITOR_API_ENABLED', env('APP_ENV') === 'local'),
     'middleware' => ['api'],
 ],
 
@@ -58,9 +59,9 @@ The config defaults are:
 ],
 ```
 
-These defaults do **not** mean Queue Monitor is open in production.
+These defaults do **not** mean Queue Monitor is open in production. API routes are enabled by default only in `local`, and access is still blocked outside `local` unless you explicitly authorize it with `LaravelQueueMonitor::auth(...)`.
 
-Access is still blocked outside `local` unless you explicitly authorize it with `LaravelQueueMonitor::auth(...)`.
+Set `QUEUE_MONITOR_API_ENABLED=true` outside local development only after adding API authentication middleware.
 
 However, if you plan to use Queue Monitor in staging or production, you should still add framework-level auth middleware. That gives you a clear and explicit security boundary before the package callback runs.
 
@@ -132,6 +133,7 @@ Default:
 
 ```php
 'api' => [
+    'enabled' => env('QUEUE_MONITOR_API_ENABLED', env('APP_ENV') === 'local'),
     'prefix' => 'api/queue-monitor',
     'middleware' => ['api'],
 ],
@@ -141,6 +143,7 @@ Recommended in production:
 
 ```php
 'api' => [
+    'enabled' => true,
     'prefix' => 'api/queue-monitor',
     'middleware' => ['api', 'auth:sanctum'],
 ],

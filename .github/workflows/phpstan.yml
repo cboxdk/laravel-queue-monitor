@@ -4,12 +4,16 @@ on:
   pull_request:
     paths:
       - '**.php'
+      - 'composer.json'
+      - 'composer.lock'
       - 'phpstan.neon.dist'
       - 'phpstan-baseline.neon'
       - '.github/workflows/phpstan.yml'
   push:
     paths:
       - '**.php'
+      - 'composer.json'
+      - 'composer.lock'
       - 'phpstan.neon.dist'
       - 'phpstan-baseline.neon'
       - '.github/workflows/phpstan.yml'

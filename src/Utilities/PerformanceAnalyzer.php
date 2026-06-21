@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Cbox\LaravelQueueMonitor\Utilities;
 
+use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\Models\JobMonitor;
+use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -73,10 +75,7 @@ final class PerformanceAnalyzer
         int $baselineDays = 30,
         int $comparisonDays = 7
     ): array {
-        /** @var string $prefix */
-        $prefix = config('queue-monitor.database.table_prefix', 'queue_monitor_');
-
-        $baseline = DB::table($prefix.'jobs')
+        $baseline = self::jobsTable()
             ->where('job_class', $jobClass)
             ->whereBetween('completed_at', [
                 now()->subDays($baselineDays),
@@ -85,7 +84,7 @@ final class PerformanceAnalyzer
             ->selectRaw('AVG(duration_ms) as avg_duration, AVG(memory_peak_mb) as avg_memory')
             ->first();
 
-        $current = DB::table($prefix.'jobs')
+        $current = self::jobsTable()
             ->where('job_class', $jobClass)
             ->where('completed_at', '>=', now()->subDays($comparisonDays))
             ->selectRaw('AVG(duration_ms) as avg_duration, AVG(memory_peak_mb) as avg_memory')
@@ -164,23 +163,22 @@ final class PerformanceAnalyzer
     /**
      * Get error rate trend
      *
-     * @return array<string, array{date: string, error_rate: float}>
+     * @return array<string, array{date: string, error_rate: float, total: int, failed: int}>
      */
     public static function getErrorRateTrend(int $days = 7): array
     {
-        /** @var string $prefix */
-        $prefix = config('queue-monitor.database.table_prefix', 'queue_monitor_');
         $trend = [];
 
         for ($i = 0; $i < $days; $i++) {
             $date = today()->subDays($i);
 
-            $stats = DB::table($prefix.'jobs')
+            $stats = self::jobsTable()
                 ->whereDate('completed_at', $date)
-                ->selectRaw('
-                    COUNT(*) as total,
-                    SUM(CASE WHEN status IN ("failed", "timeout") THEN 1 ELSE 0 END) as failed
-                ')
+                ->selectRaw('COUNT(*) as total')
+                ->selectRaw('SUM(CASE WHEN status IN (?, ?) THEN 1 ELSE 0 END) as failed', [
+                    JobStatus::FAILED->value,
+                    JobStatus::TIMEOUT->value,
+                ])
                 ->first();
 
             $total = (int) ($stats->total ?? 0);
@@ -197,5 +195,15 @@ final class PerformanceAnalyzer
         }
 
         return $trend;
+    }
+
+    private static function jobsTable(): QueryBuilder
+    {
+        /** @var string $prefix */
+        $prefix = config('queue-monitor.database.table_prefix', 'queue_monitor_');
+        /** @var string|null $connection */
+        $connection = config('queue-monitor.database.connection');
+
+        return DB::connection($connection)->table($prefix.'jobs');
     }
 }

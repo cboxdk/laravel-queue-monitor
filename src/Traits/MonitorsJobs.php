@@ -40,6 +40,6 @@ trait MonitorsJobs
      */
     public function shouldStorePayload(): bool
     {
-        return config('queue-monitor.storage.store_payload', true);
+        return (bool) config('queue-monitor.storage.store_payload', app()->environment('local'));
     }
 }

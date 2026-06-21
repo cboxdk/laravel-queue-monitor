@@ -55,8 +55,10 @@ Configure automatic cleanup of old job records:
 Run pruning manually or via scheduled task:
 
 ```php
-// In app/Console/Kernel.php
-$schedule->command('queue-monitor:prune')->daily();
+// routes/console.php
+use Illuminate\Support\Facades\Schedule;
+
+Schedule::command('queue-monitor:prune')->daily();
 ```
 
 ## Worker Detection
@@ -88,12 +90,14 @@ Configure the REST API for external integrations:
 
 ```php
 'api' => [
-    'enabled' => env('QUEUE_MONITOR_API_ENABLED', true),
+    'enabled' => env('QUEUE_MONITOR_API_ENABLED', env('APP_ENV') === 'local'),
     'prefix' => 'api/queue-monitor',
     'middleware' => ['api'],
     'rate_limit' => '60,1', // 60 requests per minute
 ],
 ```
+
+The API defaults to enabled only in `local`. Set `QUEUE_MONITOR_API_ENABLED=true` explicitly in staging or production after adding authentication middleware and an authorization callback.
 
 You can add custom middleware for authentication:
 

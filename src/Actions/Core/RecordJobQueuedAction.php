@@ -10,6 +10,7 @@ use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\Models\JobMonitor;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\JobMonitorRepositoryContract;
 use Cbox\LaravelQueueMonitor\Services\WorkerContextService;
+use Cbox\LaravelQueueMonitor\Utilities\JobPayloadSerializer;
 use Illuminate\Contracts\Queue\Job as QueueJob;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -26,7 +27,7 @@ final readonly class RecordJobQueuedAction
      *
      * Note: Caller (listener) is responsible for checking if monitoring is enabled.
      */
-    public function execute(object $event): JobMonitor
+    public function execute(object $event): ?JobMonitor
     {
         // JobQueued event has: connectionName, queue, id, job, payload, delay
         $jobInstance = $event->job ?? null;
@@ -38,10 +39,20 @@ final readonly class RecordJobQueuedAction
             throw new \RuntimeException('Job instance not found in event');
         }
 
+        $resolvedJob = $this->resolveMonitorableJob($jobInstance) ?? $jobInstance;
+
+        if (! $this->shouldMonitor($resolvedJob)) {
+            return null;
+        }
+
         $workerContext = $this->workerContext->capture();
 
-        // Serialize the job to get payload
-        $payload = $this->serializeJob($jobInstance);
+        $payload = null;
+
+        if ($this->shouldStorePayload($resolvedJob)) {
+            $serializedPayload = $this->serializeJob($jobInstance);
+            $payload = JobPayloadSerializer::exceedsSizeLimit($serializedPayload) ? null : $serializedPayload;
+        }
 
         $data = new JobMonitorData(
             id: null,
@@ -51,7 +62,7 @@ final readonly class RecordJobQueuedAction
             displayName: $this->getDisplayName($jobInstance),
             connection: $connectionName,
             queue: $this->getQueue($jobInstance),
-            payload: config('queue-monitor.storage.store_payload', true) ? $payload : null,
+            payload: $payload,
             status: JobStatus::QUEUED,
             attempt: 1,
             maxAttempts: $this->getMaxAttempts($jobInstance),
@@ -64,7 +75,7 @@ final readonly class RecordJobQueuedAction
             fileDescriptors: null,
             durationMs: null,
             exception: null,
-            tags: $this->extractTags($jobInstance),
+            tags: $this->extractTags($resolvedJob),
             queuedAt: now(),
             availableAt: $availableAt,
             startedAt: null,
@@ -75,6 +86,46 @@ final readonly class RecordJobQueuedAction
 
         /** @var JobMonitor */
         return DB::transaction(fn (): JobMonitor => $this->repository->create($data));
+    }
+
+    private function shouldMonitor(object $jobInstance): bool
+    {
+        if (method_exists($jobInstance, 'shouldBeMonitored')) {
+            return (bool) $jobInstance->shouldBeMonitored();
+        }
+
+        return true;
+    }
+
+    private function shouldStorePayload(object $jobInstance): bool
+    {
+        if (method_exists($jobInstance, 'shouldStorePayload')) {
+            return (bool) $jobInstance->shouldStorePayload();
+        }
+
+        return (bool) config('queue-monitor.storage.store_payload', app()->environment('local'));
+    }
+
+    private function resolveMonitorableJob(object $jobInstance): ?object
+    {
+        if (! $jobInstance instanceof QueueJob) {
+            return $jobInstance;
+        }
+
+        $payload = $jobInstance->payload();
+        $command = $payload['data']['command'] ?? null;
+
+        if (! is_string($command) || $command === '') {
+            return null;
+        }
+
+        try {
+            $resolved = unserialize($command);
+        } catch (\Throwable) {
+            return null;
+        }
+
+        return is_object($resolved) ? $resolved : null;
     }
 
     /**

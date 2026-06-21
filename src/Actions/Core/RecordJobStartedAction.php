@@ -127,6 +127,10 @@ final readonly class RecordJobStartedAction
         // Use injected action instead of service locator
         $jobMonitor = $this->recordQueuedAction->execute($event);
 
+        if ($jobMonitor === null) {
+            return;
+        }
+
         // Immediately update to processing
         $this->repository->update($jobMonitor->uuid, [
             'status' => JobStatus::PROCESSING,

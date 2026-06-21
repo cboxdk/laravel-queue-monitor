@@ -308,7 +308,11 @@ class JobMonitor extends Model
     {
         $tags = is_array($tag) ? $tag : [$tag];
 
-        return $query->whereJsonContains('tags', $tags);
+        foreach ($tags as $tagName) {
+            $query->whereHas('tagRecords', fn (Builder $tagQuery): Builder => $tagQuery->where('tag', $tagName));
+        }
+
+        return $query;
     }
 
     /**

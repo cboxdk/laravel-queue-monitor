@@ -88,7 +88,7 @@ final readonly class ReplayJobAction
         }
 
         // Check if payload storage is enabled
-        if (! config('queue-monitor.storage.store_payload', true)) {
+        if (! config('queue-monitor.storage.store_payload', app()->environment('local'))) {
             throw JobReplayException::storageDisabled();
         }
     }
