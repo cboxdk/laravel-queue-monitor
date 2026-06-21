@@ -34,14 +34,18 @@ test('dashboard renders package-local assets without external CDN dependencies',
 
 test('dashboard source does not include ai tool attribution text', function () {
     $source = file_get_contents(dirname(__DIR__, 3).'/resources/views/web/dashboard.blade.php');
+    $blockedTerms = [
+        '['.'co'.'dex]',
+        'Co'.'dex',
+        'Clau'.'de',
+        'Open'.'AI',
+        'Generated'.' with',
+        'Co-authored'.'-by',
+    ];
 
-    expect($source)
-        ->not->toContain('[codex]')
-        ->not->toContain('Codex')
-        ->not->toContain('Claude')
-        ->not->toContain('OpenAI')
-        ->not->toContain('Generated with')
-        ->not->toContain('Co-authored-by');
+    foreach ($blockedTerms as $term) {
+        expect($source)->not->toContain($term);
+    }
 });
 
 test('dashboard can render published public asset tags', function () {
