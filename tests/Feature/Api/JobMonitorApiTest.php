@@ -51,6 +51,25 @@ test('can get job details via api', function () {
         ]);
 });
 
+test('job details redacts stored command payload via api', function () {
+    config(['queue-monitor.api.sensitive_keys' => ['command']]);
+
+    $this->job->update([
+        'payload' => [
+            'data' => [
+                'commandName' => 'App\\Jobs\\SensitiveJob',
+                'command' => 'O:22:"App\\Jobs\\SensitiveJob":1:{s:8:"password";s:9:"secret123";}',
+            ],
+        ],
+    ]);
+
+    $response = $this->getJson("/api/queue-monitor/jobs/{$this->job->uuid}");
+
+    $response->assertOk()
+        ->assertJsonPath('data.payload.data.commandName', '*****')
+        ->assertJsonPath('data.payload.data.command', '*****');
+});
+
 test('can filter jobs by status', function () {
     JobMonitor::create([
         'uuid' => Str::uuid()->toString(),

@@ -169,6 +169,7 @@ return [
     */
     'batch' => [
         'chunk_size' => env('QUEUE_MONITOR_BATCH_CHUNK_SIZE', 100),
+        'max_jobs' => env('QUEUE_MONITOR_BATCH_MAX_JOBS', 1000),
     ],
 
     /*
@@ -184,10 +185,26 @@ return [
         'prefix' => 'api/queue-monitor',
         'middleware' => ['api'],
         'rate_limit' => '60,1', // 60 requests per minute
+        'default_limit' => env('QUEUE_MONITOR_API_DEFAULT_LIMIT', 50),
+        'max_limit' => env('QUEUE_MONITOR_API_MAX_LIMIT', 1000),
 
         // Keys to mask in the payload response (e.g. password, token, secret)
         // Set to empty array to disable redaction
-        'sensitive_keys' => ['password', 'token', 'secret', 'key', 'authorization', 'api_key', 'credit_card', 'cvv', 'ssn', 'private_key'],
+        'sensitive_keys' => ['password', 'token', 'secret', 'key', 'authorization', 'api_key', 'credit_card', 'cvv', 'ssn', 'private_key', 'command'],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Export Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Keep API exports bounded so integrations cannot accidentally load the
+    | entire job table into memory.
+    |
+    */
+    'export' => [
+        'default_limit' => env('QUEUE_MONITOR_EXPORT_DEFAULT_LIMIT', 1000),
+        'max_rows' => env('QUEUE_MONITOR_EXPORT_MAX_ROWS', 5000),
     ],
 
     /*

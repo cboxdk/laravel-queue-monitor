@@ -13,7 +13,7 @@ use Cbox\LaravelQueueMonitor\Http\Controllers\StuckJobController;
 use Cbox\LaravelQueueMonitor\Http\Middleware\EnsureQueueMonitorEnabled;
 use Illuminate\Support\Facades\Route;
 
-if (! config('queue-monitor.api.enabled', true)) {
+if (! config('queue-monitor.api.enabled', app()->environment('local'))) {
     return;
 }
 

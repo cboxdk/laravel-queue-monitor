@@ -22,7 +22,7 @@ class ExportController extends Controller
      */
     public function csv(Request $request): Response
     {
-        $filters = JobFilterData::fromRequest($request->all());
+        $filters = $this->filtersFromRequest($request);
 
         $csv = $this->exportService->toCsv($filters);
 
@@ -37,7 +37,7 @@ class ExportController extends Controller
      */
     public function json(Request $request): JsonResponse
     {
-        $filters = JobFilterData::fromRequest($request->all());
+        $filters = $this->filtersFromRequest($request);
 
         $data = $this->exportService->toJson($filters);
 
@@ -68,5 +68,20 @@ class ExportController extends Controller
         $report = $this->exportService->failedJobsReport();
 
         return response()->json($report);
+    }
+
+    private function filtersFromRequest(Request $request): JobFilterData
+    {
+        $maxRows = $this->intConfig('queue-monitor.export.max_rows', 5000);
+        $defaultLimit = $this->intConfig('queue-monitor.export.default_limit', 1000);
+
+        return JobFilterData::fromRequest($request->all(), $maxRows, $defaultLimit);
+    }
+
+    private function intConfig(string $key, int $default): int
+    {
+        $value = config($key, $default);
+
+        return is_numeric($value) ? max(1, (int) $value) : $default;
     }
 }

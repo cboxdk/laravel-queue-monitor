@@ -48,15 +48,16 @@ test('recent endpoint respects limit parameter', function () {
     expect($data)->toHaveCount(4);
 });
 
-test('failed endpoint clamps limit to maximum of 1000', function () {
+test('failed endpoint clamps limit to configured maximum', function () {
+    config()->set('queue-monitor.api.max_limit', 2);
+
     JobMonitor::factory()->count(3)->failed()->create();
 
-    // Absurdly high limit should not cause issues — clamped to 1000
     $response = getJson('/api/queue-monitor/jobs/failed?limit=999999');
 
     $response->assertOk();
     $data = $response->json('data');
-    expect($data)->toHaveCount(3);
+    expect($data)->toHaveCount(2);
 });
 
 test('recent endpoint clamps limit to minimum of 1', function () {

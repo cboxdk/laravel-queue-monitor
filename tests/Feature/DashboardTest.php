@@ -32,18 +32,24 @@ it('returns metrics for the dashboard', function () {
 });
 
 it('redacts sensitive data in dashboard payload', function () {
-    config(['queue-monitor.api.sensitive_keys' => ['password']]);
+    config(['queue-monitor.api.sensitive_keys' => ['password', 'command']]);
 
     $job = JobMonitor::factory()->create([
         'payload' => [
             'user' => 'test',
             'password' => 'secret123',
+            'data' => [
+                'commandName' => 'App\\Jobs\\SensitiveJob',
+                'command' => 'O:22:"App\\Jobs\\SensitiveJob":1:{s:8:"password";s:9:"secret123";}',
+            ],
         ],
     ]);
 
     getJson(config('queue-monitor.ui.route_prefix')."/jobs/{$job->uuid}/payload")
         ->assertStatus(200)
         ->assertJsonPath('payload.password', '*****')
+        ->assertJsonPath('payload.data.commandName', '*****')
+        ->assertJsonPath('payload.data.command', '*****')
         ->assertJsonPath('payload.user', 'test');
 });
 

@@ -76,6 +76,23 @@ test('batch delete with filters deletes matching jobs', function () {
     expect(JobMonitor::count())->toBe(2);
 });
 
+test('batch operations validate max jobs against configured limit', function () {
+    config()->set('queue-monitor.batch.max_jobs', 2);
+
+    $replayResponse = postJson('/api/queue-monitor/batch/replay', [
+        'filters' => ['statuses' => ['failed']],
+        'max_jobs' => 3,
+    ]);
+
+    $deleteResponse = postJson('/api/queue-monitor/batch/delete', [
+        'filters' => ['statuses' => ['completed']],
+        'max_jobs' => 3,
+    ]);
+
+    $replayResponse->assertStatus(422);
+    $deleteResponse->assertStatus(422);
+});
+
 test('batch replay validates uuid format', function () {
     $response = postJson('/api/queue-monitor/batch/replay', [
         'uuids' => ['not-a-uuid'],

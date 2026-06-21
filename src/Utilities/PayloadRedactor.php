@@ -20,14 +20,16 @@ class PayloadRedactor
         }
 
         foreach ($payload as $key => $value) {
-            if (is_array($value)) {
-                $payload[$key] = self::redact($value, $sensitiveKeys);
+            if (is_string($key) && self::isSensitive($key, $sensitiveKeys)) {
+                $payload[$key] = '*****';
 
                 continue;
             }
 
-            if (is_string($key) && self::isSensitive($key, $sensitiveKeys)) {
-                $payload[$key] = '*****';
+            if (is_array($value)) {
+                $payload[$key] = self::redact($value, $sensitiveKeys);
+
+                continue;
             }
         }
 
