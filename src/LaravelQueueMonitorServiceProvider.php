@@ -39,6 +39,7 @@ class LaravelQueueMonitorServiceProvider extends PackageServiceProvider
             ->hasMigration('extend_autoscale_v3_support')
             ->runsMigrations()
             ->hasViews()
+            ->hasAssets()
             ->hasCommands([
                 LaravelQueueMonitorCommand::class,
                 PruneJobsCommand::class,
