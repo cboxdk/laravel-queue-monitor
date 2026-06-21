@@ -503,7 +503,7 @@ JobMonitor::successful()
 
 ### Payload Redaction
 
-While the package stores full payloads by default, you can implement custom redaction:
+When payload storage is enabled, you can implement custom redaction:
 
 ```php
 // In your job class

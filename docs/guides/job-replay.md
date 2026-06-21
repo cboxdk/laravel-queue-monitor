@@ -153,8 +153,8 @@ Event::listen(JobReplayRequested::class, function ($event) {
 
 ## Best Practices
 
-1. **Enable in Development**: Always enable payload storage in development and testing
-2. **Disable in Production**: Consider disabling if payload storage is a concern
+1. **Enable in Development**: Payload storage defaults on in `local`; set `QUEUE_MONITOR_STORE_PAYLOAD=true` explicitly in other non-production environments where replay is required
+2. **Disable in Production**: Payload storage defaults off outside `local`; only enable it explicitly after reviewing data sensitivity
 3. **Prune Regularly**: Remove old payloads to manage storage
 4. **Monitor Replay Success**: Track replay success rates
 5. **Add Replay Logic to Jobs**: Make jobs replay-safe with idempotency checks

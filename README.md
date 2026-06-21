@@ -221,7 +221,7 @@ return [
     'enabled' => env('QUEUE_MONITOR_ENABLED', true),
 
     'storage' => [
-        'store_payload' => env('QUEUE_MONITOR_STORE_PAYLOAD', true),
+        'store_payload' => env('QUEUE_MONITOR_STORE_PAYLOAD', env('APP_ENV') === 'local'),
         'payload_max_size' => 65535,
     ],
 
@@ -256,7 +256,7 @@ return [
 - Add framework auth middleware to the UI and API routes.
 - Register `LaravelQueueMonitor::auth(...)` with an explicit admin/internal access rule.
 - Schedule `queue-monitor:prune` so retention settings actually run.
-- Decide whether `QUEUE_MONITOR_STORE_PAYLOAD=true` is acceptable for your data. Payload redaction only applies to API/dashboard responses; raw payloads are stored for replay.
+- Decide whether `QUEUE_MONITOR_STORE_PAYLOAD=true` is acceptable for your data. Payload storage defaults on in `local` and off outside `local` unless the env var is explicitly set. Payload redaction only applies to API/dashboard responses; raw payloads are stored for replay.
 - Review Content Security Policy. The bundled dashboard uses package-local CSS and JavaScript, inlined from `resources/dist`; publish `queue-monitor-assets` and customize the view if your CSP disallows inline assets.
 - If you have published `queue-monitor-views`, remove or republish them after package upgrades to pick up dashboard fixes.
 

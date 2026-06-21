@@ -27,15 +27,16 @@ Control how job payloads are stored for replay functionality:
 
 ```php
 'storage' => [
-    // Store complete job payload for replay capability
-    'store_payload' => env('QUEUE_MONITOR_STORE_PAYLOAD', true),
+    // Store complete job payload for replay capability.
+    // Defaults to enabled in local only; set QUEUE_MONITOR_STORE_PAYLOAD explicitly to override.
+    'store_payload' => env('QUEUE_MONITOR_STORE_PAYLOAD', env('APP_ENV') === 'local'),
 
     // Maximum payload size in bytes (default: 64KB)
     'payload_max_size' => 65535,
 ],
 ```
 
-**Important**: Payload storage is required for job replay. If disabled, replay functionality will not work.
+**Important**: Payload storage is required for job replay. By default it is enabled in `local` and disabled outside `local` unless `QUEUE_MONITOR_STORE_PAYLOAD` is explicitly set. If disabled, replay functionality will not work.
 
 ## Data Retention
 

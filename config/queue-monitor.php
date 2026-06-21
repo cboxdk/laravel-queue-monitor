@@ -58,8 +58,9 @@ return [
     |
     */
     'storage' => [
-        // Store complete job payload for replay capability
-        'store_payload' => env('QUEUE_MONITOR_STORE_PAYLOAD', true),
+        // Store complete job payload for replay capability.
+        // Defaults to enabled in local only; set QUEUE_MONITOR_STORE_PAYLOAD explicitly to override.
+        'store_payload' => env('QUEUE_MONITOR_STORE_PAYLOAD', env('APP_ENV') === 'local'),
 
         // Maximum payload size in bytes (default: 64KB)
         'payload_max_size' => env('QUEUE_MONITOR_PAYLOAD_MAX_SIZE', 65535),

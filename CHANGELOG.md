@@ -10,6 +10,7 @@ All notable changes to `laravel-queue-monitor` will be documented in this file.
 - Respect the configured `queue-monitor.database.connection` in infrastructure and statistics dashboard queries.
 - Ship precompiled package-local dashboard CSS and JavaScript instead of loading Tailwind, Alpine, ECharts, and fonts from public CDNs.
 - Add configurable dashboard asset loading modes (`inline`, `public`, `none`) and publishable asset sources for app-level builds.
+- Default payload storage to enabled in `local` and disabled outside `local` unless `QUEUE_MONITOR_STORE_PAYLOAD` is explicitly set.
 
 ### Documentation
 
