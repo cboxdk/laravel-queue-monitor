@@ -30,6 +30,51 @@ test('job queued event creates monitor record', function () {
     expect($monitor->job_class)->toContain('ExampleJob');
 });
 
+test('job queued event respects shouldBeMonitored opt out', function () {
+    $job = new class extends ExampleJob
+    {
+        public function shouldBeMonitored(): bool
+        {
+            return false;
+        }
+    };
+
+    $event = new JobQueued('redis', 'default', '12345', $job, '{}', null);
+    $monitor = app(RecordJobQueuedAction::class)->execute($event);
+
+    expect($monitor)->toBeNull();
+    expect(JobMonitor::count())->toBe(0);
+});
+
+test('job queued event respects per job payload opt out', function () {
+    $job = new class extends ExampleJob
+    {
+        public function shouldStorePayload(): bool
+        {
+            return false;
+        }
+    };
+
+    config()->set('queue-monitor.storage.store_payload', true);
+
+    $event = new JobQueued('redis', 'default', '12345', $job, '{}', null);
+    app(RecordJobQueuedAction::class)->execute($event);
+
+    expect(JobMonitor::first()?->payload)->toBeNull();
+});
+
+test('job queued event drops payload when it exceeds configured size', function () {
+    config()->set('queue-monitor.storage.store_payload', true);
+    config()->set('queue-monitor.storage.payload_max_size', 100);
+
+    $job = new ExampleJob(str_repeat('x', 1000));
+
+    $event = new JobQueued('redis', 'default', '12345', $job, '{}', null);
+    app(RecordJobQueuedAction::class)->execute($event);
+
+    expect(JobMonitor::first()?->payload)->toBeNull();
+});
+
 test('job processing event updates status', function () {
     $monitor = JobMonitor::factory()->queued()->create([
         'job_id' => '12345',

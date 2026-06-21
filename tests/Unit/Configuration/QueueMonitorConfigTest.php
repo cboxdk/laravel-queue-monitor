@@ -5,11 +5,12 @@ declare(strict_types=1);
 /**
  * @return array<string, mixed>
  */
-function queueMonitorConfigWithPayloadEnv(?string $appEnv, ?string $storePayload): array
+function queueMonitorConfigWithEnv(?string $appEnv, ?string $storePayload = null, ?string $apiEnabled = null): array
 {
     $keys = [
         'APP_ENV' => $appEnv,
         'QUEUE_MONITOR_STORE_PAYLOAD' => $storePayload,
+        'QUEUE_MONITOR_API_ENABLED' => $apiEnabled,
     ];
 
     $original = [];
@@ -65,25 +66,49 @@ function queueMonitorConfigWithPayloadEnv(?string $appEnv, ?string $storePayload
 }
 
 test('payload storage defaults on for local environments', function () {
-    $config = queueMonitorConfigWithPayloadEnv('local', null);
+    $config = queueMonitorConfigWithEnv('local');
 
     expect($config['storage']['store_payload'])->toBeTrue();
 });
 
 test('payload storage defaults off for production environments', function () {
-    $config = queueMonitorConfigWithPayloadEnv('production', null);
+    $config = queueMonitorConfigWithEnv('production');
 
     expect($config['storage']['store_payload'])->toBeFalse();
 });
 
 test('explicit payload storage env enables storage in production', function () {
-    $config = queueMonitorConfigWithPayloadEnv('production', 'true');
+    $config = queueMonitorConfigWithEnv('production', 'true');
 
     expect($config['storage']['store_payload'])->toBeTrue();
 });
 
 test('explicit payload storage env disables storage in local environments', function () {
-    $config = queueMonitorConfigWithPayloadEnv('local', 'false');
+    $config = queueMonitorConfigWithEnv('local', 'false');
 
     expect($config['storage']['store_payload'])->toBeFalse();
+});
+
+test('api defaults on for local environments', function () {
+    $config = queueMonitorConfigWithEnv('local');
+
+    expect($config['api']['enabled'])->toBeTrue();
+});
+
+test('api defaults off for production environments', function () {
+    $config = queueMonitorConfigWithEnv('production');
+
+    expect($config['api']['enabled'])->toBeFalse();
+});
+
+test('explicit api env enables api in production', function () {
+    $config = queueMonitorConfigWithEnv('production', null, 'true');
+
+    expect($config['api']['enabled'])->toBeTrue();
+});
+
+test('explicit api env disables api in local environments', function () {
+    $config = queueMonitorConfigWithEnv('local', null, 'false');
+
+    expect($config['api']['enabled'])->toBeFalse();
 });

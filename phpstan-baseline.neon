@@ -13,12 +13,6 @@ parameters:
 			path: src/Services/InfrastructureService.php
 
 		-
-			message: '#^Trait Cbox\\LaravelQueueMonitor\\Traits\\MonitorsJobs is used zero times and is not analysed\.$#'
-			identifier: trait.unused
-			count: 1
-			path: src/Traits/MonitorsJobs.php
-
-		-
 			message: '#.*#'
 			identifier: class.notFound
 			path: src/Listeners/QueueMetricsSubscriber.php

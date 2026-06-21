@@ -42,12 +42,16 @@ class Tag extends Model
     /**
      * Get the database connection for the model
      */
-    public function getConnectionName(): string
+    public function getConnectionName(): ?string
     {
         /** @var string|null $connection */
         $connection = config('queue-monitor.database.connection');
 
-        return $connection ?? parent::getConnectionName() ?? 'default';
+        if ($connection !== null) {
+            return $connection;
+        }
+
+        return parent::getConnectionName();
     }
 
     /**

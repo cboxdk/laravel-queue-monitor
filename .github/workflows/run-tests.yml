@@ -4,6 +4,13 @@ on:
   pull_request:
     paths:
       - '**.php'
+      - 'resources/css/**'
+      - 'resources/dist/**'
+      - 'resources/views/**'
+      - 'scripts/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'tailwind.config.js'
       - '.github/workflows/run-tests.yml'
       - 'phpunit.xml.dist'
       - 'composer.json'
@@ -11,6 +18,13 @@ on:
   push:
     paths:
       - '**.php'
+      - 'resources/css/**'
+      - 'resources/dist/**'
+      - 'resources/views/**'
+      - 'scripts/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'tailwind.config.js'
       - '.github/workflows/run-tests.yml'
       - 'phpunit.xml.dist'
       - 'composer.json'
@@ -21,21 +35,66 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  assets:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build dashboard assets
+        run: npm run build
+
+      - name: Verify committed dashboard assets
+        run: git diff --exit-code -- resources/dist/queue-monitor.css resources/dist/alpine.min.js resources/dist/echarts.min.js
+
   test:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 5
     strategy:
       fail-fast: true
       matrix:
-        os: [ubuntu-latest]
-        php: [8.4, 8.3]
-        laravel: [12.*, 11.*]
-        stability: [prefer-stable]
         include:
-          - laravel: 12.*
+          - os: ubuntu-latest
+            php: 8.5
+            laravel: 13.*
+            testbench: 11.*
+            stability: prefer-stable
+          - os: ubuntu-latest
+            php: 8.4
+            laravel: 13.*
+            testbench: 11.*
+            stability: prefer-stable
+          - os: ubuntu-latest
+            php: 8.4
+            laravel: 12.*
             testbench: 10.*
-          - laravel: 11.*
+            stability: prefer-stable
+          - os: ubuntu-latest
+            php: 8.3
+            laravel: 12.*
+            testbench: 10.*
+            stability: prefer-stable
+          - os: ubuntu-latest
+            php: 8.4
+            laravel: 11.*
             testbench: 9.*
+            stability: prefer-stable
+          - os: ubuntu-latest
+            php: 8.3
+            laravel: 11.*
+            testbench: 9.*
+            stability: prefer-stable
 
     name: P${{ matrix.php }} - L${{ matrix.laravel }} - ${{ matrix.stability }} - ${{ matrix.os }}
 

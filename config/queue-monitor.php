@@ -164,7 +164,7 @@ return [
     |
     */
     'api' => [
-        'enabled' => env('QUEUE_MONITOR_API_ENABLED', true),
+        'enabled' => env('QUEUE_MONITOR_API_ENABLED', env('APP_ENV') === 'local'),
         'prefix' => 'api/queue-monitor',
         'middleware' => ['api'],
         'rate_limit' => '60,1', // 60 requests per minute

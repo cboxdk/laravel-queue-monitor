@@ -48,16 +48,17 @@ final readonly class EloquentTagRepository implements TagRepositoryContract
         /** @var string $prefix */
         $prefix = config('queue-monitor.database.table_prefix', 'queue_monitor_');
 
-        return DB::table($prefix.'tags as t')
+        /** @var string|null $connection */
+        $connection = config('queue-monitor.database.connection');
+
+        return DB::connection($connection)->table($prefix.'tags as t')
             ->join($prefix.'jobs as j', 't.job_id', '=', 'j.id')
-            ->select([
-                't.tag',
-                DB::raw('COUNT(*) as count'),
-                DB::raw('SUM(CASE WHEN j.status = ? THEN 1 ELSE 0 END) as successful_count'),
-                DB::raw('CASE WHEN SUM(CASE WHEN j.status IN (?, ?, ?) THEN 1 ELSE 0 END) > 0 THEN ROUND((SUM(CASE WHEN j.status = ? THEN 1 ELSE 0 END) * 100.0) / SUM(CASE WHEN j.status IN (?, ?, ?) THEN 1 ELSE 0 END), 2) ELSE 0 END as success_rate'),
-            ])
-            ->addBinding([
+            ->select('t.tag')
+            ->selectRaw('COUNT(*) as count')
+            ->selectRaw('SUM(CASE WHEN j.status = ? THEN 1 ELSE 0 END) as successful_count', [
                 JobStatus::COMPLETED->value,
+            ])
+            ->selectRaw('CASE WHEN SUM(CASE WHEN j.status IN (?, ?, ?) THEN 1 ELSE 0 END) > 0 THEN ROUND((SUM(CASE WHEN j.status = ? THEN 1 ELSE 0 END) * 100.0) / SUM(CASE WHEN j.status IN (?, ?, ?) THEN 1 ELSE 0 END), 2) ELSE 0 END as success_rate', [
                 JobStatus::COMPLETED->value, JobStatus::FAILED->value, JobStatus::TIMEOUT->value,
                 JobStatus::COMPLETED->value,
                 JobStatus::COMPLETED->value, JobStatus::FAILED->value, JobStatus::TIMEOUT->value,

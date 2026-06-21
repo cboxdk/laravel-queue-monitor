@@ -206,6 +206,8 @@ tail -f storage/logs/laravel.log | grep queue-monitor
 config('queue-monitor.api.enabled'); // Should be true
 ```
 
+Outside `local`, set `QUEUE_MONITOR_API_ENABLED=true` explicitly after adding authentication middleware.
+
 2. **Verify middleware allows access**:
 ```php
 // config/queue-monitor.php

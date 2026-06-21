@@ -20,7 +20,7 @@ class EnsureQueueMonitorEnabled
             abort(503, 'Queue Monitor is currently disabled');
         }
 
-        if ($context === 'api' && ! config('queue-monitor.api.enabled', true)) {
+        if ($context === 'api' && ! config('queue-monitor.api.enabled', app()->environment('local'))) {
             abort(503, 'Queue Monitor API is currently disabled');
         }
 

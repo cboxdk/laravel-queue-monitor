@@ -354,7 +354,7 @@ final class EloquentJobMonitorRepository implements JobMonitorRepositoryContract
 
         if ($filters->tags !== null && count($filters->tags) > 0) {
             foreach ($filters->tags as $tag) {
-                $query->whereJsonContains('tags', $tag);
+                $query->whereHas('tagRecords', fn (Builder $tagQuery): Builder => $tagQuery->where('tag', $tag));
             }
         }
 

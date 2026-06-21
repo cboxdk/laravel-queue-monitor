@@ -157,7 +157,7 @@ final class QueryBuilderHelper
     public static function withTag(string $tag): Builder
     {
         return JobMonitor::query()
-            ->whereJsonContains('tags', $tag);
+            ->whereHas('tagRecords', fn (Builder $query): Builder => $query->where('tag', $tag));
     }
 
     /**
@@ -171,7 +171,7 @@ final class QueryBuilderHelper
         $query = JobMonitor::query();
 
         foreach ($tags as $tag) {
-            $query->whereJsonContains('tags', $tag);
+            $query->whereHas('tagRecords', fn (Builder $tagQuery): Builder => $tagQuery->where('tag', $tag));
         }
 
         return $query;
@@ -185,12 +185,12 @@ final class QueryBuilderHelper
      */
     public static function withAnyTag(array $tags): Builder
     {
+        if ($tags === []) {
+            return JobMonitor::query();
+        }
+
         return JobMonitor::query()
-            ->where(function ($query) use ($tags) {
-                foreach ($tags as $tag) {
-                    $query->orWhereJsonContains('tags', $tag);
-                }
-            });
+            ->whereHas('tagRecords', fn (Builder $query): Builder => $query->whereIn('tag', $tags));
     }
 
     /**

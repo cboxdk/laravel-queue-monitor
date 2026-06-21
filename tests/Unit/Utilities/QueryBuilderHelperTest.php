@@ -100,25 +100,32 @@ test('recentlyCompleted returns completed jobs in order', function () {
 });
 
 test('withTag returns jobs containing a specific tag', function () {
-    JobMonitor::factory()->create(['tags' => ['email', 'urgent']]);
-    JobMonitor::factory()->create(['tags' => ['sms']]);
+    JobMonitor::factory()->withTags(['email', 'urgent'])->create();
+    JobMonitor::factory()->withTags(['sms'])->create();
 
     expect(QueryBuilderHelper::withTag('email')->count())->toBe(1);
 });
 
 test('withAllTags returns jobs matching all tags', function () {
-    JobMonitor::factory()->create(['tags' => ['email', 'urgent']]);
-    JobMonitor::factory()->create(['tags' => ['email']]);
+    JobMonitor::factory()->withTags(['email', 'urgent'])->create();
+    JobMonitor::factory()->withTags(['email'])->create();
 
     expect(QueryBuilderHelper::withAllTags(['email', 'urgent'])->count())->toBe(1);
 });
 
 test('withAnyTag returns jobs matching any tag', function () {
-    JobMonitor::factory()->create(['tags' => ['email']]);
-    JobMonitor::factory()->create(['tags' => ['sms']]);
-    JobMonitor::factory()->create(['tags' => ['push']]);
+    JobMonitor::factory()->withTags(['email'])->create();
+    JobMonitor::factory()->withTags(['sms'])->create();
+    JobMonitor::factory()->withTags(['push'])->create();
 
     expect(QueryBuilderHelper::withAnyTag(['email', 'sms'])->count())->toBe(2);
+});
+
+test('withAnyTag with empty array does not apply tag filter', function () {
+    JobMonitor::factory()->withTags(['email'])->create();
+    JobMonitor::factory()->create();
+
+    expect(QueryBuilderHelper::withAnyTag([])->count())->toBe(2);
 });
 
 test('longRunning returns jobs processing for too long', function () {

@@ -140,7 +140,7 @@ return [
 
     // REST API settings
     'api' => [
-        'enabled' => env('QUEUE_MONITOR_API_ENABLED', true),
+        'enabled' => env('QUEUE_MONITOR_API_ENABLED', env('APP_ENV') === 'local'),
         'prefix' => 'api/queue-monitor',
         'middleware' => ['api'],
     ],
@@ -158,8 +158,10 @@ return [
 
 - Add framework auth middleware to the UI and API routes.
 - Register `LaravelQueueMonitor::auth(...)` with an explicit admin/internal access rule.
+- Enable the REST API explicitly outside local development with `QUEUE_MONITOR_API_ENABLED=true`.
 - Schedule `queue-monitor:prune` so retention settings actually run.
 - Decide whether `QUEUE_MONITOR_STORE_PAYLOAD=true` is acceptable for your data. Payload storage defaults on in `local` and off outside `local` unless the env var is explicitly set. Payload redaction only applies to API/dashboard responses; raw payloads are stored for replay.
+- If you published `config/queue-monitor.php` before this default changed, update the published `storage.store_payload` and `api.enabled` entries manually.
 - Review Content Security Policy. The bundled dashboard uses package-local CSS and JavaScript, inlined from `resources/dist`; publish `queue-monitor-assets` and customize the view if your CSP disallows inline assets.
 - If you have published `queue-monitor-views`, remove or republish them after package upgrades to pick up dashboard fixes.
 
@@ -168,8 +170,8 @@ return [
 ```env
 # Queue Monitor
 QUEUE_MONITOR_ENABLED=true
-QUEUE_MONITOR_STORE_PAYLOAD=true
-QUEUE_MONITOR_API_ENABLED=true
+QUEUE_MONITOR_STORE_PAYLOAD=false # defaults true only in local
+QUEUE_MONITOR_API_ENABLED=false   # defaults true only in local
 
 # Metrics Storage (from laravel-queue-metrics)
 QUEUE_METRICS_STORAGE=redis          # redis (default) or database

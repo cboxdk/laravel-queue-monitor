@@ -585,7 +585,7 @@ $tenantJobs = QueueMonitor::getJobs($filters);
 ```php
 $tenantId = 123;
 
-$jobs = JobMonitor::whereJsonContains('tags', "tenant:{$tenantId}")
+$jobs = JobMonitor::withTag("tenant:{$tenantId}")
     ->get();
 
 $stats = [

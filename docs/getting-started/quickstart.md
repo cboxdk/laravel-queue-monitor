@@ -24,6 +24,8 @@ Before you use the dashboard or API outside local development, read the [Authent
 
 Queue Monitor allows access in the `local` environment by default. In non-local environments, access is blocked unless you explicitly authorize it with `LaravelQueueMonitor::auth(...)`.
 
+The REST API is also enabled by default only in `local`. Set `QUEUE_MONITOR_API_ENABLED=true` outside local development after adding API authentication middleware.
+
 For staging and production, you should also add framework auth middleware:
 
 ```php

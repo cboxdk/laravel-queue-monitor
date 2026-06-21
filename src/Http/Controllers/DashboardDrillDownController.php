@@ -8,6 +8,7 @@ use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\StatisticsRepositoryContract;
 use Cbox\LaravelQueueMonitor\Repositories\Eloquent\EloquentStatisticsRepository;
 use Cbox\LaravelQueueMonitor\Services\DashboardCacheService;
+use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -55,16 +56,12 @@ class DashboardDrillDownController extends Controller
                 default => 'queue',
             };
 
-            /** @var string $prefix */
-            $prefix = config('queue-monitor.database.table_prefix', 'queue_monitor_');
-            $table = $prefix.'jobs';
-
             // Stats
             $completedValue = JobStatus::COMPLETED->value;
             $failedValue = JobStatus::FAILED->value;
             $timeoutValue = JobStatus::TIMEOUT->value;
 
-            $statsRow = DB::table($table)
+            $statsRow = $this->jobsTable()
                 ->selectRaw('COUNT(*) as total')
                 ->selectRaw('SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as completed', [$completedValue])
                 ->selectRaw('SUM(CASE WHEN status IN (?, ?) THEN 1 ELSE 0 END) as failed', [$failedValue, $timeoutValue])
@@ -81,7 +78,7 @@ class DashboardDrillDownController extends Controller
             $finished = $completed + $failed;
 
             // Percentiles via sampled duration values (bounded to 1000 rows for memory safety)
-            $durations = DB::table($table)
+            $durations = $this->jobsTable()
                 ->where($column, $value)
                 ->whereNotNull('duration_ms')
                 ->orderBy('duration_ms')
@@ -115,7 +112,7 @@ class DashboardDrillDownController extends Controller
             $throughput = $statsRepo->computeThroughputByMinute(60, [$column => $value]);
 
             // Recent jobs (last 20) with identifiable summary from payload
-            $recentJobs = DB::table($table)
+            $recentJobs = $this->jobsTable()
                 ->where($column, $value)
                 ->orderByDesc('queued_at')
                 ->limit(20)
@@ -141,11 +138,9 @@ class DashboardDrillDownController extends Controller
                 ->all();
 
             // Failure patterns (top exception classes for this entity)
-            $failurePatterns = DB::table($table)
-                ->select([
-                    'exception_class',
-                    DB::raw('COUNT(*) as count'),
-                ])
+            $failurePatterns = $this->jobsTable()
+                ->select('exception_class')
+                ->selectRaw('COUNT(*) as count')
                 ->where($column, $value)
                 ->whereNotNull('exception_class')
                 ->groupBy('exception_class')
@@ -172,6 +167,27 @@ class DashboardDrillDownController extends Controller
         }, 30);
 
         return response()->json($result);
+    }
+
+    private function jobsTable(): QueryBuilder
+    {
+        return DB::connection($this->databaseConnectionName())->table($this->jobsTableName());
+    }
+
+    private function databaseConnectionName(): ?string
+    {
+        /** @var string|null $connection */
+        $connection = config('queue-monitor.database.connection');
+
+        return $connection;
+    }
+
+    private function jobsTableName(): string
+    {
+        /** @var string $prefix */
+        $prefix = config('queue-monitor.database.table_prefix', 'queue_monitor_');
+
+        return $prefix.'jobs';
     }
 
     /**
