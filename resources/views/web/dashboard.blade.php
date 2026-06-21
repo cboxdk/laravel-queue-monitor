@@ -5,11 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Queue Monitor</title>
-    @php
-        $queueMonitorRoot = dirname((new ReflectionClass(\Cbox\LaravelQueueMonitor\LaravelQueueMonitorServiceProvider::class))->getFileName(), 2);
-        $queueMonitorAsset = static fn (string $path): string => file_get_contents($queueMonitorRoot.'/resources/dist/'.$path) ?: '';
-    @endphp
-    <style>{!! $queueMonitorAsset('queue-monitor.css') !!}</style>
+    {!! app(\Cbox\LaravelQueueMonitor\Support\DashboardAssets::class)->styles() !!}
     <style>
         [x-cloak] { display: none !important; }
 
@@ -3966,7 +3962,6 @@
             }
         }
     </script>
-    <script>{!! $queueMonitorAsset('echarts.min.js') !!}</script>
-    <script>{!! $queueMonitorAsset('alpine.min.js') !!}</script>
+    {!! app(\Cbox\LaravelQueueMonitor\Support\DashboardAssets::class)->scripts() !!}
 </body>
 </html>

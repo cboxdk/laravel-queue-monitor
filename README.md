@@ -109,6 +109,20 @@ The dashboard ships with precompiled package-local CSS and JavaScript. If your C
 php artisan vendor:publish --tag="queue-monitor-assets"
 ```
 
+Then set:
+
+```env
+QUEUE_MONITOR_ASSET_MODE=public
+```
+
+For a full app-level build override, also publish the source asset files:
+
+```bash
+php artisan vendor:publish --tag="queue-monitor-asset-sources"
+```
+
+See the Dashboard Assets guide for `inline`, `public`, and `none` asset modes.
+
 ## Quick Start
 
 ### Web Dashboard
@@ -221,6 +235,9 @@ return [
         'enabled' => true,
         'route_prefix' => 'queue-monitor',
         'middleware' => ['web'],
+        'assets' => [
+            'mode' => env('QUEUE_MONITOR_ASSET_MODE', 'inline'),
+        ],
     ],
 
     // REST API

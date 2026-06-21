@@ -104,6 +104,20 @@ The dashboard ships with precompiled package-local CSS and JavaScript. If your C
 php artisan vendor:publish --tag="queue-monitor-assets"
 ```
 
+Then set:
+
+```env
+QUEUE_MONITOR_ASSET_MODE=public
+```
+
+For a full app-level build override, also publish the source asset files:
+
+```bash
+php artisan vendor:publish --tag="queue-monitor-asset-sources"
+```
+
+See [Dashboard Assets](../guides/dashboard-assets) for `inline`, `public`, and `none` asset modes.
+
 ## Configuration
 
 The configuration file is published to `config/queue-monitor.php`. Key settings include:
@@ -129,6 +143,13 @@ return [
         'enabled' => env('QUEUE_MONITOR_API_ENABLED', true),
         'prefix' => 'api/queue-monitor',
         'middleware' => ['api'],
+    ],
+
+    // Web dashboard assets
+    'ui' => [
+        'assets' => [
+            'mode' => env('QUEUE_MONITOR_ASSET_MODE', 'inline'),
+        ],
     ],
 ];
 ```

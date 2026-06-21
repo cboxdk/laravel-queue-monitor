@@ -85,6 +85,7 @@ echo "Success Rate: {$stats['success_rate']}%\n";
 - [Authentication & Access Control](guides/authentication) - Secure the dashboard and REST API
 - [Configuration](guides/configuration) - Customize behavior
 - [Laravel Horizon Integration](guides/horizon) - Horizon compatibility and responsibility split
+- [Dashboard Assets](guides/dashboard-assets) - Publish, override, and rebuild dashboard assets
 
 ### Core Features
 - [Facade Usage](guides/facade-usage) - Programmatic API

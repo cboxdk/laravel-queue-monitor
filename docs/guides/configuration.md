@@ -100,6 +100,22 @@ You can add custom middleware for authentication:
 'middleware' => ['api', 'auth:sanctum'],
 ```
 
+## Dashboard Assets
+
+Control how the built-in dashboard loads CSS and JavaScript:
+
+```php
+'ui' => [
+    'assets' => [
+        // inline, public, or none
+        'mode' => env('QUEUE_MONITOR_ASSET_MODE', 'inline'),
+        'url' => env('QUEUE_MONITOR_ASSET_URL'),
+    ],
+],
+```
+
+Use `inline` for zero setup, `public` after publishing `queue-monitor-assets`, and `none` when a published/custom dashboard view loads assets from your application's own build. See [Dashboard Assets](dashboard-assets) for the full override workflow.
+
 ## Metrics Storage
 
 Queue Monitor depends on [laravel-queue-metrics](https://github.com/cboxdk/laravel-queue-metrics) for per-job CPU and memory instrumentation. Queue-metrics also provides aggregate persistence (worker heartbeats, throughput, baselines), but Queue Monitor doesn't need it.
