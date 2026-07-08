@@ -141,9 +141,12 @@ final readonly class RecordJobStartedAction
 
     /**
      * Get job ID from Laravel job instance
+     *
+     * The Job contract declares getJobId(): string, but the database queue
+     * driver returns the integer auto-increment id, so normalize to string.
      */
     private function getJobId(Job $job): string
     {
-        return $job->getJobId();
+        return (string) $job->getJobId();
     }
 }

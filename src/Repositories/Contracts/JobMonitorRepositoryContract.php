@@ -31,13 +31,19 @@ interface JobMonitorRepositoryContract
 
     /**
      * Find a job monitor record by job ID (first match)
+     *
+     * Accepts int|string because the database queue driver returns an
+     * integer job id while other drivers return a string.
      */
-    public function findByJobId(string $jobId): ?JobMonitor;
+    public function findByJobId(int|string $jobId): ?JobMonitor;
 
     /**
      * Find the latest attempt record for a job ID (highest attempt number)
+     *
+     * Accepts int|string because the database queue driver returns an
+     * integer job id while other drivers return a string.
      */
-    public function findLatestAttemptByJobId(string $jobId): ?JobMonitor;
+    public function findLatestAttemptByJobId(int|string $jobId): ?JobMonitor;
 
     /**
      * Query job monitor records with filters

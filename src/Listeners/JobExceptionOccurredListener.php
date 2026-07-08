@@ -30,7 +30,7 @@ final class JobExceptionOccurredListener
 
         try {
             $job = $event->job;
-            $jobId = $job->getJobId();
+            $jobId = (string) $job->getJobId();
             $exception = $event->exception;
             $exceptionData = ExceptionData::fromThrowable($exception);
 

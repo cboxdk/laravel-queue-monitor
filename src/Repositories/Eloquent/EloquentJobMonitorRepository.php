@@ -77,14 +77,14 @@ final class EloquentJobMonitorRepository implements JobMonitorRepositoryContract
         return JobMonitor::where('uuid', $uuid)->first();
     }
 
-    public function findByJobId(string $jobId): ?JobMonitor
+    public function findByJobId(int|string $jobId): ?JobMonitor
     {
-        return JobMonitor::where('job_id', $jobId)->first();
+        return JobMonitor::where('job_id', (string) $jobId)->first();
     }
 
-    public function findLatestAttemptByJobId(string $jobId): ?JobMonitor
+    public function findLatestAttemptByJobId(int|string $jobId): ?JobMonitor
     {
-        return JobMonitor::where('job_id', $jobId)
+        return JobMonitor::where('job_id', (string) $jobId)
             ->orderByDesc('attempt')
             ->orderByDesc('created_at')
             ->first();

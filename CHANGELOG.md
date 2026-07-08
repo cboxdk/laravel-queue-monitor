@@ -6,6 +6,7 @@ All notable changes to `laravel-queue-monitor` will be documented in this file.
 
 ### Fixes
 
+- Support integer job ids from the `database` queue driver, which previously threw a `TypeError` on every processed job (`getJobId()` returns an int while the `Job` contract declares `string`). Job ids are now normalized to string at the repository boundary and when recording processing.
 - Make dashboard analytics SQL portable across MySQL/MariaDB, PostgreSQL, SQL Server, and SQLite for minute bucketing and pickup-latency calculations.
 - Respect the configured `queue-monitor.database.connection` in infrastructure and statistics dashboard queries.
 - Respect `shouldBeMonitored()` and `shouldStorePayload()` on monitored jobs, enforce `payload_max_size` during recording, and keep internal deferred tag jobs out of monitoring.
