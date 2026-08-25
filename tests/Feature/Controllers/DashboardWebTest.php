@@ -115,3 +115,19 @@ test('dashboard class drill-down renders view', function () {
     $response->assertOk();
     $response->assertViewHas('drillDownType', 'job_class');
 });
+
+test('the autoscale tab carries the fuse and leadership panels', function () {
+    // These render from data the listener writes, so a template dropped in a
+    // refactor would silently take the only on-screen explanation for a held
+    // queue with it.
+    View::addNamespace('queue-monitor-source', dirname(__DIR__, 3).'/resources/views');
+
+    $html = view('queue-monitor-source::web.dashboard')->render();
+
+    expect($html)
+        ->toContain('Failure Fuse Holding')
+        ->toContain('autoscale.scaling?.open_fuses')
+        ->toContain('autoscale.cluster?.leadership?.unstable')
+        ->toContain('leadership changes in')
+        ->toContain('summary?.fuse_trips');
+});

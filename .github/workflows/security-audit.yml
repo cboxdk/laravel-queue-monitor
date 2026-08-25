@@ -1,0 +1,46 @@
+name: Security Audit
+
+# Runs on a schedule as well as on dependency changes, because an advisory can
+# land against a dependency this repository never touched. That is exactly how
+# fourteen of them accumulated unnoticed: the package ships no composer.lock, so
+# a fresh resolve was always clean while every existing checkout drifted.
+on:
+  pull_request:
+    paths:
+      - 'composer.json'
+      - '.github/workflows/security-audit.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'composer.json'
+      - '.github/workflows/security-audit.yml'
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+jobs:
+  audit:
+    name: composer audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+
+      - name: Install composer dependencies
+        uses: ramsey/composer-install@v4
+
+      # Runtime dependencies reach the consumer's application, so an advisory
+      # here fails the build.
+      - name: Audit runtime dependencies
+        run: composer audit --no-dev
+
+      # Dev dependencies never leave CI. Reported so the drift stays visible,
+      # but not a reason to block a release.
+      - name: Audit development dependencies
+        run: composer audit || true

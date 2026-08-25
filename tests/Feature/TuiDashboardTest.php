@@ -8,6 +8,7 @@ use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\Models\JobMonitor;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\StatisticsRepositoryContract;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\File;
 
 use function Termwind\render;
 
@@ -269,6 +270,16 @@ it('can publish migrations and config', function () {
     ]);
 
     expect($exitCode)->toBe(0);
+
+    // Publishing the whole provider drops a copy of every Blade view into the
+    // testbench app, where it SHADOWS the package's own views for every test
+    // that renders one — including the next full run, because vendor:publish
+    // will not overwrite an existing file without --force. A view edit then
+    // stops showing up in its own test while the source on disk is correct,
+    // which is a long way to walk before suspecting the test harness.
+    File::deleteDirectory(resource_path('views/vendor/queue-monitor'));
+})->after(function () {
+    File::deleteDirectory(resource_path('views/vendor/queue-monitor'));
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -1379,4 +1390,37 @@ test('keybindings footer shows generic shortcuts on non-job views', function () 
     render($html);
 
     expect($html)->toContain('1-6');
+});
+
+test('infrastructure view names the queues the fuse is holding', function () {
+    // The event list shows the moment a fuse tripped; this shows it has not let
+    // go. On a terminal that only holds five history rows, the difference is
+    // whether the operator can see the cause at all.
+    $html = view('queue-monitor::tui.dashboard', tuiViewData([
+        'currentView' => 6,
+        'infrastructureData' => [
+            'workers' => ['available' => false],
+            'worker_types' => ['by_type' => []],
+            'sla' => ['per_queue' => []],
+            'scaling' => [
+                'utilization' => ['percentage' => 12, 'status' => 'idle', 'busy_workers' => 0, 'total_workers' => 2],
+                'has_autoscale' => true,
+                'history' => [
+                    ['action' => 'fuse_tripped', 'queue' => 'webhooks', 'current_workers' => 0, 'target_workers' => 0, 'reason' => '100.0% of 31 jobs failing', 'time_human' => '14m ago'],
+                ],
+                'open_fuses' => [
+                    ['connection' => 'redis', 'queue' => 'webhooks', 'state' => 'tripped', 'held_at_workers' => 0, 'reason' => '100.0% of 31 jobs failing', 'since_human' => '14m ago'],
+                ],
+                'summary' => ['total_decisions' => 0, 'scale_ups' => 0, 'scale_downs' => 0, 'sla_breaches' => 0, 'fuse_trips' => 1],
+            ],
+            'capacity' => ['queues' => []],
+        ],
+    ]))->render();
+
+    render($html);
+
+    expect($html)
+        ->toContain('1 fuse trips')
+        ->toContain('webhooks')
+        ->toContain('TRIPPED at 0');
 });

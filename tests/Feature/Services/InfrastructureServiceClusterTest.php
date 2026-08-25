@@ -110,3 +110,127 @@ test('getScalingData includes breach severity data', function () {
     expect($data['breach_severity'])->not->toBeNull();
     expect($data['breach_severity']['avg_breach_seconds'])->toBe(15.0);
 });
+
+// ── Failure fuse state ───────────────────────────────────────────────────────
+//
+// The timeline shows the moment a fuse tripped; open_fuses shows that it is
+// still holding. A fuse that tripped an hour ago has scrolled off the timeline
+// while the queue it holds is still at zero workers.
+
+function fuseEvent(string $queue, string $action, int $workers, string $ago = '-5 minutes'): ScalingEvent
+{
+    return ScalingEvent::create([
+        'connection' => 'redis',
+        'queue' => $queue,
+        'action' => $action,
+        'current_workers' => $workers,
+        'target_workers' => $workers,
+        'reason' => 'test',
+        'created_at' => now()->parse($ago),
+    ]);
+}
+
+test('a tripped fuse is reported as holding the queue', function () {
+    fuseEvent('webhooks', 'fuse_tripped', 0);
+
+    $fuses = app(InfrastructureService::class)->getScalingData()['open_fuses'];
+
+    expect($fuses)->toHaveCount(1)
+        ->and($fuses[0]['queue'])->toBe('webhooks')
+        ->and($fuses[0]['state'])->toBe('tripped')
+        ->and($fuses[0]['held_at_workers'])->toBe(0)
+        ->and($fuses[0]['connection'])->toBe('redis');
+});
+
+test('a probing fuse is still holding, at its probe count', function () {
+    fuseEvent('webhooks', 'fuse_probing', 1);
+
+    $fuses = app(InfrastructureService::class)->getScalingData()['open_fuses'];
+
+    expect($fuses)->toHaveCount(1)
+        ->and($fuses[0]['state'])->toBe('probing')
+        ->and($fuses[0]['held_at_workers'])->toBe(1);
+});
+
+test('a recovered fuse is no longer holding', function () {
+    fuseEvent('webhooks', 'fuse_tripped', 0, '-10 minutes');
+    fuseEvent('webhooks', 'fuse_probing', 1, '-5 minutes');
+    fuseEvent('webhooks', 'fuse_recovered', 0, '-1 minute');
+
+    expect(app(InfrastructureService::class)->getScalingData()['open_fuses'])->toBeEmpty();
+});
+
+test('only the latest event decides a queue state', function () {
+    // A fuse that recovered and tripped again is tripped, not both.
+    fuseEvent('webhooks', 'fuse_recovered', 0, '-10 minutes');
+    fuseEvent('webhooks', 'fuse_tripped', 0, '-1 minute');
+
+    $fuses = app(InfrastructureService::class)->getScalingData()['open_fuses'];
+
+    expect($fuses)->toHaveCount(1)
+        ->and($fuses[0]['state'])->toBe('tripped');
+});
+
+test('queues are tracked independently', function () {
+    fuseEvent('webhooks', 'fuse_tripped', 0, '-2 minutes');
+    fuseEvent('invoices', 'fuse_recovered', 0, '-2 minutes');
+    fuseEvent('reports', 'fuse_probing', 1, '-1 minute');
+
+    $fuses = app(InfrastructureService::class)->getScalingData()['open_fuses'];
+
+    expect(array_column($fuses, 'queue'))->toEqualCanonicalizing(['webhooks', 'reports']);
+});
+
+test('the same queue name on two connections is not conflated', function () {
+    ScalingEvent::create(['connection' => 'redis', 'queue' => 'default', 'action' => 'fuse_tripped', 'current_workers' => 0, 'target_workers' => 0, 'reason' => 'test', 'created_at' => now()]);
+    ScalingEvent::create(['connection' => 'sqs', 'queue' => 'default', 'action' => 'fuse_recovered', 'current_workers' => 0, 'target_workers' => 0, 'reason' => 'test', 'created_at' => now()]);
+
+    $fuses = app(InfrastructureService::class)->getScalingData()['open_fuses'];
+
+    expect($fuses)->toHaveCount(1)
+        ->and($fuses[0]['connection'])->toBe('redis');
+});
+
+test('a fuse trip is counted but is not a scaling decision', function () {
+    fuseEvent('webhooks', 'fuse_tripped', 0, '-2 minutes');
+    ScalingEvent::create(['connection' => 'redis', 'queue' => 'emails', 'action' => 'scale_up', 'current_workers' => 1, 'target_workers' => 3, 'reason' => 'test', 'created_at' => now()]);
+
+    $summary = app(InfrastructureService::class)->getScalingData()['summary'];
+
+    expect($summary['fuse_trips'])->toBe(1)
+        ->and($summary['total_decisions'])->toBe(1);
+});
+
+// ── Leadership stability ─────────────────────────────────────────────────────
+
+test('leadership is reported stable when nothing flagged it', function () {
+    ClusterEvent::create(['cluster_id' => 'c1', 'manager_id' => 'mgr-1', 'event_type' => 'leader_changed', 'leader_id' => 'mgr-1', 'created_at' => now()]);
+
+    $leadership = app(InfrastructureService::class)->getClusterData()['leadership'];
+
+    expect($leadership['unstable'])->toBeFalse()
+        ->and($leadership['changes_in_window'])->toBe(1)
+        ->and($leadership['window_seconds'])->toBe(60);
+});
+
+test('an unstable flag inside the window surfaces with its reason', function () {
+    ClusterEvent::create(['cluster_id' => 'c1', 'manager_id' => 'mgr-1', 'event_type' => 'leader_changed', 'leader_id' => 'mgr-1', 'created_at' => now()]);
+    ClusterEvent::create(['cluster_id' => 'c1', 'manager_id' => 'mgr-1', 'event_type' => 'leadership_unstable', 'leader_id' => 'mgr-1', 'reason' => '5 leadership changes in 60s', 'meta' => ['changes_observed' => 5], 'created_at' => now()]);
+
+    $leadership = app(InfrastructureService::class)->getClusterData()['leadership'];
+
+    expect($leadership['unstable'])->toBeTrue()
+        ->and($leadership['reason'])->toBe('5 leadership changes in 60s')
+        ->and($leadership['flagged_at'])->not->toBeNull();
+});
+
+test('a flag that has aged out of the window no longer shows as unstable', function () {
+    // Otherwise a cluster that settled hours ago stays painted amber forever.
+    ClusterEvent::create(['cluster_id' => 'c1', 'manager_id' => 'mgr-1', 'event_type' => 'leader_changed', 'leader_id' => 'mgr-1', 'created_at' => now()->subHour()]);
+    ClusterEvent::create(['cluster_id' => 'c1', 'manager_id' => 'mgr-1', 'event_type' => 'leadership_unstable', 'leader_id' => 'mgr-1', 'reason' => 'old', 'created_at' => now()->subHour()]);
+
+    $leadership = app(InfrastructureService::class)->getClusterData()['leadership'];
+
+    expect($leadership['unstable'])->toBeFalse()
+        ->and($leadership['changes_in_window'])->toBe(0);
+});

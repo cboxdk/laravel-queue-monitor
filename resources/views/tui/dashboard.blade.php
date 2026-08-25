@@ -494,7 +494,22 @@
                         @if(($summary['sla_breaches'] ?? 0) > 0)
                             <span class="text-red-400 ml-2 font-bold">⚠ {{ $summary['sla_breaches'] }} breaches</span>
                         @endif
+                        @if(($summary['fuse_trips'] ?? 0) > 0)
+                            <span class="text-yellow-400 ml-2 font-bold">⊘ {{ $summary['fuse_trips'] }} fuse trips</span>
+                        @endif
                     </div>
+                    {{-- Queues the fuse is still holding. The event list below
+                         shows the moment each one tripped; this shows that it
+                         has not let go. --}}
+                    @foreach($infrastructureData['scaling']['open_fuses'] ?? [] as $fuse)
+                        <div class="px-1 flex">
+                            <span class="w-8 text-yellow-400">⊘</span>
+                            <span class="text-yellow-400 w-16 truncate">{{ $fuse['queue'] ?? '' }}</span>
+                            <span class="text-gray-400">{{ strtoupper($fuse['state'] ?? '') }} at {{ $fuse['held_at_workers'] ?? 0 }}</span>
+                            <span class="text-gray-500 ml-2 truncate">{{ $fuse['reason'] ?? '' }}</span>
+                            <span class="text-gray-600 ml-1">{{ $fuse['since_human'] ?? '' }}</span>
+                        </div>
+                    @endforeach
                     @foreach(array_slice($infrastructureData['scaling']['history'] ?? [], 0, 5) as $event)
                         <div class="px-1 flex">
                             @php
