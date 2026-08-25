@@ -147,6 +147,12 @@ class LaravelQueueMonitorServiceProvider extends PackageServiceProvider
             'Cbox\\LaravelQueueAutoscale\\Events\\ClusterManagerPresenceChanged' => 'handlePresenceChanged',
             'Cbox\\LaravelQueueAutoscale\\Events\\ClusterScalingSignalUpdated' => 'handleScalingSignalUpdated',
             'Cbox\\LaravelQueueAutoscale\\Events\\ClusterSummaryPublished' => 'handleSummaryPublished',
+            // Failure fuse. From the dashboard's point of view a trip IS a
+            // scaling event: the fleet stops growing, or shrinks, while the
+            // backlog climbs. Without these it looks like a malfunction.
+            'Cbox\\LaravelQueueAutoscale\\Events\\FuseTripped' => 'handleFuseTripped',
+            'Cbox\\LaravelQueueAutoscale\\Events\\FuseProbing' => 'handleFuseProbing',
+            'Cbox\\LaravelQueueAutoscale\\Events\\FuseRecovered' => 'handleFuseRecovered',
         ];
 
         foreach ($autoscaleEvents as $eventClass => $method) {

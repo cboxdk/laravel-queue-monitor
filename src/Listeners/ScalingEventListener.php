@@ -207,6 +207,98 @@ class ScalingEventListener
         }
     }
 
+    /**
+     * The failure fuse tripped: this queue's jobs are failing, and the
+     * autoscaler has stopped adding workers to it.
+     *
+     * Worth recording as a scaling event rather than a log line, because from
+     * the dashboard's point of view it is one: the fleet stops growing, or
+     * shrinks, while the backlog climbs. Without it a fuse trip looks exactly
+     * like the autoscaler malfunctioning — the queue is deep, the workers are
+     * going away, and nothing on screen says why.
+     */
+    public function handleFuseTripped(object $event): void
+    {
+        try {
+            $failureRate = $this->floatProperty($event, 'failureRate');
+            $samples = $this->intProperty($event, 'samples');
+            $heldAt = $this->intProperty($event, 'heldAtWorkers');
+
+            ScalingEvent::create([
+                'connection' => $this->stringProperty($event, 'connection'),
+                'queue' => $this->stringProperty($event, 'queue'),
+                'action' => 'fuse_tripped',
+                'current_workers' => $heldAt ?? 0,
+                'target_workers' => $heldAt ?? 0,
+                'active_workers' => $heldAt,
+                'reason' => $failureRate === null
+                    ? 'Failure fuse tripped'
+                    : sprintf(
+                        'Failure fuse tripped: %.1f%% of %d jobs failing — holding at %s worker(s) instead of scaling into the failure',
+                        $failureRate,
+                        $samples ?? 0,
+                        $heldAt ?? '?',
+                    ),
+            ]);
+        } catch (\Throwable $e) {
+            report($e);
+        }
+    }
+
+    /**
+     * The fuse is letting a single worker through to see whether the
+     * dependency has recovered.
+     */
+    public function handleFuseProbing(object $event): void
+    {
+        try {
+            $probeWorkers = $this->intProperty($event, 'probeWorkers');
+
+            ScalingEvent::create([
+                'connection' => $this->stringProperty($event, 'connection'),
+                'queue' => $this->stringProperty($event, 'queue'),
+                'action' => 'fuse_probing',
+                'current_workers' => $probeWorkers ?? 0,
+                'target_workers' => $probeWorkers ?? 0,
+                'active_workers' => $probeWorkers,
+                'reason' => sprintf(
+                    'Failure fuse probing recovery with %s worker(s)',
+                    $probeWorkers ?? '?',
+                ),
+            ]);
+        } catch (\Throwable $e) {
+            report($e);
+        }
+    }
+
+    /**
+     * The probe succeeded and normal scaling resumes.
+     */
+    public function handleFuseRecovered(object $event): void
+    {
+        try {
+            $failureRate = $this->floatProperty($event, 'failureRate');
+            $samples = $this->intProperty($event, 'samples');
+
+            ScalingEvent::create([
+                'connection' => $this->stringProperty($event, 'connection'),
+                'queue' => $this->stringProperty($event, 'queue'),
+                'action' => 'fuse_recovered',
+                'current_workers' => 0,
+                'target_workers' => 0,
+                'reason' => $failureRate === null
+                    ? 'Failure fuse recovered; normal scaling resumes'
+                    : sprintf(
+                        'Failure fuse recovered: %.1f%% of %d jobs failing — normal scaling resumes',
+                        $failureRate,
+                        $samples ?? 0,
+                    ),
+            ]);
+        } catch (\Throwable $e) {
+            report($e);
+        }
+    }
+
     public function handleLeaderChanged(object $event): void
     {
         try {
@@ -218,9 +310,79 @@ class ScalingEventListener
                 'previous_leader_id' => property_exists($event, 'previousLeaderId') ? $event->previousLeaderId : null,
                 'created_at' => now(),
             ]);
+
+            $this->flagUnstableLeadership(
+                property_exists($event, 'clusterId') ? $event->clusterId : 'unknown',
+                property_exists($event, 'observedByManagerId') ? $event->observedByManagerId : null,
+                property_exists($event, 'currentLeaderId') ? $event->currentLeaderId : null,
+            );
         } catch (\Throwable $e) {
             report($e);
         }
+    }
+
+    /**
+     * Record when leadership is moving faster than the autoscaler's guards can
+     * rebuild.
+     *
+     * Taking the cluster lease discards worker placement, the anti-flapping
+     * window and the fair-share ledger's position, because each describes a
+     * cluster the new leader has not observed. One failover costs a cycle;
+     * leadership that keeps moving means none of them ever completes, and the
+     * workload starved longest keeps losing its claim to be served next.
+     *
+     * Derived here rather than consumed from the autoscaler, which reports this
+     * only to its log channel. The leader changes are already in this table, so
+     * counting them is the same information and needs nothing new from the
+     * package — and it keeps working against an older autoscale release.
+     */
+    private function flagUnstableLeadership(string $clusterId, ?string $managerId, ?string $leaderId): void
+    {
+        $windowSeconds = $this->intConfig('queue-monitor.cluster.leadership_window_seconds', 60);
+        $threshold = $this->intConfig('queue-monitor.cluster.leadership_change_threshold', 3);
+
+        if ($windowSeconds < 1 || $threshold < 2) {
+            return;
+        }
+
+        $changes = ClusterEvent::query()
+            ->where('cluster_id', $clusterId)
+            ->where('event_type', 'leader_changed')
+            ->where('created_at', '>=', now()->subSeconds($windowSeconds))
+            ->count();
+
+        if ($changes < $threshold) {
+            return;
+        }
+
+        // One row per window, not one per change: an unstable cluster would
+        // otherwise bury its own timeline under the warning about it.
+        $alreadyFlagged = ClusterEvent::query()
+            ->where('cluster_id', $clusterId)
+            ->where('event_type', 'leadership_unstable')
+            ->where('created_at', '>=', now()->subSeconds($windowSeconds))
+            ->exists();
+
+        if ($alreadyFlagged) {
+            return;
+        }
+
+        ClusterEvent::create([
+            'cluster_id' => $clusterId,
+            'manager_id' => $managerId,
+            'event_type' => 'leadership_unstable',
+            'leader_id' => $leaderId,
+            'reason' => sprintf(
+                '%d leadership changes in %ds — worker placement, anti-flapping damping and fair-share rotation each restart on every change, so none of them completes',
+                $changes,
+                $windowSeconds,
+            ),
+            'meta' => [
+                'changes_observed' => $changes,
+                'window_seconds' => $windowSeconds,
+            ],
+            'created_at' => now(),
+        ]);
     }
 
     public function handlePresenceChanged(object $event): void
@@ -359,5 +521,40 @@ class ScalingEventListener
         }
 
         return md5(serialize($summary)) === $cached['hash'];
+    }
+
+    /**
+     * Read a property off a duck-typed autoscale event.
+     *
+     * The autoscale package is an optional peer, so its event objects arrive
+     * untyped here and a payload from a different version must degrade to a
+     * usable row rather than throw inside a queue worker.
+     */
+    private function stringProperty(object $event, string $name, string $default = 'unknown'): string
+    {
+        $value = property_exists($event, $name) ? $event->{$name} : null;
+
+        return is_string($value) && $value !== '' ? $value : $default;
+    }
+
+    private function intProperty(object $event, string $name): ?int
+    {
+        $value = property_exists($event, $name) ? $event->{$name} : null;
+
+        return is_numeric($value) ? (int) $value : null;
+    }
+
+    private function floatProperty(object $event, string $name): ?float
+    {
+        $value = property_exists($event, $name) ? $event->{$name} : null;
+
+        return is_numeric($value) ? (float) $value : null;
+    }
+
+    private function intConfig(string $key, int $default): int
+    {
+        $value = config($key, $default);
+
+        return is_numeric($value) ? (int) $value : $default;
     }
 }

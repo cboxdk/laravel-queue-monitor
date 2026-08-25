@@ -101,6 +101,28 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Cluster leadership
+    |--------------------------------------------------------------------------
+    |
+    | Taking the autoscaler's cluster lease discards worker placement, the
+    | anti-flapping window and the fair-share ledger's position, because each
+    | describes a cluster the new leader has not observed. One failover costs a
+    | cycle; leadership that keeps moving means none of them ever completes.
+    |
+    | When this many leadership changes land inside the window, a
+    | `leadership_unstable` cluster event is recorded — once per window, so an
+    | unstable cluster does not bury its own timeline. The default window
+    | matches the autoscaler's own anti-flapping window, which is the yardstick
+    | every piece of discarded state is sized in.
+    |
+    */
+    'cluster' => [
+        'leadership_window_seconds' => env('QUEUE_MONITOR_LEADERSHIP_WINDOW', 60),
+        'leadership_change_threshold' => env('QUEUE_MONITOR_LEADERSHIP_THRESHOLD', 3),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Worker Detection
     |--------------------------------------------------------------------------
     |
