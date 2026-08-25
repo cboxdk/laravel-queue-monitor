@@ -182,6 +182,33 @@ When persistence is on, configure a storage backend in `config/queue-metrics.php
 
 For full metrics configuration options, see the [laravel-queue-metrics documentation](https://github.com/cboxdk/laravel-queue-metrics).
 
+## Autoscale Cluster Leadership
+
+When [queue-autoscale](https://github.com/cboxdk/laravel-queue-autoscale) runs in
+cluster mode, one manager holds the lease and makes the scaling decisions. Taking that
+lease discards worker placement, the anti-flapping window and the fair-share ledger's
+position, because each of them describes a cluster the new leader has not observed.
+
+One failover costs a cycle and is normal — a deploy causes one. Leadership that keeps
+moving means none of that state ever completes, and the symptom on the dashboard is a
+fleet that scales but never settles. Queue Monitor records a `leadership_unstable`
+cluster event when the changes pile up:
+
+```php
+'cluster' => [
+    'leadership_window_seconds' => env('QUEUE_MONITOR_LEADERSHIP_WINDOW', 60),
+    'leadership_change_threshold' => env('QUEUE_MONITOR_LEADERSHIP_THRESHOLD', 3),
+],
+```
+
+The default window matches the autoscaler's own anti-flapping window, which is the
+yardstick every piece of discarded state is sized in. The event is recorded once per
+window rather than once per change, so an unstable cluster does not bury the timeline
+you are reading it from. Set the threshold below `2` to turn the check off.
+
+The usual causes are a lease shorter than a scaling cycle takes, a manager the network
+keeps partitioning, and a host whose clock has drifted past the lease TTL.
+
 ## Repository Bindings
 
 Override default repository implementations:

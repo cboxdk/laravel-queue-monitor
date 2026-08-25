@@ -4,6 +4,11 @@ All notable changes to `laravel-queue-monitor` will be documented in this file.
 
 ## Unreleased
 
+### Features
+
+- Record the autoscaler's failure-fuse events (`FuseTripped`, `FuseProbing`, `FuseRecovered`) as scaling events. A fuse trip previously reached the dashboard as an unexplained scale-down: the queue is deep, the workers are going away, and nothing on screen says why. The timeline now names the cause, the failure rate that caused it, and the probe that recovers it.
+- Flag unstable cluster leadership. Taking the autoscaler's lease discards worker placement, the anti-flapping window and the fair-share ledger's position, so leadership that keeps moving means none of them ever completes. Repeated changes inside `queue-monitor.cluster.leadership_window_seconds` now record a `leadership_unstable` cluster event — once per window, so an unstable cluster does not bury its own timeline.
+
 ### Fixes
 
 - Support integer job ids from the `database` queue driver, which previously threw a `TypeError` on every processed job (`getJobId()` returns an int while the `Job` contract declares `string`). Job ids are now normalized to string at the repository boundary and when recording processing.

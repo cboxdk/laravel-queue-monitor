@@ -497,9 +497,23 @@
                     </div>
                     @foreach(array_slice($infrastructureData['scaling']['history'] ?? [], 0, 5) as $event)
                         <div class="px-1 flex">
-                            <span class="w-8 {{ ($event['action'] ?? '') === 'scale_up' ? 'text-green-400' : (($event['action'] ?? '') === 'scale_down' ? 'text-blue-400' : 'text-red-400') }}">
-                                {{ ($event['action'] ?? '') === 'scale_up' ? '↑' : (($event['action'] ?? '') === 'scale_down' ? '↓' : '⚠') }}
-                            </span>
+                            @php
+                                $eventAction = $event['action'] ?? '';
+                                $eventColour = match ($eventAction) {
+                                    'scale_up', 'fuse_recovered' => 'text-green-400',
+                                    'scale_down' => 'text-blue-400',
+                                    'fuse_tripped', 'fuse_probing' => 'text-yellow-400',
+                                    default => 'text-red-400',
+                                };
+                                $eventGlyph = match ($eventAction) {
+                                    'scale_up' => '↑',
+                                    'scale_down' => '↓',
+                                    'fuse_tripped', 'fuse_probing' => '⊘',
+                                    'fuse_recovered' => '✓',
+                                    default => '⚠',
+                                };
+                            @endphp
+                            <span class="w-8 {{ $eventColour }}">{{ $eventGlyph }}</span>
                             <span class="text-white w-16 truncate">{{ $event['queue'] ?? '' }}</span>
                             <span class="text-gray-400">{{ $event['current_workers'] ?? 0 }}→{{ $event['target_workers'] ?? 0 }}</span>
                             <span class="text-gray-500 ml-2 truncate">{{ $event['reason'] ?? '' }}</span>
