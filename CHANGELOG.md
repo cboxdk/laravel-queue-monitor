@@ -24,28 +24,17 @@ See the [CHANGELOG](CHANGELOG.md) for the full list.
 ### Features
 
 - Record the autoscaler's failure-fuse events (`FuseTripped`, `FuseProbing`, `FuseRecovered`) as scaling events. A fuse trip previously reached the dashboard as an unexplained scale-down: the queue is deep, the workers are going away, and nothing on screen says why. The timeline now names the cause, the failure rate that caused it, and the probe that recovers it.
-- Flag unstable cluster leadership. Taking the autoscaler's lease discards worker placement, the anti-flapping window and the fair-share ledger's position, so leadership that keeps moving means none of them ever completes. Repeated changes inside `queue-monitor.cluster.leadership_window_seconds` now record a `leadership_unstable` cluster event — once per window, so an unstable cluster does not bury its own timeline.
+- Show which queues the fuse is still holding, on both the web and terminal dashboards. The timeline records the moment a fuse tripped; a fuse that tripped an hour ago has scrolled off it while the queue it holds is still at zero workers. `scaling.open_fuses` reports the current state per queue, and `summary.fuse_trips` counts trips in the last hour without counting them as scaling decisions.
+- Flag unstable cluster leadership. Taking the autoscaler's lease discards worker placement, the anti-flapping window and the fair-share ledger's position, so leadership that keeps moving means none of them ever completes. Repeated changes inside `queue-monitor.cluster.leadership_window_seconds` now record a `leadership_unstable` cluster event — once per window, so an unstable cluster does not bury its own timeline — and the cluster panel says what the churn is costing.
 
 ### Fixes
 
-- Support integer job ids from the `database` queue driver, which previously threw a `TypeError` on every processed job (`getJobId()` returns an int while the `Job` contract declares `string`). Job ids are now normalized to string at the repository boundary and when recording processing.
-- Make dashboard analytics SQL portable across MySQL/MariaDB, PostgreSQL, SQL Server, and SQLite for minute bucketing and pickup-latency calculations.
-- Respect the configured `queue-monitor.database.connection` in infrastructure and statistics dashboard queries.
-- Respect `shouldBeMonitored()` and `shouldStorePayload()` on monitored jobs, enforce `payload_max_size` during recording, and keep internal deferred tag jobs out of monitoring.
-- Use normalized tag records for tag filtering instead of driver-specific JSON contains queries.
-- Ship precompiled package-local dashboard CSS and JavaScript instead of loading Tailwind, Alpine, ECharts, and fonts from public CDNs.
-- Add configurable dashboard asset loading modes (`inline`, `public`, `none`) and publishable asset sources for app-level builds.
-- Default payload storage to enabled in `local` and disabled outside `local` unless `QUEUE_MONITOR_STORE_PAYLOAD` is explicitly set.
-- Default REST API route registration to enabled in `local` and disabled outside `local` unless `QUEUE_MONITOR_API_ENABLED` is explicitly set.
-- Add `queue-monitor:health --readiness` for launch configuration checks and make health thresholds configurable.
-- Mask serialized Laravel command payloads in API/dashboard responses by default.
-- Add configurable API, export, and batch-operation limits to keep expensive requests bounded.
-- Expand CI coverage for Laravel 13/PHP 8.5 and dashboard asset builds.
+- Stop `vendor:publish` in the test suite from leaving a published copy of every Blade view inside the testbench app, where it shadowed the package's own views for every later render test — including subsequent runs, because `vendor:publish` will not overwrite an existing file without `--force`.
+- Raise the amber text on the autoscale panels to at least 4.5:1 against its background (4.7:1 measured), and the cluster host figure past the 3:1 large-text floor it sat just under.
 
-### Documentation
+### Maintenance
 
-- Align documented requirements with the current Composer constraints: Laravel 11+ and `cboxdk/laravel-queue-metrics` `^3.0`.
-- Add production-readiness notes for auth, pruning, payload/API defaults, health readiness checks, dashboard assets, published config/views, local asset builds, and Horizon integration.
+- Add a scheduled `composer audit` workflow. The package ships no `composer.lock`, so a fresh resolve was always clean while existing checkouts drifted — fourteen advisories in `guzzlehttp/guzzle`, `guzzlehttp/psr7` and `league/commonmark` had accumulated unnoticed against dependencies this repository never touched. All fourteen clear on a plain `composer update`; the workflow now catches the next one.
 
 ## v1.7.3 — Persist autoscale scaling decisions - 2026-05-19
 

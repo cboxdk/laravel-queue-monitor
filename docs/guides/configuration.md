@@ -182,6 +182,28 @@ When persistence is on, configure a storage backend in `config/queue-metrics.php
 
 For full metrics configuration options, see the [laravel-queue-metrics documentation](https://github.com/cboxdk/laravel-queue-metrics).
 
+## Autoscale Failure Fuse
+
+When [queue-autoscale](https://github.com/cboxdk/laravel-queue-autoscale) trips its
+failure fuse, it stops adding workers to a queue whose jobs are failing — scaling up a
+queue whose jobs all fail just burns capacity faster. Queue Monitor records the trip,
+the recovery probe, and the recovery as scaling events, so the dashboard can say why a
+deep queue lost its workers instead of leaving it looking like a malfunction.
+
+The autoscale tab reports both the transitions and the current state:
+
+- `scaling.history` — the moment each fuse tripped, probed or recovered
+- `scaling.open_fuses` — the queues a fuse is still holding, and at how many workers
+- `scaling.summary.fuse_trips` — trips in the last hour, counted separately from
+  scaling decisions, because a trip is the autoscaler declining to make one
+
+The distinction that matters is state versus transition. A fuse that tripped an hour
+ago has scrolled off the timeline while the queue it holds is still at zero workers, so
+`open_fuses` is what answers "why does this queue have no workers right now".
+
+Nothing needs configuring — the events are bound automatically when the autoscale
+package is installed.
+
 ## Autoscale Cluster Leadership
 
 When [queue-autoscale](https://github.com/cboxdk/laravel-queue-autoscale) runs in

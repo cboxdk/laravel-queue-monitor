@@ -319,6 +319,7 @@ final class InfrastructureService
 
         $scalingHistory = [];
         $scalingSummary = [];
+        $openFuses = [];
 
         if ($hasScalingTable) {
             try {
@@ -340,21 +341,29 @@ final class InfrastructureService
                     ->all();
 
                 // Summary: aggregate counts (no full table load)
-                $trackedActions = ['scale_up', 'scale_down', 'sla_breach', 'sla_recovered', 'sla_breach_predicted'];
+                $trackedActions = ['scale_up', 'scale_down', 'sla_breach', 'sla_recovered', 'sla_breach_predicted', 'fuse_tripped'];
                 $summaryCounts = ScalingEvent::where('created_at', '>=', now()->subHour())
                     ->whereIn('action', $trackedActions)
                     ->selectRaw('action, COUNT(*) as cnt')
                     ->groupBy('action')
                     ->pluck('cnt', 'action')
                     ->all();
+                // A fuse trip is not a scaling decision, it is the autoscaler
+                // declining to make one, so it is counted but kept out of the
+                // decision total.
+                $decisionCounts = array_diff_key($summaryCounts, ['fuse_tripped' => true]);
+
                 $scalingSummary = [
-                    'total_decisions' => array_sum($summaryCounts),
+                    'total_decisions' => array_sum($decisionCounts),
                     'scale_ups' => $summaryCounts['scale_up'] ?? 0,
                     'scale_downs' => $summaryCounts['scale_down'] ?? 0,
                     'sla_breaches' => $summaryCounts['sla_breach'] ?? 0,
                     'sla_recoveries' => $summaryCounts['sla_recovered'] ?? 0,
                     'sla_breach_predictions' => $summaryCounts['sla_breach_predicted'] ?? 0,
+                    'fuse_trips' => $summaryCounts['fuse_tripped'] ?? 0,
                 ];
+
+                $openFuses = $this->getOpenFuses();
 
                 // Breach severity stats
                 $breachSeverity = null;
@@ -389,6 +398,7 @@ final class InfrastructureService
             ],
             'history' => $scalingHistory,
             'summary' => $scalingSummary,
+            'open_fuses' => $openFuses,
             'has_autoscale' => $hasScalingTable && count($scalingHistory) > 0,
             'autoscale_version' => $this->detectAutoscaleVersion(),
             'breach_severity' => $breachSeverity ?? null,
@@ -564,6 +574,26 @@ final class InfrastructureService
                 ])
                 ->all();
 
+            // Leadership stability. Taking the cluster lease discards worker
+            // placement, the anti-flapping window and the fair-share ledger's
+            // position, because each describes a cluster the new leader has not
+            // observed. One failover costs a cycle and is normal — a deploy
+            // causes one. Leadership that keeps moving means none of that state
+            // ever completes, and the symptom is a fleet that scales but never
+            // settles, which reads as a scaling bug rather than a lease problem.
+            $leadershipWindow = $this->intConfig('queue-monitor.cluster.leadership_window_seconds', 60);
+
+            $leadershipFlag = ClusterEvent::forCluster($clusterId)
+                ->ofType('leadership_unstable')
+                ->where('created_at', '>=', now()->subSeconds($leadershipWindow))
+                ->orderByDesc('created_at')
+                ->first();
+
+            $changesInWindow = ClusterEvent::forCluster($clusterId)
+                ->ofType('leader_changed')
+                ->where('created_at', '>=', now()->subSeconds($leadershipWindow))
+                ->count();
+
             // Manager events (start/stop, last 24h)
             $managerEvents = ClusterEvent::forCluster($clusterId)
                 ->whereIn('event_type', ['manager_started', 'manager_stopped'])
@@ -600,6 +630,13 @@ final class InfrastructureService
                     'reason' => $latestSignal->reason,
                     'updated_at' => $latestSignal->created_at?->toIso8601String(),
                 ] : null,
+                'leadership' => [
+                    'unstable' => $leadershipFlag !== null,
+                    'changes_in_window' => $changesInWindow,
+                    'window_seconds' => $leadershipWindow,
+                    'reason' => $leadershipFlag?->reason,
+                    'flagged_at' => $leadershipFlag?->created_at?->toIso8601String(),
+                ],
                 'signal_history' => $signalHistory,
                 'leader_history' => $leaderHistory,
                 'manager_events' => $managerEvents,
@@ -690,6 +727,67 @@ final class InfrastructureService
 
             return null;
         }
+    }
+
+    /**
+     * Queues the failure fuse is currently holding, newest observation first.
+     *
+     * Derived from the latest fuse event per queue rather than read from the
+     * autoscaler, which keeps this state in Redis under keys the monitor does
+     * not own. The distinction that matters is state versus transition: the
+     * timeline shows the moment a fuse tripped, and a fuse that tripped an hour
+     * ago has scrolled off it while still holding the queue at zero workers.
+     * Without this the dashboard says a queue has no workers and offers no
+     * reason, which is the exact confusion the fuse events were added to end.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function getOpenFuses(): array
+    {
+        $events = ScalingEvent::query()
+            ->whereIn('action', ['fuse_tripped', 'fuse_probing', 'fuse_recovered'])
+            ->where('created_at', '>=', now()->subDay())
+            ->orderByDesc('created_at')
+            ->limit(500)
+            ->get();
+
+        $open = [];
+        $seen = [];
+
+        foreach ($events as $event) {
+            $key = $event->connection.':'.$event->queue;
+
+            if (isset($seen[$key])) {
+                continue;
+            }
+
+            $seen[$key] = true;
+
+            // A recovered fuse is a closed fuse. It stays in the timeline as
+            // the event that ended the outage, but it is not holding anything.
+            if ($event->action === 'fuse_recovered') {
+                continue;
+            }
+
+            $open[] = [
+                'connection' => $event->connection,
+                'queue' => $event->queue,
+                'state' => $event->action === 'fuse_probing' ? 'probing' : 'tripped',
+                'held_at_workers' => $event->target_workers,
+                'reason' => $event->reason,
+                'since' => $event->created_at->toIso8601String(),
+                'since_human' => $event->created_at->diffForHumans(),
+            ];
+        }
+
+        return $open;
+    }
+
+    private function intConfig(string $key, int $default): int
+    {
+        $value = config($key, $default);
+
+        return is_numeric($value) ? (int) $value : $default;
     }
 
     private function detectAutoscaleVersion(): ?int

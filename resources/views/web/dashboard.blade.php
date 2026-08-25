@@ -1851,7 +1851,7 @@
                                         <div>
                                             <div class="text-[10px] font-bold text-indigo-400 uppercase tracking-wider mb-1">Hosts</div>
                                             <div class="flex items-baseline gap-1">
-                                                <span class="text-2xl font-bold tabular-nums" :class="(infrastructure.cluster?.scaling_signal?.current_hosts ?? 0) >= (infrastructure.cluster?.scaling_signal?.recommended_hosts ?? 1) ? 'text-emerald-600' : (infrastructure.cluster?.scaling_signal?.current_hosts ?? 0) >= (infrastructure.cluster?.scaling_signal?.recommended_hosts ?? 1) * 0.6 ? 'text-amber-600' : 'text-red-600'" x-text="infrastructure.cluster?.scaling_signal?.current_hosts ?? infrastructure.cluster?.topology?.host_count ?? 0"></span>
+                                                <span class="text-2xl font-bold tabular-nums" :class="(infrastructure.cluster?.scaling_signal?.current_hosts ?? 0) >= (infrastructure.cluster?.scaling_signal?.recommended_hosts ?? 1) ? 'text-emerald-600' : (infrastructure.cluster?.scaling_signal?.current_hosts ?? 0) >= (infrastructure.cluster?.scaling_signal?.recommended_hosts ?? 1) * 0.6 ? 'text-amber-700' : 'text-red-600'" x-text="infrastructure.cluster?.scaling_signal?.current_hosts ?? infrastructure.cluster?.topology?.host_count ?? 0"></span>
                                                 <span class="text-sm text-gray-400">/ <span x-text="infrastructure.cluster?.scaling_signal?.recommended_hosts ?? '?'"></span> recommended</span>
                                             </div>
                                         </div>
@@ -2151,6 +2151,43 @@
                             </div>
                         </template>
 
+                        {{-- Open Failure Fuses.
+                             State, not transition: the timeline below shows the
+                             moment a fuse tripped, and a fuse that tripped an
+                             hour ago has scrolled off it while still holding the
+                             queue at zero workers. Without this the dashboard
+                             says a queue has no workers and offers no reason. --}}
+                        <template x-if="autoscale.available && (autoscale.scaling?.open_fuses ?? []).length > 0">
+                            <div class="bg-amber-50 border border-amber-200 rounded-xl shadow-sm overflow-hidden">
+                                <div class="px-5 py-4 border-b border-amber-200/60">
+                                    <div class="flex items-center justify-between gap-3">
+                                        <div class="flex items-center gap-2 min-w-0">
+                                            <svg aria-hidden="true" class="h-4 w-4 text-amber-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" /></svg>
+                                            <h4 class="text-sm font-semibold text-amber-900">Failure Fuse Holding</h4>
+                                            <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold bg-amber-100 text-amber-800" x-text="(autoscale.scaling?.open_fuses ?? []).length + ' ' + ((autoscale.scaling?.open_fuses ?? []).length === 1 ? 'queue' : 'queues')"></span>
+                                        </div>
+                                        <span class="text-[10px] text-amber-700 flex-shrink-0 hidden sm:block">Scaling up a queue whose jobs all fail just burns capacity faster</span>
+                                    </div>
+                                </div>
+                                <div class="divide-y divide-amber-200/50">
+                                    <template x-for="(fuse, idx) in (autoscale.scaling?.open_fuses ?? [])" :key="'fuse-' + idx">
+                                        <div class="flex items-start gap-3 px-5 py-3">
+                                            <span class="mt-0.5 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold flex-shrink-0" :class="fuse.state === 'probing' ? 'bg-amber-100 text-amber-700' : 'bg-amber-200 text-amber-900'" x-text="fuse.state.toUpperCase()"></span>
+                                            <div class="min-w-0 flex-1">
+                                                <div class="flex items-center gap-2 flex-wrap">
+                                                    <span class="text-sm font-semibold text-amber-900" x-text="fuse.queue"></span>
+                                                    <span class="text-[11px] text-amber-700" x-text="fuse.connection"></span>
+                                                    <span class="text-[11px] font-medium text-amber-800" x-text="'held at ' + fuse.held_at_workers + ' worker' + (fuse.held_at_workers === 1 ? '' : 's')"></span>
+                                                </div>
+                                                <p class="text-[11px] text-amber-700 mt-0.5" x-text="fuse.reason"></p>
+                                            </div>
+                                            <span class="text-[10px] text-amber-700 flex-shrink-0 whitespace-nowrap" x-text="fuse.since_human"></span>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+
                         {{-- Cluster Topology Banner --}}
                         <template x-if="autoscale.available && autoscale.cluster?.has_cluster">
                             <div class="bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-200/80 rounded-xl shadow-sm overflow-hidden">
@@ -2168,12 +2205,17 @@
                                     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
                                         <div>
                                             <div class="text-[10px] font-bold text-indigo-400 uppercase tracking-wider mb-1">Leader</div>
-                                            <div class="text-sm font-semibold text-indigo-900 truncate" x-text="autoscale.cluster?.topology?.leader_id ?? 'electing...'"></div>
+                                            <div class="flex items-center gap-1.5 min-w-0">
+                                                <span class="text-sm font-semibold text-indigo-900 truncate" x-text="autoscale.cluster?.topology?.leader_id ?? 'electing...'"></span>
+                                                <template x-if="autoscale.cluster?.leadership?.unstable">
+                                                    <span class="inline-flex items-center rounded-full px-1.5 py-0.5 text-[9px] font-bold bg-amber-100 text-amber-800 flex-shrink-0">UNSTABLE</span>
+                                                </template>
+                                            </div>
                                         </div>
                                         <div>
                                             <div class="text-[10px] font-bold text-indigo-400 uppercase tracking-wider mb-1">Hosts</div>
                                             <div class="flex items-baseline gap-1">
-                                                <span class="text-2xl font-bold tabular-nums" :class="(autoscale.cluster?.scaling_signal?.current_hosts ?? 0) >= (autoscale.cluster?.scaling_signal?.recommended_hosts ?? 1) ? 'text-emerald-600' : (autoscale.cluster?.scaling_signal?.current_hosts ?? 0) >= (autoscale.cluster?.scaling_signal?.recommended_hosts ?? 1) * 0.6 ? 'text-amber-600' : 'text-red-600'" x-text="autoscale.cluster?.scaling_signal?.current_hosts ?? autoscale.cluster?.topology?.host_count ?? 0"></span>
+                                                <span class="text-2xl font-bold tabular-nums" :class="(autoscale.cluster?.scaling_signal?.current_hosts ?? 0) >= (autoscale.cluster?.scaling_signal?.recommended_hosts ?? 1) ? 'text-emerald-600' : (autoscale.cluster?.scaling_signal?.current_hosts ?? 0) >= (autoscale.cluster?.scaling_signal?.recommended_hosts ?? 1) * 0.6 ? 'text-amber-700' : 'text-red-600'" x-text="autoscale.cluster?.scaling_signal?.current_hosts ?? autoscale.cluster?.topology?.host_count ?? 0"></span>
                                                 <span class="text-sm text-gray-400">/ <span x-text="autoscale.cluster?.scaling_signal?.recommended_hosts ?? '?'"></span> recommended</span>
                                             </div>
                                         </div>
@@ -2189,19 +2231,34 @@
                                             <p class="text-[10px] text-gray-400 mt-0.5 truncate" x-text="autoscale.cluster?.scaling_signal?.reason ?? ''"></p>
                                         </div>
                                     </div>
+                                    {{-- What an unstable lease actually costs, because the
+                                         symptom is a fleet that scales but never settles, and
+                                         that reads as a scaling bug rather than a lease one. --}}
+                                    <template x-if="autoscale.cluster?.leadership?.unstable">
+                                        <div class="mt-4 flex items-start gap-2 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2.5">
+                                            <svg aria-hidden="true" class="h-4 w-4 text-amber-600 flex-shrink-0 mt-px" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" /></svg>
+                                            <div class="min-w-0">
+                                                <p class="text-[11px] font-semibold text-amber-900">
+                                                    <span x-text="autoscale.cluster?.leadership?.changes_in_window ?? 0"></span> leadership changes in <span x-text="autoscale.cluster?.leadership?.window_seconds ?? 60"></span>s
+                                                </p>
+                                                <p class="text-[11px] text-amber-700 mt-0.5">Worker placement, anti-flapping damping and fair-share rotation each restart on every change, so none of them completes. Check the lease duration, network partitions between managers, and clock drift.</p>
+                                            </div>
+                                        </div>
+                                    </template>
                                 </div>
                             </div>
                         </template>
 
                         {{-- Scaling Stats Cards --}}
                         <template x-if="autoscale.available">
-                            <div class="grid grid-cols-2 lg:grid-cols-6 gap-4 stagger-in">
-                                <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm p-4"><div class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Total Decisions</div><div class="text-2xl font-bold text-gray-900 tabular-nums" x-text="autoscale.scaling?.summary?.total_decisions ?? 0"></div></div>
-                                <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm p-4"><div class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Scale Ups</div><div class="text-2xl font-bold text-emerald-600 tabular-nums" x-text="autoscale.scaling?.summary?.scale_ups ?? 0"></div></div>
-                                <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm p-4"><div class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Scale Downs</div><div class="text-2xl font-bold text-blue-600 tabular-nums" x-text="autoscale.scaling?.summary?.scale_downs ?? 0"></div></div>
-                                <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm p-4"><div class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">SLA Breaches</div><div class="text-2xl font-bold text-red-600 tabular-nums" x-text="autoscale.scaling?.summary?.sla_breaches ?? 0"></div></div>
-                                <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm p-4"><div class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">SLA Recoveries</div><div class="text-2xl font-bold text-emerald-600 tabular-nums" x-text="autoscale.scaling?.summary?.sla_recoveries ?? 0"></div></div>
-                                <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm p-4"><div class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Predictions</div><div class="text-2xl font-bold text-orange-600 tabular-nums" x-text="autoscale.scaling?.summary?.sla_breach_predictions ?? 0"></div></div>
+                            <div class="grid grid-cols-2 lg:grid-cols-7 gap-4 stagger-in">
+                                <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm p-4 flex flex-col"><div class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Total Decisions</div><div class="mt-auto text-2xl font-bold text-gray-900 tabular-nums" x-text="autoscale.scaling?.summary?.total_decisions ?? 0"></div></div>
+                                <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm p-4 flex flex-col"><div class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Scale Ups</div><div class="mt-auto text-2xl font-bold text-emerald-600 tabular-nums" x-text="autoscale.scaling?.summary?.scale_ups ?? 0"></div></div>
+                                <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm p-4 flex flex-col"><div class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Scale Downs</div><div class="mt-auto text-2xl font-bold text-blue-600 tabular-nums" x-text="autoscale.scaling?.summary?.scale_downs ?? 0"></div></div>
+                                <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm p-4 flex flex-col"><div class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">SLA Breaches</div><div class="mt-auto text-2xl font-bold text-red-600 tabular-nums" x-text="autoscale.scaling?.summary?.sla_breaches ?? 0"></div></div>
+                                <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm p-4 flex flex-col"><div class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">SLA Recoveries</div><div class="mt-auto text-2xl font-bold text-emerald-600 tabular-nums" x-text="autoscale.scaling?.summary?.sla_recoveries ?? 0"></div></div>
+                                <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm p-4 flex flex-col"><div class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Predictions</div><div class="mt-auto text-2xl font-bold text-orange-600 tabular-nums" x-text="autoscale.scaling?.summary?.sla_breach_predictions ?? 0"></div></div>
+                                <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm p-4 flex flex-col"><div class="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Fuse Trips</div><div class="mt-auto text-2xl font-bold tabular-nums" :class="(autoscale.scaling?.summary?.fuse_trips ?? 0) > 0 ? 'text-amber-600' : 'text-gray-900'" x-text="autoscale.scaling?.summary?.fuse_trips ?? 0"></div></div>
                             </div>
                         </template>
 
