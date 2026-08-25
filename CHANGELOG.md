@@ -19,7 +19,7 @@ All notable changes to `laravel-queue-monitor` will be documented in this file.
 
 See the [CHANGELOG](CHANGELOG.md) for the full list.
 
-## Unreleased
+## v1.8.0 — Failure fuse visibility - 2026-08-25
 
 ### Features
 
