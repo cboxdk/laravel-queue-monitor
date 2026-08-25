@@ -2,23 +2,6 @@
 
 All notable changes to `laravel-queue-monitor` will be documented in this file.
 
-## v1.7.4 — Database queue driver fix and launch hardening - 2026-07-08
-
-### Fixes
-
-- **Support integer job ids from the `database` queue driver.** Laravel's `DatabaseJob::getJobId()` returns the integer auto-increment id even though the `Job` contract declares `getJobId(): string`, which threw a `TypeError` on every processed job under `QUEUE_CONNECTION=database`. Job ids are now normalized to string when recording processing and at the repository boundary (`findByJobId` / `findLatestAttemptByJobId`).
-- Portable dashboard analytics SQL across MySQL/MariaDB, PostgreSQL, SQL Server, and SQLite.
-- Respect the configured `queue-monitor.database.connection` in dashboard queries.
-- Respect `shouldBeMonitored()` / `shouldStorePayload()`, enforce `payload_max_size`, and keep internal deferred tag jobs out of monitoring.
-- Normalized tag records for tag filtering instead of driver-specific JSON queries.
-- Ship precompiled package-local dashboard assets instead of loading from public CDNs; add `inline`/`public`/`none` asset modes.
-- Environment-aware defaults for payload storage and REST API route registration (enabled in `local`, off elsewhere unless explicitly set).
-- Add `queue-monitor:health --readiness` launch checks with configurable thresholds.
-- Mask serialized command payloads in API/dashboard responses by default.
-- Configurable API, export, and batch-operation limits.
-
-See the [CHANGELOG](CHANGELOG.md) for the full list.
-
 ## v1.8.0 — Failure fuse visibility - 2026-08-25
 
 ### Features
@@ -35,6 +18,23 @@ See the [CHANGELOG](CHANGELOG.md) for the full list.
 ### Maintenance
 
 - Add a scheduled `composer audit` workflow. The package ships no `composer.lock`, so a fresh resolve was always clean while existing checkouts drifted — fourteen advisories in `guzzlehttp/guzzle`, `guzzlehttp/psr7` and `league/commonmark` had accumulated unnoticed against dependencies this repository never touched. All fourteen clear on a plain `composer update`; the workflow now catches the next one.
+
+## v1.7.4 — Database queue driver fix and launch hardening - 2026-07-08
+
+### Fixes
+
+- **Support integer job ids from the `database` queue driver.** Laravel's `DatabaseJob::getJobId()` returns the integer auto-increment id even though the `Job` contract declares `getJobId(): string`, which threw a `TypeError` on every processed job under `QUEUE_CONNECTION=database`. Job ids are now normalized to string when recording processing and at the repository boundary (`findByJobId` / `findLatestAttemptByJobId`).
+- Portable dashboard analytics SQL across MySQL/MariaDB, PostgreSQL, SQL Server, and SQLite.
+- Respect the configured `queue-monitor.database.connection` in dashboard queries.
+- Respect `shouldBeMonitored()` / `shouldStorePayload()`, enforce `payload_max_size`, and keep internal deferred tag jobs out of monitoring.
+- Normalized tag records for tag filtering instead of driver-specific JSON queries.
+- Ship precompiled package-local dashboard assets instead of loading from public CDNs; add `inline`/`public`/`none` asset modes.
+- Environment-aware defaults for payload storage and REST API route registration (enabled in `local`, off elsewhere unless explicitly set).
+- Add `queue-monitor:health --readiness` launch checks with configurable thresholds.
+- Mask serialized command payloads in API/dashboard responses by default.
+- Configurable API, export, and batch-operation limits.
+
+See the [CHANGELOG](CHANGELOG.md) for the full list.
 
 ## v1.7.3 — Persist autoscale scaling decisions - 2026-05-19
 
