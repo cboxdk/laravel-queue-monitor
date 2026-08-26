@@ -1175,7 +1175,7 @@
         }
     </style>
 </head>
-<body class="qm-modern" :class="{ 'qm-menu-lock': mobileMenuOpen }" x-data="dashboard()" x-init="init()">
+<body class="qm-modern" :class="{ 'qm-menu-lock': mobileMenuOpen }" x-data="dashboard()">
     <div class="qm-app">
         <div class="qm-mobile-overlay" :class="{ 'open': mobileMenuOpen }" @click="mobileMenuOpen = false" aria-hidden="true"></div>
 
@@ -1233,19 +1233,19 @@
                         <option>Production</option>
                     </select>
 
-                    <button type="button" class="qm-chip live" @click="toggleLive()">
+                    <button type="button" class="qm-chip" :class="{ live: isLive }" :aria-pressed="isLive" @click="toggleLive()">
                         <svg viewBox="0 0 24 24"><path d="M5 12h4l3-8 3 16 3-8h1"></path></svg>
                         <span x-text="isLive ? 'Live' : 'Paused'">Live</span>
                     </button>
 
                     <span class="qm-chip" x-text="lastRefreshLabel()">Last refresh pending</span>
 
-                    <button type="button" class="qm-icon-button" title="Pause refresh" aria-label="Pause refresh" @click="toggleLive()">
+                    <button type="button" class="qm-icon-button" :title="isLive ? 'Pause refresh' : 'Resume refresh'" :aria-label="isLive ? 'Pause refresh' : 'Resume refresh'" :aria-pressed="isLive" @click="toggleLive()">
                         <svg x-show="isLive" viewBox="0 0 24 24"><path d="M8 5v14"></path><path d="M16 5v14"></path></svg>
                         <svg x-show="!isLive" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"></path></svg>
                     </button>
-                    <button type="button" class="qm-icon-button" title="Refresh now" aria-label="Refresh now" @click="refreshCurrentView()">
-                        <svg viewBox="0 0 24 24" :class="{ 'animate-spin': anyLoading() }"><path d="M21 12a9 9 0 0 1-15.5 6.2"></path><path d="M3 12A9 9 0 0 1 18.5 5.8"></path><path d="M18 2v4h4"></path><path d="M6 22v-4H2"></path></svg>
+                    <button type="button" class="qm-icon-button" title="Refresh now" aria-label="Refresh now" @click="refreshCurrentView(true)">
+                        <svg viewBox="0 0 24 24" :class="{ 'animate-spin': anyLoading() || anyRefreshing() }"><path d="M21 12a9 9 0 0 1-15.5 6.2"></path><path d="M3 12A9 9 0 0 1 18.5 5.8"></path><path d="M18 2v4h4"></path><path d="M6 22v-4H2"></path></svg>
                     </button>
                 </div>
             </header>
@@ -1516,7 +1516,7 @@
                         </button>
                         <button x-show="hasActiveFilters()" @click="clearFilters()" class="text-[11px] font-semibold text-red-600 hover:text-red-800 transition">Clear all</button>
                         <button @click="fetchJobs()" class="inline-flex items-center gap-1.5 px-3 py-2 text-[11px] font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition">
-                            <svg class="h-3.5 w-3.5" :class="loading.jobs && 'animate-spin'" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" /></svg>
+                            <svg class="h-3.5 w-3.5" :class="(loading.jobs || refreshing.jobs) && 'animate-spin'" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" /></svg>
                             Refresh
                         </button>
                     </div>
@@ -1647,7 +1647,7 @@
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="text-sm font-semibold text-gray-900">Analytics</h3>
                     <button @click="fetchAnalytics()" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition">
-                        <svg class="h-3.5 w-3.5" :class="loading.analytics && 'animate-spin'" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" /></svg>
+                        <svg class="h-3.5 w-3.5" :class="(loading.analytics || refreshing.analytics) && 'animate-spin'" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" /></svg>
                         Refresh
                     </button>
                 </div>
@@ -1728,7 +1728,7 @@
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="text-sm font-semibold text-gray-900">System Health</h3>
                     <button @click="fetchHealth()" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition">
-                        <svg class="h-3.5 w-3.5" :class="loading.health && 'animate-spin'" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" /></svg>
+                        <svg class="h-3.5 w-3.5" :class="(loading.health || refreshing.health) && 'animate-spin'" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" /></svg>
                         Refresh
                     </button>
                 </div>
@@ -1817,7 +1817,7 @@
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="text-sm font-semibold text-gray-900">Horizon</h3>
                     <button @click="fetchInfrastructure()" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition">
-                        <svg class="h-3.5 w-3.5" :class="loading.infrastructure && 'animate-spin'" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" /></svg>
+                        <svg class="h-3.5 w-3.5" :class="(loading.infrastructure || refreshing.infrastructure) && 'animate-spin'" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" /></svg>
                         Refresh
                     </button>
                 </div>
@@ -2123,15 +2123,8 @@
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="text-sm font-semibold text-gray-900">Autoscale</h3>
                     <div class="flex items-center gap-2">
-                        <template x-if="autoscaleAutoRefresh">
-                            <span class="text-[10px] text-emerald-600 font-medium">Auto-refreshing every 5s</span>
-                        </template>
-                        <button @click="autoscaleAutoRefresh = !autoscaleAutoRefresh; if (autoscaleAutoRefresh) startAutoscaleAutoRefresh(); else stopAutoscaleAutoRefresh();" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium border rounded-lg transition" :class="autoscaleAutoRefresh ? 'text-emerald-700 bg-emerald-50 border-emerald-200 hover:bg-emerald-100' : 'text-gray-600 bg-white border-gray-200 hover:bg-gray-50'">
-                            <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M5.636 18.364a9 9 0 010-12.728m12.728 0a9 9 0 010 12.728M12 12h.008v.008H12V12zm-3 0a3 3 0 116 0 3 3 0 01-6 0z" /></svg>
-                            <span x-text="autoscaleAutoRefresh ? 'Live' : 'Auto'"></span>
-                        </button>
                         <button @click="fetchAutoscale()" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition">
-                            <svg class="h-3.5 w-3.5" :class="loading.autoscale && 'animate-spin'" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" /></svg>
+                            <svg class="h-3.5 w-3.5" :class="(loading.autoscale || refreshing.autoscale) && 'animate-spin'" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" /></svg>
                             Refresh
                         </button>
                     </div>
@@ -3002,8 +2995,6 @@
                 infrastructure: {},
                 autoscale: {},
                 horizonAvailable: false,
-                autoscaleAutoRefresh: false,
-                autoscaleRefreshInterval: null,
 
                 // Jobs tab state
                 filters: { search: '', statuses: [], queue: '', dateFrom: '', dateTo: '', showAdvanced: false, jobClass: '', server: '', minAttempts: '', minDuration: '' },
@@ -3017,7 +3008,9 @@
                 isLive: true,
                 inFlight: { overview: false, jobs: false, analytics: false, health: false, infrastructure: false, autoscale: false, detail: false, drillDown: false },
                 pendingRefresh: { overview: false, jobs: false, analytics: false, health: false, infrastructure: false, autoscale: false, detail: false, drillDown: false },
+                refreshing: { overview: false, jobs: false, analytics: false, health: false, infrastructure: false, autoscale: false, detail: false, drillDown: false },
                 loading: { overview: true, jobs: false, analytics: false, health: false, infrastructure: false, autoscale: false, detail: false },
+                lastMetaRefreshAt: 0,
                 error: null,
                 retryCount: 0,
                 maxRetries: 3,
@@ -3062,7 +3055,9 @@
                 },
 
                 init() {
+                    try { this.isLive = localStorage.getItem('qm.live') !== '0'; } catch (e) {}
                     this.clockInterval = setInterval(() => { this.clock = Date.now(); }, 1000);
+                    this.lastMetaRefreshAt = Date.now();
                     this.fetchOverview();
                     this.fetchHealth();
                     this.fetchInfrastructure();
@@ -3112,8 +3107,12 @@
                             // Restore filters from URL on back/forward
                             this.filters = { search: '', statuses: [], queue: '', dateFrom: '', dateTo: '', showAdvanced: false, jobClass: '', server: '', minAttempts: '', minDuration: '' };
                             this.restoreFiltersFromUrl();
-                            this.refreshCurrentView();
+                            this.refreshCurrentView(true);
                         }
+                    });
+
+                    document.addEventListener('visibilitychange', () => {
+                        if (!document.hidden) this.refreshCurrentView();
                     });
 
                     window.addEventListener('resize', () => {
@@ -3135,17 +3134,26 @@
                 startAutoRefresh() {
                     if (this.refreshInterval) clearInterval(this.refreshInterval);
                     this.refreshInterval = setInterval(() => {
-                        if (!this.isLive) return;
+                        if (!this.isLive || document.hidden) return;
                         this.refreshCurrentView();
+                        // The overview's Workers card reads autoscale/infrastructure
+                        // data; keep those stores fresh at a slower cadence.
+                        if (this.activeTab === 'overview' && Date.now() - this.lastMetaRefreshAt > 30000) {
+                            this.lastMetaRefreshAt = Date.now();
+                            this.fetchInfrastructure();
+                            this.fetchAutoscale();
+                        }
                     }, {{ config('queue-monitor.ui.refresh_interval', 3000) }});
                 },
 
                 toggleLive() {
                     this.isLive = !this.isLive;
-                    if (this.isLive) this.refreshCurrentView();
+                    try { localStorage.setItem('qm.live', this.isLive ? '1' : '0'); } catch (e) {}
+                    if (this.isLive) this.refreshCurrentView(true);
                 },
 
-                refreshCurrentView() {
+                refreshCurrentView(force = false) {
+                    if (!force && !this.isLive) return;
                     if (this.jobView) { this.fetchJobDetail(this.jobView); return; }
                     if (this.drillDown) { this.refreshDrillDown(); return; }
                     if (this.activeTab === 'overview') { this.fetchOverview(); this.fetchHealth(); }
@@ -3153,7 +3161,7 @@
                     else if (this.activeTab === 'analytics') this.fetchAnalytics();
                     else if (this.activeTab === 'health') this.fetchHealth();
                     else if (this.activeTab === 'infrastructure') this.fetchInfrastructure();
-                    else if (this.activeTab === 'autoscale' && !this.autoscaleAutoRefresh) this.fetchAutoscale();
+                    else if (this.activeTab === 'autoscale') this.fetchAutoscale();
                 },
 
                 pageTitle() {
@@ -3187,6 +3195,10 @@
 
                 anyLoading() {
                     return Object.values(this.loading).some(Boolean) || this.drillDownLoading;
+                },
+
+                anyRefreshing() {
+                    return Object.values(this.refreshing).some(Boolean);
                 },
 
                 healthChecksList() {
@@ -3329,13 +3341,15 @@
 
                     this.inFlight[scope] = true;
                     this.pendingRefresh[scope] = false;
+                    this.refreshing[scope] = true;
 
                     try {
                         await callback();
                     } finally {
                         this.inFlight[scope] = false;
+                        this.refreshing[scope] = false;
 
-                        if (this.pendingRefresh[scope]) {
+                        if (this.pendingRefresh[scope] && this.isLive) {
                             this.pendingRefresh[scope] = false;
                             this.refreshScope(scope);
                         }
@@ -3365,8 +3379,6 @@
                         this.drillDownChart = null;
                         this.drillDown = null; this.drillDownData = null;
                     }
-                    // Stop autoscale auto-refresh when leaving the tab
-                    if (this.activeTab === 'autoscale' && tab !== 'autoscale') { this.autoscaleAutoRefresh = false; this.stopAutoscaleAutoRefresh(); }
                     this.activeTab = tab;
                     this.pushTabState(tab);
                     if (tab === 'overview') this.fetchOverview();
@@ -3423,7 +3435,7 @@
                         this.clock = this.lastRefreshAt;
                         return await response.json();
                     } catch (err) {
-                        if (retries < this.maxRetries) {
+                        if (retries < this.maxRetries && this.isLive) {
                             const delay = Math.pow(2, retries) * 1000;
                             this.error = `Failed to load data. Retrying in ${delay/1000}s...`;
                             await new Promise(r => setTimeout(r, delay));
@@ -3523,17 +3535,6 @@
                         if (Object.keys(this.autoscale).length === 0) this.loading.autoscale = true;
                         try { this.autoscale = await this.fetchWithRetry('{{ route("queue-monitor.dashboard.autoscale") }}'); } catch (e) { console.error('fetchAutoscale error:', e); } finally { this.loading.autoscale = false; }
                     });
-                },
-
-                startAutoscaleAutoRefresh() {
-                    this.stopAutoscaleAutoRefresh();
-                    this.autoscaleRefreshInterval = setInterval(() => {
-                        if (this.isLive && this.activeTab === 'autoscale') this.fetchAutoscale();
-                    }, 5000);
-                },
-
-                stopAutoscaleAutoRefresh() {
-                    if (this.autoscaleRefreshInterval) { clearInterval(this.autoscaleRefreshInterval); this.autoscaleRefreshInterval = null; }
                 },
 
                 // ========== ACTIONS ==========
