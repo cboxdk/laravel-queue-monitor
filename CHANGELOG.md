@@ -2,6 +2,22 @@
 
 All notable changes to `laravel-queue-monitor` will be documented in this file.
 
+## v1.10.0 — Contracts-first and typed read models - 2026-08-26
+
+An internal architecture pass with no change to any JSON response, dashboard, CLI, or configuration behaviour — every existing test passes unchanged, which is the guarantee that output is byte-for-key identical.
+
+### Maintenance
+
+- **Contracts-first throughout.** The six service classes (alerting, health, infrastructure, export, dashboard cache, worker context) now sit behind interfaces bound via a `services` config map, mirroring the repository binding. A host overrides or fakes any of them by rebinding its contract — the same replacement model the repositories already used, now uniform across the package. An arch test enforces final-by-default on the domain namespaces, so behaviour changes by rebinding a contract, never by subclassing an implementation. (#40, #41)
+- **The whole read path flows typed.** The statistics repository and the four read services return 24 `final readonly` value objects instead of `array<string,mixed>` bags. Each implements `Arrayable` + `JsonSerializable` + `ArrayAccess`, so responses, the dashboard, the terminal UI, and `--json` output are unchanged; arrays remain only at true serialization edges (external Horizon/autoscale telemetry with runtime-variable shapes). (#43, #44)
+- Single-sourced the health-score formula (it lived in two places, one without a div-by-zero guard) and the alerting thresholds (they hardcoded values the health checks read from `queue-monitor.health.*`, so raising a threshold made the two disagree); added `error_rate_critical_threshold` for the alert escalation. (#40, #42)
+- Fixed a contract-downcast that would fatal the drill-down endpoint for any host binding a custom statistics repository, promoted three service-location call sites to constructor injection, and removed dead code (an unused form request and two command options that were never read). (#40)
+- Set the test suite memory limit to 512M in the composer script and CI, matching the sibling packages — the suite had grown to sit right at PHP's default 128MB CLI limit. (#43)
+
+### Note for contract implementers
+
+If you implement `StatisticsRepositoryContract` or one of the new `Services\Contracts\*` interfaces directly, the read methods now declare value-object return types instead of `array`. Update your implementations' return types accordingly (or return the shipped value objects). Consumers of these methods need no change — the value objects array-access and serialize exactly like the arrays they replaced.
+
 ## v1.9.0 — Scaling timeline and a hardening pass - 2026-08-26
 
 ### Features
@@ -336,6 +352,7 @@ First stable release of Queue Monitor for Laravel - a comprehensive job monitori
 
 ```bash
 composer require cboxdk/laravel-queue-monitor
+
 
 
 
