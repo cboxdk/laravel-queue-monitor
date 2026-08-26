@@ -350,6 +350,16 @@
             cursor: pointer;
         }
 
+        .qm-nav-item:focus-visible,
+        .qm-chip:focus-visible,
+        .qm-icon-button:focus-visible,
+        .qm-segment:focus-visible,
+        .qm-action-button:focus-visible,
+        .qm-queue-bar:focus-visible {
+            outline: 2px solid var(--qm-blue, #2563eb);
+            outline-offset: 2px;
+        }
+
         .qm-content {
             padding: 24px 28px 34px;
             display: grid;
@@ -1172,6 +1182,17 @@
         .stagger-in > *:nth-child(5) { animation-delay: 160ms; }
         .stagger-in > *:nth-child(6) { animation-delay: 200ms; }
 
+        @media (prefers-reduced-motion: reduce) {
+            .shimmer,
+            .pulse-dot,
+            .pulse-alert,
+            .stagger-in > *,
+            .animate-pulse,
+            .animate-spin {
+                animation: none !important;
+            }
+        }
+
         /* Scrollbar */
         .custom-scroll::-webkit-scrollbar { width: 5px; }
         .custom-scroll::-webkit-scrollbar-track { background: transparent; }
@@ -1208,7 +1229,7 @@
     <div class="qm-app">
         <div class="qm-mobile-overlay" :class="{ 'open': mobileMenuOpen }" @click="mobileMenuOpen = false" aria-hidden="true"></div>
 
-        <aside class="qm-sidebar" :class="{ 'open': mobileMenuOpen }">
+        <aside class="qm-sidebar" :class="{ 'open': mobileMenuOpen }" :aria-hidden="isMobile && !mobileMenuOpen ? 'true' : null" :inert="isMobile && !mobileMenuOpen">
             <a :href="dashboardUrl" class="qm-brand">
                 <div class="qm-brand-mark">Q</div>
                 <div>
@@ -1220,19 +1241,11 @@
             <nav class="qm-nav-section" aria-label="Primary navigation">
                 <div class="qm-nav-title">Monitor</div>
                 <template x-for="tab in sidebarTabs" :key="tab.id">
-                    <button type="button" class="qm-nav-item" :class="{ 'active': activeTab === tab.id && !jobView && !drillDown }" x-show="!tab.horizon || horizonAvailable" @click="navigateTo(tab.id)">
+                    <button type="button" class="qm-nav-item" :class="{ 'active': activeTab === tab.id && !jobView && !drillDown }" :aria-current="activeTab === tab.id && !jobView && !drillDown ? 'page' : null" x-show="!tab.horizon || horizonAvailable" @click="navigateTo(tab.id)">
                         <svg viewBox="0 0 24 24" x-html="tab.svg"></svg>
                         <span x-text="tab.label"></span>
                     </button>
                 </template>
-            </nav>
-
-            <nav class="qm-nav-section" aria-label="Administration navigation">
-                <div class="qm-nav-title">Admin</div>
-                <button type="button" class="qm-nav-item" @click="navigateTo('health')">
-                    <svg viewBox="0 0 24 24"><path d="M12 15.5A3.5 3.5 0 1 0 12 8a3.5 3.5 0 0 0 0 7.5z"></path><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.7 1.7 0 0 0 15 19.37a1.7 1.7 0 0 0-1 .28 1.7 1.7 0 0 0-.8 1.45V21a2 2 0 0 1-4 0v-.09a1.7 1.7 0 0 0-.8-1.45 1.7 1.7 0 0 0-1-.28 1.7 1.7 0 0 0-1.88.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.63 15a1.7 1.7 0 0 0-.28-1 1.7 1.7 0 0 0-1.45-.8H3a2 2 0 0 1 0-4h.09a1.7 1.7 0 0 0 1.45-.8 1.7 1.7 0 0 0 .28-1 1.7 1.7 0 0 0-.34-1.88l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.63a1.7 1.7 0 0 0 1-.28 1.7 1.7 0 0 0 .8-1.45V3a2 2 0 0 1 4 0v.09a1.7 1.7 0 0 0 .8 1.45 1.7 1.7 0 0 0 1 .28 1.7 1.7 0 0 0 1.88-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.37 9c0 .36.1.7.28 1 .3.5.84.8 1.45.8H21a2 2 0 0 1 0 4h-.09a1.7 1.7 0 0 0-1.45.8 1.7 1.7 0 0 0-.06.4z"></path></svg>
-                    <span>Settings</span>
-                </button>
             </nav>
 
             <div class="qm-sidebar-footer">
@@ -1243,7 +1256,7 @@
 
         <div class="qm-main">
             <header class="qm-topbar">
-                <button type="button" class="qm-menu-button" aria-label="Open navigation" @click="mobileMenuOpen = true">
+                <button type="button" class="qm-menu-button" aria-label="Open navigation" :aria-expanded="mobileMenuOpen" @click="mobileMenuOpen = true">
                     <svg viewBox="0 0 24 24"><path d="M4 7h16"></path><path d="M4 12h16"></path><path d="M4 17h16"></path></svg>
                 </button>
 
@@ -1255,7 +1268,7 @@
                 <div class="qm-toolbar">
                     <label class="qm-search">
                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21 21-4.3-4.3"></path><circle cx="11" cy="11" r="7"></circle></svg>
-                        <input type="text" x-model="filters.search" @keydown.enter.prevent="navigateTo('jobs'); resetPaginationAndFetch()" placeholder="Search job, queue, UUID">
+                        <input type="text" x-model="filters.search" @keydown.enter.prevent="pagination.offset = 0; selectedJobs = []; navigateTo('jobs')" aria-label="Search jobs" placeholder="Search job, queue, UUID">
                     </label>
 
                     <button type="button" class="qm-chip" :class="{ live: isLive }" :aria-pressed="isLive" @click="toggleLive()">
@@ -1283,13 +1296,13 @@
             </div>
 
             {{-- ==================== TAB CONTENT (hidden when viewing job detail or drill-down) ==================== --}}
-            <div x-show="!jobView && !drillDown">
+            <div x-show="!jobView && !drillDown" x-cloak>
 
             {{-- ==================== OVERVIEW TAB ==================== --}}
             <div x-show="activeTab === 'overview'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0">
                 <div class="qm-metrics">
                     <article class="qm-metric">
-                        <div class="qm-metric-head"><span>Failed jobs</span><span class="qm-status qm-bad" x-text="formatNumber(overview.stats.failed || 0)">0</span></div>
+                        <div class="qm-metric-head"><span>Failure rate</span><span class="qm-status qm-bad" x-text="formatNumber(overview.stats.failed || 0)">0</span></div>
                         <div class="qm-metric-value" x-text="failureRateLabel()">0%</div>
                         <div class="qm-metric-foot"><span class="qm-delta" :class="(overview.stats.failed || 0) > 0 ? 'qm-bad' : 'qm-good'" x-text="(overview.stats.failed || 0) > 0 ? 'Watch' : 'Clean'">Clean</span><span>last 24h failure share</span></div>
                     </article>
@@ -1304,12 +1317,12 @@
                         <div class="qm-metric-foot"><span class="qm-delta" :class="(overview.stats.avg_duration_ms || 0) > 8000 ? 'qm-warn' : 'qm-good'" x-text="(overview.stats.avg_duration_ms || 0) > 8000 ? 'Above target' : 'On target'">On target</span><span>average runtime</span></div>
                     </article>
                     <article class="qm-metric">
-                        <div class="qm-metric-head"><span>Workers</span><span class="qm-status qm-good" x-text="workerStatusLabel()">Healthy</span></div>
+                        <div class="qm-metric-head"><span>Workers</span><span class="qm-status" :class="workerStatusTone()" x-text="workerStatusLabel()">Healthy</span></div>
                         <div class="qm-metric-value" x-text="workerCountLabel()">-</div>
-                        <div class="qm-metric-foot"><span class="qm-delta qm-good" x-text="autoscaleStatusLabel()">Ready</span><span>autoscale signal</span></div>
+                        <div class="qm-metric-foot"><span class="qm-delta" :class="autoscaleStatusTone()" x-text="autoscaleStatusLabel()">Ready</span><span>autoscale signal</span></div>
                     </article>
                     <article class="qm-metric">
-                        <div class="qm-metric-head"><span>Throughput</span><span class="qm-status qm-good">Stable</span></div>
+                        <div class="qm-metric-head"><span>Throughput</span><span class="qm-status" :class="throughputTotal() > 0 ? 'qm-good' : 'qm-info'" x-text="throughputTotal() > 0 ? 'Active' : 'Idle'">Idle</span></div>
                         <div class="qm-metric-value" x-text="formatCompact(throughputTotal())">0</div>
                         <div class="qm-metric-foot"><span class="qm-delta qm-good" x-text="formatNumber(overview.stats.total || 0)">0</span><span>jobs in current window</span></div>
                     </article>
@@ -1370,15 +1383,15 @@
                                     </thead>
                                     <tbody>
                                         <template x-for="job in attentionJobs().slice(0, 6)" :key="job.uuid">
-                                            <tr class="cursor-pointer" title="Select job" :class="{ 'selected': selectedOverviewJob()?.uuid === job.uuid }" @click="selectedOverviewUuid = job.uuid">
+                                            <tr class="cursor-pointer" title="Select job" :class="{ 'selected': selectedOverviewJob()?.uuid === job.uuid }" tabindex="0" role="button" @click="selectedOverviewUuid = job.uuid" @keydown.enter="selectedOverviewUuid = job.uuid" @keydown.space.prevent="selectedOverviewUuid = job.uuid">
                                                 <td><span class="qm-status" :class="statusTone(job.status?.value)" x-text="job.status?.label || job.status?.value || 'Unknown'"></span></td>
                                                 <td><strong x-text="job.job_class"></strong><span x-text="job.uuid ? 'uuid ' + job.uuid.slice(0, 8) : ''"></span></td>
                                                 <td x-text="job.queue || '-'"></td>
                                                 <td x-text="attemptLabel(job)"></td>
-                                                <td x-text="formatDuration(job.pickup_time_ms || job.duration_ms)"></td>
+                                                <td x-text="formatDuration(job.pickup_time_ms ?? job.duration_ms)"></td>
                                                 <td x-text="formatDuration(job.duration_ms)"></td>
                                                 <td x-text="job.server || job.server_name || '-'"></td>
-                                                <td x-text="job.queued_at || '-'"></td>
+                                                <td x-text="formatTime(job.queued_at)"></td>
                                             </tr>
                                         </template>
                                     </tbody>
@@ -1406,7 +1419,7 @@
                                 <div><span>Queue</span><strong x-text="selectedOverviewJob()?.queue || '-'"></strong></div>
                                 <div><span>Attempts</span><strong x-text="attemptLabel(selectedOverviewJob())"></strong></div>
                                 <div><span>Server</span><strong x-text="selectedOverviewJob()?.server || selectedOverviewJob()?.server_name || '-'"></strong></div>
-                                <div><span>Updated</span><strong x-text="selectedOverviewJob()?.queued_at || '-'"></strong></div>
+                                <div><span>Updated</span><strong x-text="formatTime(selectedOverviewJob()?.queued_at)"></strong></div>
                                 <div><span>Runtime</span><strong x-text="formatDuration(selectedOverviewJob()?.duration_ms)"></strong></div>
                                 <div><span>Impact</span><strong x-text="selectedOverviewJob()?.is_failed ? 'Retry required' : 'Monitor'"></strong></div>
                             </div>
@@ -1416,7 +1429,7 @@
                                 <span x-text="selectedOverviewJob()?.is_failed ? 'Inspect the exception and retry after correction.' : 'Continue monitoring current throughput.'"></span>
                             </div>
 
-                            <div class="qm-trace" x-text="selectedOverviewJob()?.error || selectedOverviewJob()?.uuid || 'No exception captured for this job.'"></div>
+                            <div class="qm-trace" x-text="selectedOverviewJob()?.error || 'No exception captured for this job.'"></div>
 
                             <div class="qm-action-row">
                                 <button type="button" class="qm-action-button primary" @click="replayJob(selectedOverviewJob()?.uuid)">Retry</button>
@@ -1437,7 +1450,7 @@
                                 <strong>Autoscale</strong>
                                 <span>Worker allocation by queue group</span>
                             </div>
-                            <span class="qm-status qm-good" x-text="autoscaleStatusLabel()">Ready</span>
+                            <span class="qm-status" :class="autoscaleStatusTone()" x-text="autoscaleStatusLabel()">Ready</span>
                         </div>
                         <div class="qm-health-list">
                             <template x-for="q in overview.queues.slice(0, 3)" :key="'auto-' + q.queue">
@@ -1480,7 +1493,7 @@
                             <span class="qm-status qm-info" x-text="formatNumber((overview.alerts?.active || []).length) + ' open'">0 open</span>
                         </div>
                         <div class="qm-health-list">
-                            <template x-for="alert in (overview.alerts?.active || []).slice(0, 3)" :key="alert.message">
+                            <template x-for="(alert, idx) in (overview.alerts?.active || []).slice(0, 3)" :key="idx">
                                 <div class="qm-health-item">
                                     <div><strong x-text="alert.message"></strong><span x-text="alert.type || 'queue monitor'"></span></div>
                                     <span class="qm-status" :class="alert.severity === 'critical' ? 'qm-bad' : (alert.severity === 'warning' ? 'qm-warn' : 'qm-info')" x-text="alert.severity || 'info'"></span>
@@ -1609,29 +1622,29 @@
                         <table class="min-w-full divide-y divide-gray-100">
                             <thead>
                                 <tr class="bg-gray-50/60">
-                                    <th class="px-4 py-2.5 w-10"><input type="checkbox" @change="toggleAllJobs($event)" :checked="selectedJobs.length > 0 && selectedJobs.length === jobs.data.length" class="rounded border-gray-300 text-brand focus:ring-brand"></th>
-                                    <th class="px-4 py-2.5 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider cursor-pointer select-none" @click="toggleSort('status')"><span class="flex items-center gap-1">Status <span x-text="sortIndicator('status')"></span></span></th>
-                                    <th class="px-4 py-2.5 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider cursor-pointer select-none" @click="toggleSort('job_class')"><span class="flex items-center gap-1">Job <span x-text="sortIndicator('job_class')"></span></span></th>
+                                    <th class="px-4 py-2.5 w-10"><input type="checkbox" aria-label="Select all jobs on this page" @change="toggleAllJobs($event)" :checked="selectedJobs.length > 0 && selectedJobs.length === jobs.data.length" x-effect="$el.indeterminate = selectedJobs.length > 0 && selectedJobs.length < jobs.data.length" class="rounded border-gray-300 text-brand focus:ring-brand"></th>
+                                    <th class="px-4 py-2.5 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider" :aria-sort="ariaSort('status')"><button type="button" class="inline-flex items-center gap-1 uppercase cursor-pointer select-none" @click="toggleSort('status')">Status <span x-text="sortIndicator('status')"></span></button></th>
+                                    <th class="px-4 py-2.5 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider" :aria-sort="ariaSort('job_class')"><button type="button" class="inline-flex items-center gap-1 uppercase cursor-pointer select-none" @click="toggleSort('job_class')">Job <span x-text="sortIndicator('job_class')"></span></button></th>
                                     <th class="px-4 py-2.5 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider">Queue</th>
-                                    <th class="px-4 py-2.5 text-right text-[10px] font-bold text-gray-400 uppercase tracking-wider cursor-pointer select-none" @click="toggleSort('duration_ms')"><span class="flex items-center gap-1 justify-end">Duration <span x-text="sortIndicator('duration_ms')"></span></span></th>
+                                    <th class="px-4 py-2.5 text-right text-[10px] font-bold text-gray-400 uppercase tracking-wider" :aria-sort="ariaSort('duration_ms')"><button type="button" class="inline-flex items-center gap-1 uppercase cursor-pointer select-none" @click="toggleSort('duration_ms')">Duration <span x-text="sortIndicator('duration_ms')"></span></button></th>
                                     <th class="px-4 py-2.5 text-right text-[10px] font-bold text-gray-400 uppercase tracking-wider">CPU</th>
                                     <th class="px-4 py-2.5 text-right text-[10px] font-bold text-gray-400 uppercase tracking-wider">Memory</th>
                                     <th class="px-4 py-2.5 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider">Server</th>
                                     <th class="px-4 py-2.5 text-center text-[10px] font-bold text-gray-400 uppercase tracking-wider">Attempt</th>
-                                    <th class="px-4 py-2.5 text-right text-[10px] font-bold text-gray-400 uppercase tracking-wider cursor-pointer select-none" @click="toggleSort('queued_at')"><span class="flex items-center gap-1 justify-end">Time <span x-text="sortIndicator('queued_at')"></span></span></th>
+                                    <th class="px-4 py-2.5 text-right text-[10px] font-bold text-gray-400 uppercase tracking-wider" :aria-sort="ariaSort('queued_at')"><button type="button" class="inline-flex items-center gap-1 uppercase cursor-pointer select-none" @click="toggleSort('queued_at')">Time <span x-text="sortIndicator('queued_at')"></span></button></th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-50">
                                 <template x-if="loading.jobs">
                                     <template x-for="i in 8" :key="'jskel-'+i">
-                                        <tr><td class="px-4 py-3"><div class="h-4 w-4 shimmer rounded"></div></td><td class="px-4 py-3"><div class="h-5 w-16 shimmer rounded-full"></div></td><td class="px-4 py-3"><div class="h-4 w-36 shimmer rounded"></div></td><td class="px-4 py-3"><div class="h-4 w-16 shimmer rounded"></div></td><td class="px-4 py-3"><div class="h-4 w-14 shimmer rounded ml-auto"></div></td><td class="px-4 py-3"><div class="h-4 w-20 shimmer rounded"></div></td><td class="px-4 py-3"><div class="h-4 w-6 shimmer rounded mx-auto"></div></td><td class="px-4 py-3"><div class="h-4 w-24 shimmer rounded ml-auto"></div></td></tr>
+                                        <tr><td class="px-4 py-3"><div class="h-4 w-4 shimmer rounded"></div></td><td class="px-4 py-3"><div class="h-5 w-16 shimmer rounded-full"></div></td><td class="px-4 py-3"><div class="h-4 w-36 shimmer rounded"></div></td><td class="px-4 py-3"><div class="h-4 w-16 shimmer rounded"></div></td><td class="px-4 py-3"><div class="h-4 w-14 shimmer rounded ml-auto"></div></td><td class="px-4 py-3"><div class="h-4 w-10 shimmer rounded ml-auto"></div></td><td class="px-4 py-3"><div class="h-4 w-10 shimmer rounded ml-auto"></div></td><td class="px-4 py-3"><div class="h-4 w-20 shimmer rounded"></div></td><td class="px-4 py-3"><div class="h-4 w-6 shimmer rounded mx-auto"></div></td><td class="px-4 py-3"><div class="h-4 w-24 shimmer rounded ml-auto"></div></td></tr>
                                     </template>
                                 </template>
                                 <template x-if="!loading.jobs">
                                     <template x-for="job in jobs.data" :key="job.uuid">
-                                        <tr class="hover:bg-brand-faint/40 cursor-pointer transition-colors" @click="openJobView(job.uuid)">
+                                        <tr class="hover:bg-brand-faint/40 cursor-pointer transition-colors" tabindex="0" role="button" @click="openJobView(job.uuid)" @keydown.enter="openJobView(job.uuid)" @keydown.space.prevent="openJobView(job.uuid)">
                                             <td class="px-4 py-2.5" @click.stop><input type="checkbox" :value="job.uuid" x-model="selectedJobs" class="rounded border-gray-300 text-brand focus:ring-brand"></td>
-                                            <td class="px-4 py-2.5 whitespace-nowrap"><span class="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold" :class="statusClass(job.status.value)" x-text="job.status.label"></span></td>
+                                            <td class="px-4 py-2.5 whitespace-nowrap"><span class="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold" :class="statusClass(job.status?.value)" x-text="job.status?.label"></span></td>
                                             <td class="px-4 py-2.5 whitespace-nowrap">
                                                 <div class="flex items-center gap-1.5">
                                                     <span class="text-sm font-mono text-brand hover:underline drill-arrow" x-text="job.job_class" @click.stop="openDrillDown('job_class', job.full_job_class || job.job_class)"></span>
@@ -1694,7 +1707,7 @@
                         <div class="px-5 py-4 border-b border-gray-100"><h4 class="text-sm font-semibold text-gray-900">Per-Queue Statistics</h4></div>
                         <div class="overflow-x-auto">
                             <table class="min-w-full divide-y divide-gray-100">
-                                <thead><tr class="bg-gray-50/60"><th class="px-4 py-2.5 text-left text-[10px] font-bold text-gray-400 uppercase">Queue</th><th class="px-4 py-2.5 text-right text-[10px] font-bold text-gray-400 uppercase">Total</th><th class="px-4 py-2.5 text-right text-[10px] font-bold text-gray-400 uppercase">Completed</th><th class="px-4 py-2.5 text-right text-[10px] font-bold text-gray-400 uppercase">Failed</th><th class="px-4 py-2.5 text-right text-[10px] font-bold text-gray-400 uppercase">Avg ms</th><th class="px-4 py-2.5 text-right text-[10px] font-bold text-gray-400 uppercase">Success %</th></tr></thead>
+                                <thead><tr class="bg-gray-50/60"><th class="px-4 py-2.5 text-left text-[10px] font-bold text-gray-400 uppercase">Queue</th><th class="px-4 py-2.5 text-right text-[10px] font-bold text-gray-400 uppercase">Total</th><th class="px-4 py-2.5 text-right text-[10px] font-bold text-gray-400 uppercase">Completed</th><th class="px-4 py-2.5 text-right text-[10px] font-bold text-gray-400 uppercase">Failed</th><th class="px-4 py-2.5 text-right text-[10px] font-bold text-gray-400 uppercase">Avg Duration</th><th class="px-4 py-2.5 text-right text-[10px] font-bold text-gray-400 uppercase">Success %</th></tr></thead>
                                 <tbody class="divide-y divide-gray-50">
                                     <template x-for="q in (analytics.queues || [])" :key="q.queue">
                                         <tr class="hover:bg-gray-50/60">
@@ -1702,8 +1715,8 @@
                                             <td class="px-4 py-2.5 text-sm text-gray-500 text-right tabular-nums" x-text="formatNumber(q.total_jobs)"></td>
                                             <td class="px-4 py-2.5 text-sm text-emerald-600 text-right tabular-nums" x-text="formatNumber(q.completed)"></td>
                                             <td class="px-4 py-2.5 text-sm text-red-600 text-right tabular-nums" x-text="formatNumber(q.failed)"></td>
-                                            <td class="px-4 py-2.5 text-sm text-gray-500 text-right tabular-nums" x-text="formatNumber(q.avg_duration_ms, 0)"></td>
-                                            <td class="px-4 py-2.5 text-sm text-right font-medium tabular-nums" :class="q.success_rate >= 95 ? 'text-emerald-600' : q.success_rate >= 80 ? 'text-amber-600' : 'text-red-600'" x-text="formatNumber(q.success_rate, 1) + '%'"></td>
+                                            <td class="px-4 py-2.5 text-sm text-gray-500 text-right tabular-nums" x-text="formatDuration(q.avg_duration_ms)"></td>
+                                            <td class="px-4 py-2.5 text-sm text-right font-medium tabular-nums" :class="q.success_rate >= 95 ? 'text-emerald-600' : q.success_rate >= 80 ? 'text-amber-600' : 'text-red-600'" x-text="formatPercent(q.success_rate)"></td>
                                         </tr>
                                     </template>
                                 </tbody>
@@ -1717,14 +1730,14 @@
                         <div class="px-5 py-4 border-b border-gray-100"><h4 class="text-sm font-semibold text-gray-900">Per-Server Statistics</h4></div>
                         <div class="overflow-x-auto">
                             <table class="min-w-full divide-y divide-gray-100">
-                                <thead><tr class="bg-gray-50/60"><th class="px-4 py-2.5 text-left text-[10px] font-bold text-gray-400 uppercase">Server</th><th class="px-4 py-2.5 text-right text-[10px] font-bold text-gray-400 uppercase">Jobs</th><th class="px-4 py-2.5 text-right text-[10px] font-bold text-gray-400 uppercase">Avg ms</th><th class="px-4 py-2.5 text-right text-[10px] font-bold text-gray-400 uppercase">Success %</th></tr></thead>
+                                <thead><tr class="bg-gray-50/60"><th class="px-4 py-2.5 text-left text-[10px] font-bold text-gray-400 uppercase">Server</th><th class="px-4 py-2.5 text-right text-[10px] font-bold text-gray-400 uppercase">Jobs</th><th class="px-4 py-2.5 text-right text-[10px] font-bold text-gray-400 uppercase">Avg Duration</th><th class="px-4 py-2.5 text-right text-[10px] font-bold text-gray-400 uppercase">Success %</th></tr></thead>
                                 <tbody class="divide-y divide-gray-50">
                                     <template x-for="s in (analytics.servers || [])" :key="s.server_name">
                                         <tr class="hover:bg-gray-50/60">
                                             <td class="px-4 py-2.5 text-sm font-mono text-brand hover:underline cursor-pointer drill-arrow" x-text="s.server_name" @click="openDrillDown('server', s.server_name)"></td>
                                             <td class="px-4 py-2.5 text-sm text-gray-500 text-right tabular-nums" x-text="formatNumber(s.total_jobs)"></td>
-                                            <td class="px-4 py-2.5 text-sm text-gray-500 text-right tabular-nums" x-text="formatNumber(s.avg_duration_ms, 0)"></td>
-                                            <td class="px-4 py-2.5 text-sm text-gray-500 tabular-nums" x-text="formatNumber(s.success_rate, 1) + '%'"></td>
+                                            <td class="px-4 py-2.5 text-sm text-gray-500 text-right tabular-nums" x-text="formatDuration(s.avg_duration_ms)"></td>
+                                            <td class="px-4 py-2.5 text-sm text-gray-500 text-right tabular-nums" x-text="formatPercent(s.success_rate)"></td>
                                         </tr>
                                     </template>
                                 </tbody>
@@ -1736,7 +1749,7 @@
                         <div class="px-5 py-4 border-b border-gray-100"><h4 class="text-sm font-semibold text-gray-900">Failure Patterns</h4></div>
                         <div class="overflow-x-auto">
                             <table class="min-w-full divide-y divide-gray-100">
-                                <thead><tr class="bg-gray-50/60"><th class="px-4 py-2.5 text-left text-[10px] font-bold text-gray-400 uppercase">Exception</th><th class="px-4 py-2.5 text-right text-[10px] font-bold text-gray-400 uppercase">Count</th><th class="px-4 py-2.5 text-left text-[10px] font-bold text-gray-400 uppercase">Affected Jobs</th></tr></thead>
+                                <thead><tr class="bg-gray-50/60"><th class="px-4 py-2.5 text-left text-[10px] font-bold text-gray-400 uppercase">Exception</th><th class="px-4 py-2.5 text-right text-[10px] font-bold text-gray-400 uppercase">Count</th><th class="px-4 py-2.5 text-right text-[10px] font-bold text-gray-400 uppercase">Affected Jobs</th></tr></thead>
                                 <tbody class="divide-y divide-gray-50">
                                     <template x-for="fp in (analytics.failure_patterns?.top_exceptions || [])" :key="fp.exception_class">
                                         <tr class="hover:bg-gray-50/60">
@@ -1828,7 +1841,7 @@
                 <div class="mt-6 bg-white border border-gray-200/80 rounded-xl shadow-sm overflow-hidden">
                     <div class="px-5 py-4 border-b border-gray-100"><h4 class="text-sm font-semibold text-gray-900">Active Alerts</h4></div>
                     <div class="divide-y divide-gray-50">
-                        <template x-for="alert in (health.alerts?.active || [])" :key="alert.message">
+                        <template x-for="(alert, idx) in (health.alerts?.active || [])" :key="idx">
                             <div class="px-5 py-3 flex items-start gap-3">
                                 <span class="mt-0.5 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase" :class="{ 'bg-red-100 text-red-700': alert.severity === 'critical', 'bg-amber-100 text-amber-700': alert.severity === 'warning', 'bg-blue-100 text-blue-700': alert.severity === 'info' }" x-text="alert.severity"></span>
                                 <span class="text-sm text-gray-700" x-text="alert.message"></span>
@@ -1996,7 +2009,7 @@
                                         <circle cx="80" cy="80" r="65" fill="none" stroke="url(#gaugeGradient)" stroke-width="12" stroke-linecap="round" :stroke-dasharray="(2 * Math.PI * 65 * (infrastructure.scaling?.utilization?.percentage ?? 0) / 100) + ' ' + (2 * Math.PI * 65)" transform="rotate(-90 80 80)" style="transition: stroke-dasharray 0.6s ease" />
                                     </svg>
                                     <div class="absolute inset-0 flex flex-col items-center justify-center">
-                                        <span class="text-4xl font-bold tabular-nums" :class="(infrastructure.scaling?.utilization?.percentage ?? 0) > 85 ? 'text-red-600' : (infrastructure.scaling?.utilization?.percentage ?? 0) > 60 ? 'text-emerald-600' : (infrastructure.scaling?.utilization?.percentage ?? 0) > 30 ? 'text-amber-600' : 'text-gray-500'" x-text="(infrastructure.scaling?.utilization?.percentage ?? 0) + '%'"></span>
+                                        <span class="text-4xl font-bold tabular-nums" :class="(infrastructure.scaling?.utilization?.percentage ?? 0) > 85 ? 'text-red-600' : (infrastructure.scaling?.utilization?.percentage ?? 0) > 60 ? 'text-amber-600' : (infrastructure.scaling?.utilization?.percentage ?? 0) > 0 ? 'text-emerald-600' : 'text-gray-500'" x-text="formatPercent(infrastructure.scaling?.utilization?.percentage ?? 0)"></span>
                                         <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mt-1">Utilization</span>
                                     </div>
                                 </div>
@@ -2088,7 +2101,7 @@
                                                 <td class="px-4 py-2.5 text-sm text-gray-600 text-right tabular-nums" x-text="formatDuration(q.avg_duration_ms)"></td>
                                                 <td class="px-4 py-2.5 text-sm text-gray-600 text-right tabular-nums" x-text="q.max_jobs_per_minute"></td>
                                                 <td class="px-4 py-2.5 text-sm text-gray-600 text-right tabular-nums" x-text="q.peak_jobs_per_minute"></td>
-                                                <td class="px-4 py-2.5 text-sm text-right tabular-nums" :class="q.headroom_percent < 15 ? 'text-red-600 font-semibold' : q.headroom_percent < 40 ? 'text-amber-600' : 'text-gray-600'" x-text="q.headroom_percent + '%'"></td>
+                                                <td class="px-4 py-2.5 text-sm text-right tabular-nums" :class="q.headroom_percent < 15 ? 'text-red-600 font-semibold' : q.headroom_percent < 40 ? 'text-amber-600' : 'text-gray-600'" x-text="formatPercent(q.headroom_percent)"></td>
                                                 <td class="px-4 py-2.5 text-center"><span class="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold" :class="{ 'bg-blue-100 text-blue-700': q.status === 'over_provisioned', 'bg-emerald-50 text-emerald-700': q.status === 'optimal', 'bg-red-50 text-red-700': q.status === 'at_capacity', 'bg-gray-100 text-gray-600': q.status === 'no_data' }" x-text="q.status === 'over_provisioned' ? 'Over-provisioned' : q.status === 'at_capacity' ? 'At Capacity' : q.status === 'optimal' ? 'Optimal' : 'No Data'"></span></td>
                                             </tr>
                                         </template>
@@ -2112,7 +2125,7 @@
                                             <span class="text-[10px] font-medium text-gray-400" x-text="'<' + sla.target_seconds + 's target'"></span>
                                         </div>
                                         <div class="flex items-baseline gap-2 mb-2">
-                                            <span class="text-2xl font-bold tabular-nums" :class="sla.compliance >= 99 ? 'text-emerald-600' : sla.compliance >= 95 ? 'text-amber-600' : 'text-red-600'" x-text="sla.compliance + '%'"></span>
+                                            <span class="text-2xl font-bold tabular-nums" :class="sla.compliance >= 99 ? 'text-emerald-600' : sla.compliance >= 95 ? 'text-amber-600' : 'text-red-600'" x-text="formatPercent(sla.compliance)"></span>
                                             <span class="text-[11px] text-gray-400" x-text="sla.within + '/' + sla.total + ' jobs'"></span>
                                         </div>
                                         <div class="w-full bg-gray-100 rounded-full h-2"><div class="h-2 rounded-full transition-all duration-500" :class="sla.compliance >= 99 ? 'bg-emerald-500' : sla.compliance >= 95 ? 'bg-amber-500' : 'bg-red-500'" :style="'width: ' + sla.compliance + '%'"></div></div>
@@ -2126,12 +2139,12 @@
                         {{-- Horizon Workload --}}
                         <div x-show="infrastructure.workers?.available && (infrastructure.workers?.workload || []).length > 0" class="bg-white border border-gray-200/80 rounded-xl shadow-sm overflow-hidden">
                                 <div class="px-5 py-4 border-b border-gray-100"><h4 class="text-sm font-semibold text-gray-900">Horizon Workload</h4></div>
-                                <div x-show="(infrastructure.workers?.workload || []).every(w => w.length === 0 && w.wait === 0)" class="py-10 text-center">
+                                <div x-show="(infrastructure.workers?.workload || []).length > 0 && (infrastructure.workers?.workload || []).every(w => w.length === 0 && w.wait === 0)" class="py-10 text-center">
                                     <div class="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-emerald-50 mb-2"><svg class="h-5 w-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></div>
                                     <p class="text-sm text-emerald-600 font-medium">All queues clear</p>
                                     <p class="text-[11px] text-gray-400 mt-1">No pending jobs across <span x-text="(infrastructure.workers?.workload || []).length"></span> queues</p>
                                 </div>
-                                <div x-show="!(infrastructure.workers?.workload || []).every(w => w.length === 0 && w.wait === 0)" class="divide-y divide-gray-50">
+                                <div x-show="!((infrastructure.workers?.workload || []).length > 0 && (infrastructure.workers?.workload || []).every(w => w.length === 0 && w.wait === 0))" class="divide-y divide-gray-50">
                                     <template x-for="w in (infrastructure.workers?.workload || [])" :key="w.queue">
                                         <div class="px-5 py-3">
                                             <div class="flex items-center justify-between mb-1.5">
@@ -2296,7 +2309,7 @@
                                         </div>
                                         <div class="flex items-center gap-3 text-[11px] text-gray-400">
                                             <span><span class="font-semibold text-gray-700" x-text="autoscale.live?.total_workers ?? 0"></span> / <span x-text="autoscale.live?.total_worker_capacity ?? 0"></span> workers</span>
-                                            <span><span class="font-semibold" :class="(autoscale.live?.utilization_percent ?? 0) > 85 ? 'text-red-600' : (autoscale.live?.utilization_percent ?? 0) > 60 ? 'text-amber-600' : 'text-gray-700'" x-text="Math.round(autoscale.live?.utilization_percent ?? 0) + '%'"></span> utilization</span>
+                                            <span><span class="font-semibold" :class="(autoscale.live?.utilization_percent ?? 0) > 85 ? 'text-red-600' : (autoscale.live?.utilization_percent ?? 0) > 60 ? 'text-amber-600' : 'text-gray-700'" x-text="formatPercent(autoscale.live?.utilization_percent ?? 0, 0)"></span> utilization</span>
                                         </div>
                                     </div>
                                 </div>
@@ -2341,7 +2354,7 @@
                                                             <div class="w-12 bg-gray-100 rounded-full h-1.5">
                                                                 <div class="h-1.5 rounded-full transition-all" :class="(host.cpu_percent ?? 0) > 85 ? 'bg-red-500' : (host.cpu_percent ?? 0) > 60 ? 'bg-amber-500' : 'bg-emerald-500'" :style="'width: ' + Math.min(host.cpu_percent ?? 0, 100) + '%'"></div>
                                                             </div>
-                                                            <span class="tabular-nums font-medium" :class="(host.cpu_percent ?? 0) > 85 ? 'text-red-600' : (host.cpu_percent ?? 0) > 60 ? 'text-amber-600' : 'text-gray-700'" x-text="Math.round(host.cpu_percent ?? 0) + '%'"></span>
+                                                            <span class="tabular-nums font-medium" :class="(host.cpu_percent ?? 0) > 85 ? 'text-red-600' : (host.cpu_percent ?? 0) > 60 ? 'text-amber-600' : 'text-gray-700'" x-text="formatPercent(host.cpu_percent ?? 0, 0)"></span>
                                                         </div>
                                                         <div class="text-[10px] text-gray-400 mt-0.5" x-show="host.cpu_cores" x-text="host.cpu_cores + ' cores'"></div>
                                                     </td>
@@ -2350,7 +2363,7 @@
                                                             <div class="w-12 bg-gray-100 rounded-full h-1.5">
                                                                 <div class="h-1.5 rounded-full transition-all" :class="(host.memory_percent ?? 0) > 85 ? 'bg-red-500' : (host.memory_percent ?? 0) > 60 ? 'bg-amber-500' : 'bg-emerald-500'" :style="'width: ' + Math.min(host.memory_percent ?? 0, 100) + '%'"></div>
                                                             </div>
-                                                            <span class="tabular-nums font-medium" :class="(host.memory_percent ?? 0) > 85 ? 'text-red-600' : (host.memory_percent ?? 0) > 60 ? 'text-amber-600' : 'text-gray-700'" x-text="Math.round(host.memory_percent ?? 0) + '%'"></span>
+                                                            <span class="tabular-nums font-medium" :class="(host.memory_percent ?? 0) > 85 ? 'text-red-600' : (host.memory_percent ?? 0) > 60 ? 'text-amber-600' : 'text-gray-700'" x-text="formatPercent(host.memory_percent ?? 0, 0)"></span>
                                                         </div>
                                                         <div class="text-[10px] text-gray-400 mt-0.5" x-text="Math.round(host.memory_used_mb ?? 0) + ' / ' + Math.round(host.memory_total_mb ?? 0) + ' MB'"></div>
                                                     </td>
@@ -2487,15 +2500,15 @@
                                                     <td class="px-4 py-2.5 text-right whitespace-nowrap tabular-nums" :class="(wl.pending ?? 0) > 0 ? 'font-semibold text-amber-600' : 'text-gray-500'" x-text="wl.pending"></td>
                                                     <td class="px-4 py-2.5 text-right whitespace-nowrap tabular-nums text-gray-700" x-text="(wl.throughput_per_minute ?? 0).toFixed(1)"></td>
                                                     <td class="px-4 py-2.5 text-right whitespace-nowrap">
-                                                        <span class="tabular-nums font-medium" :class="{ 'text-red-600': wl.oldest_job_age_status === 'breached', 'text-amber-600': wl.oldest_job_age_status === 'warning', 'text-gray-700': wl.oldest_job_age_status === 'normal' }" x-text="(wl.oldest_job_age ?? 0) + 's'"></span>
+                                                        <span class="tabular-nums font-medium" :class="{ 'text-red-600': wl.oldest_job_age_status === 'breached', 'text-amber-600': wl.oldest_job_age_status === 'warning', 'text-gray-700': wl.oldest_job_age_status === 'normal' }" x-text="formatDuration((wl.oldest_job_age ?? 0) * 1000)"></span>
                                                     </td>
-                                                    <td class="px-4 py-2.5 text-right whitespace-nowrap tabular-nums text-gray-500" x-text="(wl.sla_target_seconds ?? '-') + 's'"></td>
+                                                    <td class="px-4 py-2.5 text-right whitespace-nowrap tabular-nums text-gray-500" x-text="wl.sla_target_seconds != null ? formatDuration(wl.sla_target_seconds * 1000) : '-'"></td>
                                                     <td class="px-4 py-2.5 text-right whitespace-nowrap">
                                                         <div class="flex items-center justify-end gap-2">
                                                             <div class="w-12 bg-gray-100 rounded-full h-1.5">
                                                                 <div class="h-1.5 rounded-full transition-all" :class="(wl.utilization_percent ?? 0) > 85 ? 'bg-red-500' : (wl.utilization_percent ?? 0) > 60 ? 'bg-amber-500' : 'bg-emerald-500'" :style="'width: ' + Math.min(wl.utilization_percent ?? 0, 100) + '%'"></div>
                                                             </div>
-                                                            <span class="tabular-nums font-medium text-gray-700" x-text="Math.round(wl.utilization_percent ?? 0) + '%'"></span>
+                                                            <span class="tabular-nums font-medium text-gray-700" x-text="formatPercent(wl.utilization_percent ?? 0, 0)"></span>
                                                         </div>
                                                     </td>
                                                     <td class="px-4 py-2.5 whitespace-nowrap">
@@ -2525,7 +2538,7 @@
                                                     <div class="w-24 bg-gray-100 rounded-full h-1.5">
                                                         <div class="h-1.5 rounded-full transition-all duration-500" :class="sla.compliance >= 99 ? 'bg-emerald-500' : sla.compliance >= 95 ? 'bg-amber-500' : 'bg-red-500'" :style="'width: ' + Math.min(sla.compliance, 100) + '%'"></div>
                                                     </div>
-                                                    <span class="text-sm font-bold tabular-nums w-14 text-right" :class="sla.compliance >= 99 ? 'text-emerald-600' : sla.compliance >= 95 ? 'text-amber-600' : 'text-red-600'" x-text="sla.compliance.toFixed(1) + '%'"></span>
+                                                    <span class="text-sm font-bold tabular-nums w-14 text-right" :class="sla.compliance >= 99 ? 'text-emerald-600' : sla.compliance >= 95 ? 'text-amber-600' : 'text-red-600'" x-text="formatPercent(sla.compliance)"></span>
                                                     <span x-show="sla.breached > 0" class="text-[10px] text-red-500 font-semibold" x-text="sla.breached + ' breached'"></span>
                                                 </div>
                                             </div>
@@ -2632,13 +2645,13 @@
             </div>{{-- END TAB CONTENT --}}
 
             {{-- ==================== FULL-PAGE JOB DETAIL VIEW ==================== --}}
-            <div x-show="jobView" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
+            <div x-show="jobView" x-cloak x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
 
                 {{-- Back nav + header --}}
                 <div class="mb-6">
                     <button @click="closeJobView()" class="inline-flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-700 transition mb-4 group">
                         <svg class="h-4 w-4 transition-transform group-hover:-translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" /></svg>
-                        Back to <span x-text="previousTab === 'jobs' ? 'Jobs' : 'Overview'"></span>
+                        Back to <span x-text="tabLabels[previousTab] || 'Overview'"></span>
                     </button>
 
                     {{-- Loading state --}}
@@ -2659,9 +2672,10 @@
                                 </div>
                                 <div class="flex items-center gap-3 text-[11px] text-gray-500">
                                     <span class="font-mono text-gray-400 select-all" x-text="jobDetail?.job?.uuid"></span>
-                                    <button @click="copyToClipboard(window.location.href)" class="text-gray-400 hover:text-brand transition" title="Copy link">
+                                    <button @click="copyToClipboard(window.location.href, 'link')" class="text-gray-400 hover:text-brand transition" title="Copy link">
                                         <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m9.86-4.122a4.5 4.5 0 00-6.364-6.364L4.5 6.75a4.5 4.5 0 006.364 6.364l4.5-4.5z" /></svg>
                                     </button>
+                                    <span x-show="copied === 'link'" x-transition.opacity class="text-[10px] font-semibold text-emerald-600">Copied</span>
                                 </div>
                             </div>
                             <div class="flex gap-2 flex-shrink-0">
@@ -2711,11 +2725,11 @@
                                     <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" /></svg>
                                     Exception
                                 </h3>
-                                <button @click="copyToClipboard(formatExceptionMarkdown(jobDetail?.exception))"
+                                <button @click="copyToClipboard(formatExceptionMarkdown(jobDetail?.exception), 'exception')"
                                         class="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-[11px] font-medium text-red-700 bg-red-100 hover:bg-red-200 rounded-lg transition"
                                         title="Copy exception as markdown">
                                     <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9.75a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184" /></svg>
-                                    Copy
+                                    <span x-text="copied === 'exception' ? 'Copied' : 'Copy'">Copy</span>
                                 </button>
                             </div>
                             <div class="p-5 space-y-3">
@@ -2738,11 +2752,11 @@
                             <template x-if="jobDetail?.payload">
                                 <div class="p-5">
                                     {{-- Meta badges --}}
-                                    <div class="flex flex-wrap gap-2 mb-4" x-data="{ parsed: parsePayload(jobDetail.payload) }">
-                                        <template x-if="parsed.meta.maxTries"><span class="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] bg-gray-100 text-gray-600 rounded-full">max tries: <span x-text="parsed.meta.maxTries" class="font-semibold"></span></span></template>
-                                        <template x-if="parsed.meta.timeout !== undefined"><span class="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] bg-gray-100 text-gray-600 rounded-full">timeout: <span x-text="parsed.meta.timeout ?? 'none'" class="font-semibold"></span></span></template>
-                                        <template x-if="parsed.meta.maxExceptions"><span class="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] bg-gray-100 text-gray-600 rounded-full">max exceptions: <span x-text="parsed.meta.maxExceptions" class="font-semibold"></span></span></template>
-                                        <template x-if="parsed.meta.backoff"><span class="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] bg-gray-100 text-gray-600 rounded-full">backoff: <span x-text="parsed.meta.backoff" class="font-semibold"></span></span></template>
+                                    <div class="flex flex-wrap gap-2 mb-4">
+                                        <template x-if="parsedPayload().meta.maxTries"><span class="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] bg-gray-100 text-gray-600 rounded-full">max tries: <span x-text="parsedPayload().meta.maxTries" class="font-semibold"></span></span></template>
+                                        <template x-if="parsedPayload().meta.timeout !== undefined"><span class="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] bg-gray-100 text-gray-600 rounded-full">timeout: <span x-text="parsedPayload().meta.timeout ?? 'none'" class="font-semibold"></span></span></template>
+                                        <template x-if="parsedPayload().meta.maxExceptions"><span class="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] bg-gray-100 text-gray-600 rounded-full">max exceptions: <span x-text="parsedPayload().meta.maxExceptions" class="font-semibold"></span></span></template>
+                                        <template x-if="parsedPayload().meta.backoff"><span class="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] bg-gray-100 text-gray-600 rounded-full">backoff: <span x-text="parsedPayload().meta.backoff" class="font-semibold"></span></span></template>
                                     </div>
                                     {{-- Command --}}
                                     <div x-show="jobDetail.payload?.data?.commandName" class="mb-4">
@@ -2750,10 +2764,10 @@
                                         <div class="text-sm font-mono font-medium text-gray-800 bg-gray-50 rounded-lg px-3 py-2" x-text="jobDetail.payload.data.commandName"></div>
                                     </div>
                                     {{-- Extracted properties --}}
-                                    <div class="mb-4" x-data="{ parsed: parsePayload(jobDetail.payload) }">
+                                    <div class="mb-4">
                                         <div class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Job Parameters</div>
                                         <div class="space-y-1.5">
-                                            <template x-for="prop in parsed.properties" :key="prop.name">
+                                            <template x-for="prop in parsedPayload().properties" :key="prop.name">
                                                 <div class="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg">
                                                     <span class="text-[11px] font-mono font-semibold text-gray-700" x-text="prop.name"></span>
                                                     <span class="text-[11px] text-gray-400">=</span>
@@ -2761,7 +2775,7 @@
                                                 </div>
                                             </template>
                                         </div>
-                                        <div x-show="parsed.properties.length === 0" class="text-[11px] text-gray-400 mt-1">No extractable parameters</div>
+                                        <div x-show="parsedPayload().properties.length === 0" class="text-[11px] text-gray-400 mt-1">No extractable parameters</div>
                                     </div>
                                     {{-- Raw toggle --}}
                                     <button @click="showRaw = !showRaw" class="text-[11px] text-gray-400 hover:text-gray-600 transition mb-2 flex items-center gap-1">
@@ -2833,17 +2847,17 @@
                                         {{-- Status dot --}}
                                         <div class="mt-1 flex-shrink-0">
                                             <div class="w-2.5 h-2.5 rounded-full" :class="{
-                                                'bg-emerald-500': attempt.status.value === 'completed',
-                                                'bg-red-500': attempt.status.value === 'failed' || attempt.status.value === 'timeout',
-                                                'bg-blue-500': attempt.status.value === 'processing',
-                                                'bg-amber-500': attempt.status.value === 'queued'
+                                                'bg-emerald-500': attempt.status?.value === 'completed',
+                                                'bg-red-500': attempt.status?.value === 'failed' || attempt.status?.value === 'timeout',
+                                                'bg-blue-500': attempt.status?.value === 'processing',
+                                                'bg-amber-500': attempt.status?.value === 'queued'
                                             }"></div>
                                         </div>
                                         {{-- Content --}}
                                         <div class="flex-1 min-w-0">
                                             <div class="flex items-center gap-2">
                                                 <span class="text-sm font-semibold" :class="attempt.uuid === jobView ? 'text-brand' : 'text-gray-900'" x-text="'#' + attempt.attempt"></span>
-                                                <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold" :class="statusClass(attempt.status.value)" x-text="attempt.status.label"></span>
+                                                <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold" :class="statusClass(attempt.status?.value)" x-text="attempt.status?.label"></span>
                                             </div>
                                             <div class="flex items-center gap-3 mt-0.5 text-[11px]">
                                                 <span x-show="attempt.started_at" class="text-gray-500 font-mono tabular-nums" x-text="formatDateTime(attempt.started_at)"></span>
@@ -2863,7 +2877,7 @@
             </div>
 
             {{-- ==================== FULL-PAGE DRILL-DOWN VIEW ==================== --}}
-            <div x-show="drillDown" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
+            <div x-show="drillDown" x-cloak x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
 
                 {{-- Back nav + header --}}
                 <div class="mb-6">
@@ -2937,14 +2951,14 @@
                                 </div>
                                 <div class="divide-y divide-gray-50">
                                     <template x-for="job in (drillDownData?.recent_jobs || [])" :key="job.uuid">
-                                        <div class="flex items-center gap-3 px-5 py-2.5 hover:bg-brand-faint/40 cursor-pointer transition-colors" @click="closeDrillDown(); openJobView(job.uuid)">
+                                        <div class="flex items-center gap-3 px-5 py-2.5 hover:bg-brand-faint/40 cursor-pointer transition-colors" @click="openJobView(job.uuid)">
                                             <span class="flex-shrink-0 h-2 w-2 rounded-full" :class="drillDownStatusClass(job.status)"></span>
                                             <div class="flex-1 min-w-0">
                                                 <span x-show="job.summary" class="text-sm text-gray-700 truncate block" x-text="job.summary"></span>
                                                 <span x-show="!job.summary" class="text-sm text-gray-500 truncate block" x-text="job.job_class"></span>
                                             </div>
                                             <span x-show="job.attempt > 1" class="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 flex-shrink-0" x-text="'x' + job.attempt"></span>
-                                            <span class="text-[11px] font-mono text-gray-500 flex-shrink-0 tabular-nums" x-text="job.duration"></span>
+                                            <span class="text-[11px] font-mono text-gray-500 flex-shrink-0 tabular-nums" x-text="formatDuration(job.duration_ms)"></span>
                                             <span class="text-[11px] text-gray-400 flex-shrink-0" x-text="formatTime(job.queued_at)"></span>
                                         </div>
                                     </template>
@@ -2964,7 +2978,7 @@
                                         <div class="flex justify-between"><dt class="text-[11px] text-gray-500">p95</dt><dd class="text-[11px] font-medium text-gray-900 font-mono tabular-nums" x-text="formatDuration(drillDownData?.stats?.p95_duration_ms)"></dd></div>
                                         <div class="flex justify-between"><dt class="text-[11px] text-gray-500">p99</dt><dd class="text-[11px] font-medium text-gray-900 font-mono tabular-nums" x-text="formatDuration(drillDownData?.stats?.p99_duration_ms)"></dd></div>
                                         <div class="flex justify-between"><dt class="text-[11px] text-gray-500">Memory avg</dt><dd class="text-[11px] font-medium text-gray-900 font-mono tabular-nums" x-text="drillDownData?.stats?.avg_memory_mb != null ? drillDownData.stats.avg_memory_mb + ' MB' : '-'"></dd></div>
-                                        <div class="flex justify-between"><dt class="text-[11px] text-gray-500">Success rate</dt><dd class="text-[11px] font-medium font-mono tabular-nums" :class="(drillDownData?.stats?.success_rate ?? 0) >= 95 ? 'text-emerald-600' : (drillDownData?.stats?.success_rate ?? 0) >= 80 ? 'text-amber-600' : 'text-red-600'" x-text="formatNumber(drillDownData?.stats?.success_rate, 1) + '%'"></dd></div>
+                                        <div class="flex justify-between"><dt class="text-[11px] text-gray-500">Success rate</dt><dd class="text-[11px] font-medium font-mono tabular-nums" :class="(drillDownData?.stats?.success_rate ?? 0) >= 95 ? 'text-emerald-600' : (drillDownData?.stats?.success_rate ?? 0) >= 80 ? 'text-amber-600' : 'text-red-600'" x-text="formatPercent(drillDownData?.stats?.success_rate)"></dd></div>
                                     </dl>
                                 </div>
                             </div>
@@ -2990,16 +3004,16 @@
     </div>
     </div>
 
-    {{-- ==================== CONFIRM DELETE DIALOG ==================== --}}
+    {{-- ==================== CONFIRM ACTION DIALOG ==================== --}}
     <div x-show="confirmDelete" x-cloak class="relative z-50">
         <div class="fixed inset-0 bg-gray-900/30 backdrop-blur-sm" @click="confirmDelete = null"></div>
         <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div x-show="confirmDelete" x-transition class="bg-white rounded-xl shadow-xl max-w-sm w-full p-6">
-                <h3 class="text-base font-semibold text-gray-900">Delete Job</h3>
-                <p class="mt-2 text-sm text-gray-500">Are you sure you want to delete this job? This action cannot be undone.</p>
+            <div x-show="confirmDelete" x-transition role="dialog" aria-modal="true" aria-labelledby="qm-confirm-title" class="bg-white rounded-xl shadow-xl max-w-sm w-full p-6">
+                <h3 id="qm-confirm-title" class="text-base font-semibold text-gray-900" x-text="confirmDelete?.title || 'Delete Job'">Delete Job</h3>
+                <p class="mt-2 text-sm text-gray-500" x-text="confirmDelete?.message">Are you sure you want to delete this job? This action cannot be undone.</p>
                 <div class="mt-5 flex gap-3 justify-end">
-                    <button @click="confirmDelete = null" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition">Cancel</button>
-                    <button @click="deleteJob(confirmDelete)" class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition">Delete</button>
+                    <button x-ref="confirmCancel" @click="confirmDelete = null" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition">Cancel</button>
+                    <button @click="runConfirm()" class="px-4 py-2 text-sm font-medium text-white rounded-lg transition" :class="confirmDelete?.danger === false ? 'bg-amber-600 hover:bg-amber-700' : 'bg-red-600 hover:bg-red-700'" x-text="confirmDelete?.confirmLabel || 'Delete'">Delete</button>
                 </div>
             </div>
         </div>
@@ -3008,10 +3022,15 @@
     {{-- ==================== JAVASCRIPT ==================== --}}
     <script>
         function dashboard() {
+            // Non-reactive memo so parsePayload runs once per payload object,
+            // not on every Alpine evaluation of the payload panel.
+            let payloadCache = { key: undefined, value: null };
+
             return {
                 activeTab: 'overview',
                 previousTab: 'overview',
                 mobileMenuOpen: false,
+                isMobile: window.innerWidth <= 900,
 
                 // Job detail view (replaces slide-over)
                 jobView: null,
@@ -3019,7 +3038,8 @@
 
                 // Data stores
                 overview: { stats: {}, queues: [], alerts: {}, recentJobs: [], charts: {} },
-                jobs: { data: [], meta: { total: 0, limit: 50, offset: 0 } },
+                attention: [],
+                jobs: { data: [], meta: { total: 0, limit: {{ config('queue-monitor.ui.per_page', 35) }}, offset: 0 } },
                 analytics: {},
                 health: {},
                 infrastructure: {},
@@ -3035,7 +3055,7 @@
                 availableQueues: [],
                 selectedJobs: [],
                 sorting: { field: 'queued_at', direction: 'desc' },
-                pagination: { offset: 0, limit: 50, total: 0 },
+                pagination: { offset: 0, limit: {{ config('queue-monitor.ui.per_page', 35) }} },
 
                 // Auto-refresh
                 refreshInterval: null,
@@ -3049,7 +3069,7 @@
                 retryCount: 0,
                 maxRetries: 3,
 
-                // Confirm dialog
+                // Confirm dialog: { title, message, confirmLabel, danger, onConfirm }
                 confirmDelete: null,
 
                 // Drill-down panel
@@ -3057,6 +3077,7 @@
                 drillDownData: null,
                 drillDownLoading: false,
                 drillDownChart: null,
+                drillDownFromTab: false,
 
                 // Chart instances
                 throughputChart: null,
@@ -3064,6 +3085,8 @@
                 lastRefreshAt: null,
                 clock: Date.now(),
                 clockInterval: null,
+                copied: null,
+                copiedTimeout: null,
                 sidebarTabs: [
                     { id: 'overview', label: 'Overview', svg: '<path d="M3 13h8V3H3z"></path><path d="M13 21h8V11h-8z"></path><path d="M13 9h8V3h-8z"></path><path d="M3 21h8v-6H3z"></path>' },
                     { id: 'jobs', label: 'Jobs', svg: '<path d="M4 7h16"></path><path d="M4 12h16"></path><path d="M4 17h10"></path>' },
@@ -3112,11 +3135,13 @@
 
                         // Restore tab from hash fragment (#jobs, #analytics, etc.)
                         const hash = window.location.hash.replace('#', '');
+                        // replaceHistory: the restored tab must not duplicate the entry
+                        // the browser already holds, or Back wipes filters instead of leaving.
                         if (hasFilters && this.activeTab !== 'jobs') {
                             // Filters present — switch to jobs tab (navigateTo will fetch with correct filters)
-                            this.navigateTo('jobs');
+                            this.navigateTo('jobs', true);
                         } else if (['jobs', 'analytics', 'health', 'infrastructure', 'autoscale'].includes(hash)) {
-                            this.navigateTo(hash);
+                            this.navigateTo(hash, true);
                         }
                     }
 
@@ -3143,6 +3168,7 @@
                             this.restoreFiltersFromUrl();
                             this.refreshCurrentView(true);
                         }
+                        this.updateDocumentTitle();
                     });
 
                     document.addEventListener('visibilitychange', () => {
@@ -3150,7 +3176,8 @@
                     });
 
                     window.addEventListener('resize', () => {
-                        if (window.innerWidth > 900) this.mobileMenuOpen = false;
+                        this.isMobile = window.innerWidth <= 900;
+                        if (!this.isMobile) this.mobileMenuOpen = false;
                         this.throughputChart?.resize();
                         this.distributionChart?.resize();
                         this.drillDownChart?.resize();
@@ -3158,10 +3185,15 @@
 
                     window.addEventListener('keydown', (e) => {
                         if (e.key === 'Escape') {
-                            if (this.mobileMenuOpen) this.mobileMenuOpen = false;
+                            if (this.confirmDelete) this.confirmDelete = null;
+                            else if (this.mobileMenuOpen) this.mobileMenuOpen = false;
                             else if (this.drillDown) this.closeDrillDown();
                             else if (this.jobView) this.closeJobView();
                         }
+                    });
+
+                    this.$watch('confirmDelete', (value) => {
+                        if (value) this.$nextTick(() => this.$refs.confirmCancel?.focus());
                     });
                 },
 
@@ -3202,11 +3234,16 @@
                     else if (this.activeTab === 'autoscale') this.fetchAutoscale();
                 },
 
+                tabLabels: { overview: 'Overview', jobs: 'Jobs', analytics: 'Analytics', health: 'Health', autoscale: 'Autoscale', infrastructure: 'Infrastructure' },
+
                 pageTitle() {
                     if (this.jobView) return 'Selected job';
                     if (this.drillDown) return this.drillDown?.type === 'job_class' ? this.shortClass(this.drillDown?.value) : (this.drillDown?.value || 'Drill-down');
-                    const labels = { overview: 'Overview', jobs: 'Jobs', analytics: 'Analytics', health: 'Health', autoscale: 'Autoscale', infrastructure: 'Infrastructure' };
-                    return labels[this.activeTab] || 'Overview';
+                    return this.tabLabels[this.activeTab] || 'Overview';
+                },
+
+                updateDocumentTitle() {
+                    document.title = 'Queue Monitor — ' + this.pageTitle();
                 },
 
                 pageSubtitle() {
@@ -3248,13 +3285,11 @@
                 },
 
                 attentionJobs() {
-                    const jobs = this.overview.recentJobs || [];
-                    const weighted = [...jobs].sort((a, b) => {
-                        const aScore = (a.is_failed ? 100 : 0) + ((a.status?.value === 'timeout') ? 80 : 0) + ((a.attempt || 0) * 3);
-                        const bScore = (b.is_failed ? 100 : 0) + ((b.status?.value === 'timeout') ? 80 : 0) + ((b.attempt || 0) * 3);
-                        return bScore - aScore;
-                    });
-                    return weighted;
+                    return this.attention;
+                },
+
+                attentionScore(job) {
+                    return (job.is_failed ? 100 : 0) + ((job.status?.value === 'timeout') ? 80 : 0) + ((job.attempt || 0) * 3);
                 },
 
                 selectedOverviewJob() {
@@ -3276,7 +3311,7 @@
                     const total = Number(this.overview.stats.total || 0);
                     const failed = Number(this.overview.stats.failed || 0);
                     if (total <= 0) return '0%';
-                    return `${this.formatNumber((failed / total) * 100, 2)}%`;
+                    return this.formatPercent((failed / total) * 100, 2);
                 },
 
                 queueBacklogSeverity() {
@@ -3315,12 +3350,28 @@
                     return 'Healthy';
                 },
 
+                workerStatusTone() {
+                    const utilization = this.autoscale.live?.utilization_percent ?? this.infrastructure.scaling?.utilization?.percentage;
+                    if (utilization == null) return 'qm-info';
+                    if (utilization >= 90) return 'qm-bad';
+                    if (utilization >= 70) return 'qm-warn';
+                    return 'qm-good';
+                },
+
                 autoscaleStatusLabel() {
                     if (this.autoscale.cluster?.scaling_signal?.action) {
                         return this.autoscale.cluster.scaling_signal.action.replace('_', ' ');
                     }
                     if (this.autoscale.available === false) return 'Optional';
                     return this.autoscale.available ? 'Active' : 'Ready';
+                },
+
+                autoscaleStatusTone() {
+                    const action = this.autoscale.cluster?.scaling_signal?.action;
+                    if (action === 'scale_up') return 'qm-warn';
+                    if (action === 'scale_down') return 'qm-info';
+                    if (action) return 'qm-good';
+                    return this.autoscale.available ? 'qm-good' : 'qm-info';
                 },
 
                 throughputTotal() {
@@ -3418,7 +3469,7 @@
 
                 // ========== NAVIGATION ==========
 
-                navigateTo(tab) {
+                navigateTo(tab, replaceHistory = false) {
                     this.mobileMenuOpen = false;
 
                     // Close sub-views without pushing their own state
@@ -3429,7 +3480,8 @@
                         this.drillDown = null; this.drillDownData = null;
                     }
                     this.activeTab = tab;
-                    this.pushTabState(tab);
+                    this.pushTabState(tab, replaceHistory);
+                    this.updateDocumentTitle();
                     if (tab === 'overview') this.fetchOverview();
                     else if (tab === 'jobs') this.fetchJobs();
                     else if (tab === 'analytics') this.fetchAnalytics();
@@ -3442,10 +3494,12 @@
                     });
                 },
 
-                pushTabState(tab) {
+                pushTabState(tab, replace = false) {
                     const hash = tab === 'overview' ? '' : '#' + tab;
                     const qs = window.location.search;
-                    history.pushState({ tab }, '', this.dashboardUrl + qs + hash);
+                    const url = this.dashboardUrl + qs + hash;
+                    if (replace) history.replaceState({ tab }, '', url);
+                    else history.pushState({ tab }, '', url);
                 },
 
                 openJobView(uuid, pushHistory = true) {
@@ -3455,6 +3509,7 @@
                     this.drillDownChart = null;
                     this.jobView = uuid;
                     this.jobDetail = null;
+                    this.updateDocumentTitle();
                     this.fetchJobDetail(uuid);
                     if (pushHistory) {
                         const url = this.jobViewUrlBase + uuid;
@@ -3466,6 +3521,7 @@
                     this.jobView = null;
                     this.jobDetail = null;
                     this.pushTabState(this.previousTab);
+                    this.updateDocumentTitle();
                 },
 
                 // ========== DATA FETCHING ==========
@@ -3503,6 +3559,7 @@
                         this.overview.queues = data.queues || [];
                         this.overview.alerts = data.alerts || {};
                         this.overview.recentJobs = data.recent_jobs || [];
+                        this.attention = [...this.overview.recentJobs].sort((a, b) => this.attentionScore(b) - this.attentionScore(a));
                         this.overview.charts = data.charts || {};
                         const queueNames = [...new Set((data.queues || []).map(q => q.queue).filter(Boolean))].sort();
                         if (this.availableQueues.length === 0 && queueNames.length > 0) this.availableQueues = queueNames;
@@ -3537,7 +3594,15 @@
                         // Drop selections that are no longer on the current page so
                         // batch actions only ever target visible rows.
                         this.selectedJobs = this.selectedJobs.filter(uuid => this.jobs.data.some(job => job.uuid === uuid));
-                        this.pagination.total = data.meta?.total || 0;
+                        const total = data.meta?.total ?? 0;
+                        if (total > 0 && this.pagination.offset >= total) {
+                            // The result set shrank below the current page: snap to the
+                            // last valid page and refetch once (offset strictly decreases,
+                            // so this cannot loop).
+                            this.pagination.offset = Math.floor((total - 1) / this.pagination.limit) * this.pagination.limit;
+                            this.syncFiltersToUrl();
+                            this.fetchJobs();
+                        }
                         const metaQueues = data.meta?.available_queues || [];
                         if (Array.isArray(metaQueues)) this.availableQueues = metaQueues;
                         else if (this.availableQueues.length === 0 && this.jobs.data.length > 0) this.availableQueues = [...new Set(this.jobs.data.map(j => j.queue).filter(Boolean))].sort();
@@ -3600,11 +3665,27 @@
                     } catch (e) { this.error = 'Failed to replay job'; console.error('replayJob error:', e); }
                 },
 
-                confirmDeleteJob(uuid) { this.confirmDelete = uuid; },
+                askConfirm(config) {
+                    this.confirmDelete = { danger: true, confirmLabel: 'Delete', ...config };
+                },
+
+                runConfirm() {
+                    const action = this.confirmDelete?.onConfirm;
+                    this.confirmDelete = null;
+                    if (action) action();
+                },
+
+                confirmDeleteJob(uuid) {
+                    if (!uuid) return;
+                    this.askConfirm({
+                        title: 'Delete Job',
+                        message: 'Are you sure you want to delete this job? This action cannot be undone.',
+                        onConfirm: () => this.deleteJob(uuid),
+                    });
+                },
 
                 async deleteJob(uuid) {
                     if (!uuid) return;
-                    this.confirmDelete = null;
                     try {
                         const res = await fetch(this.dashboardUrl + '/jobs/' + uuid + '/delete', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' } });
                         if (!res.ok) { const err = await res.json().catch(() => ({})); this.error = err.message || 'Failed to delete job (HTTP ' + res.status + ')'; return; }
@@ -3622,9 +3703,20 @@
                     } catch (e) { this.error = 'Failed to replay jobs'; console.error('batchReplay error:', e); }
                 },
 
-                async resolveStuckJob(uuid, action) {
+                resolveStuckJob(uuid, action) {
                     if (!uuid) return;
-                    if (action === 'delete' && !confirm('Delete this stuck job? This cannot be undone.')) return;
+                    if (action === 'delete') {
+                        this.askConfirm({
+                            title: 'Delete Stuck Job',
+                            message: 'Delete this stuck job? This cannot be undone.',
+                            onConfirm: () => this.performResolveStuckJob(uuid, action),
+                        });
+                        return;
+                    }
+                    this.performResolveStuckJob(uuid, action);
+                },
+
+                async performResolveStuckJob(uuid, action) {
                     try {
                         const res = await fetch(this.dashboardUrl + '/stuck-jobs/resolve', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' }, body: JSON.stringify({ uuids: [uuid], action }) });
                         if (!res.ok) throw new Error('Request failed');
@@ -3632,23 +3724,36 @@
                     } catch (e) { this.error = `Failed to ${action} stuck job`; console.error('resolveStuckJob error:', e); }
                 },
 
-                async resolveAllStuckJobs(action) {
-                    const label = action === 'delete' ? 'delete' : 'retry';
-                    if (!confirm(`${label.charAt(0).toUpperCase() + label.slice(1)} all stuck jobs?`)) return;
-                    try {
-                        const res = await fetch(this.dashboardUrl + '/stuck-jobs/resolve-all', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' }, body: JSON.stringify({ action }) });
-                        if (!res.ok) throw new Error('Request failed');
-                        this.fetchHealth();
-                    } catch (e) { this.error = `Failed to ${label} stuck jobs`; console.error('resolveAllStuckJobs error:', e); }
+                resolveAllStuckJobs(action) {
+                    const label = action === 'delete' ? 'Delete' : 'Retry';
+                    this.askConfirm({
+                        title: `${label} All Stuck Jobs`,
+                        message: `${label} all stuck jobs?${action === 'delete' ? ' This cannot be undone.' : ''}`,
+                        confirmLabel: `${label} All`,
+                        danger: action === 'delete',
+                        onConfirm: async () => {
+                            try {
+                                const res = await fetch(this.dashboardUrl + '/stuck-jobs/resolve-all', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' }, body: JSON.stringify({ action }) });
+                                if (!res.ok) throw new Error('Request failed');
+                                this.fetchHealth();
+                            } catch (e) { this.error = `Failed to ${label.toLowerCase()} stuck jobs`; console.error('resolveAllStuckJobs error:', e); }
+                        },
+                    });
                 },
 
-                async batchDelete() {
+                batchDelete() {
                     if (this.selectedJobs.length === 0) return;
-                    if (!confirm(`Delete ${this.selectedJobs.length} job(s)? This cannot be undone.`)) return;
-                    try {
-                        await fetch(this.dashboardUrl + '/batch/delete', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' }, body: JSON.stringify({ uuids: this.selectedJobs }) });
-                        this.selectedJobs = []; this.fetchJobs();
-                    } catch (e) { this.error = 'Failed to delete jobs'; console.error('batchDelete error:', e); }
+                    const count = this.selectedJobs.length;
+                    this.askConfirm({
+                        title: 'Delete Jobs',
+                        message: `Delete ${count} job${count === 1 ? '' : 's'}? This cannot be undone.`,
+                        onConfirm: async () => {
+                            try {
+                                await fetch(this.dashboardUrl + '/batch/delete', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' }, body: JSON.stringify({ uuids: this.selectedJobs }) });
+                                this.selectedJobs = []; this.fetchJobs();
+                            } catch (e) { this.error = 'Failed to delete jobs'; console.error('batchDelete error:', e); }
+                        },
+                    });
                 },
 
                 // ========== DRILL-DOWN ==========
@@ -3658,6 +3763,10 @@
                     this.drillDown = { type, value };
                     this.drillDownLoading = true;
                     this.drillDownData = null;
+                    // Only an in-app open sits on top of a tab entry; deep links and
+                    // popstate restores do not, so closing them cannot history.back().
+                    this.drillDownFromTab = pushHistory;
+                    this.updateDocumentTitle();
                     if (pushHistory) {
                         const base = this.drillDownUrlBase[type] || this.dashboardUrl;
                         history.pushState({ drillDown: { type, value } }, '', base + encodeURIComponent(value));
@@ -3672,12 +3781,19 @@
                     }
                 },
 
-                closeDrillDown() {
+                closeDrillDown(adjustHistory = true) {
                     try { if (this.drillDownChart) { this.drillDownChart.dispose(); } } catch (e) {}
                     this.drillDownChart = null;
                     this.drillDown = null;
                     this.drillDownData = null;
-                    this.pushTabState(this.activeTab);
+                    if (!adjustHistory) return;
+                    if (this.drillDownFromTab) {
+                        this.drillDownFromTab = false;
+                        history.back();
+                    } else {
+                        this.pushTabState(this.activeTab);
+                    }
+                    this.updateDocumentTitle();
                 },
 
                 async refreshDrillDown() {
@@ -3694,7 +3810,7 @@
                 },
 
                 drillDownToJobs(type, value) {
-                    this.closeDrillDown();
+                    this.closeDrillDown(false);
                     this.filters = { search: '', statuses: [], queue: '', dateFrom: '', dateTo: '', showAdvanced: false, jobClass: '', server: '', minAttempts: '', minDuration: '' };
                     this.pagination.offset = 0;
                     this.selectedJobs = [];
@@ -3809,9 +3925,12 @@
                     if (params.has('server')) { this.filters.server = params.get('server'); restored = true; }
                     if (params.has('attempts')) { this.filters.minAttempts = params.get('attempts'); restored = true; }
                     if (params.has('duration')) { this.filters.minDuration = params.get('duration'); restored = true; }
-                    if (params.has('sort')) { this.sorting.field = params.get('sort'); restored = true; }
-                    if (params.has('dir')) { this.sorting.direction = params.get('dir'); restored = true; }
-                    if (params.has('offset')) { this.pagination.offset = parseInt(params.get('offset')) || 0; restored = true; }
+                    // Whitelist sort/dir so arbitrary URL params never reach the API.
+                    const sort = params.get('sort');
+                    if (sort && ['queued_at', 'duration_ms', 'job_class', 'status'].includes(sort)) { this.sorting.field = sort; restored = true; }
+                    const dir = params.get('dir');
+                    if (dir && ['asc', 'desc'].includes(dir)) { this.sorting.direction = dir; restored = true; }
+                    if (params.has('offset')) { this.pagination.offset = Math.max(0, parseInt(params.get('offset'), 10) || 0); restored = true; }
 
                     // Show advanced filters panel if any advanced filter is active
                     if (this.filters.jobClass || this.filters.server || this.filters.minAttempts || this.filters.minDuration) {
@@ -3822,6 +3941,7 @@
                 },
 
                 sortIndicator(field) { if (this.sorting.field !== field) return ''; return this.sorting.direction === 'asc' ? '\u2191' : '\u2193'; },
+                ariaSort(field) { if (this.sorting.field !== field) return 'none'; return this.sorting.direction === 'asc' ? 'ascending' : 'descending'; },
                 toggleAllJobs(event) { this.selectedJobs = event.target.checked ? this.jobs.data.map(j => j.uuid) : []; },
                 prevPage() { this.pagination.offset = Math.max(0, this.pagination.offset - this.pagination.limit); this.selectedJobs = []; this.syncFiltersToUrl(); this.fetchJobs(); },
                 nextPage() { this.pagination.offset += this.pagination.limit; this.selectedJobs = []; this.syncFiltersToUrl(); this.fetchJobs(); },
@@ -3902,6 +4022,10 @@
                     return new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 }).format(num);
                 },
 
+                formatPercent(value, decimals = 1) {
+                    return this.formatNumber(value, decimals) + '%';
+                },
+
                 formatDuration(ms) {
                     if (!ms && ms !== 0) return '-';
                     if (ms < 1000) return Math.round(ms) + 'ms';
@@ -3919,7 +4043,7 @@
                         if (diffMs < 60000) return 'just now';
                         if (diffMs < 3600000) return Math.floor(diffMs / 60000) + 'm ago';
                         if (diffMs < 86400000) return Math.floor(diffMs / 3600000) + 'h ago';
-                        return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                        return d.toLocaleDateString('en-GB', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
                     } catch (e) { return iso; }
                 },
 
@@ -3944,7 +4068,7 @@
                 formatCpu(cpuTimeMs, durationMs) {
                     if (cpuTimeMs == null || durationMs == null || durationMs === 0) return '-';
                     const pct = (cpuTimeMs / durationMs) * 100;
-                    return pct < 1 ? '<1%' : Math.round(pct) + '%';
+                    return pct < 1 ? '<1%' : this.formatPercent(pct, 0);
                 },
 
                 cpuColor(cpuTimeMs, durationMs) {
@@ -3959,8 +4083,8 @@
                     if (peakMb == null) return '-';
                     const peak = parseFloat(peakMb).toFixed(0);
                     if (limitMb != null && limitMb > 0) {
-                        const pct = Math.round((peakMb / limitMb) * 100);
-                        return peak + ' / ' + parseFloat(limitMb).toFixed(0) + ' MB (' + pct + '%)';
+                        const pct = this.formatPercent((peakMb / limitMb) * 100, 0);
+                        return peak + ' / ' + parseFloat(limitMb).toFixed(0) + ' MB (' + pct + ')';
                     }
                     return peak + ' MB';
                 },
@@ -3977,17 +4101,38 @@
                     if (peakMb == null) return '-';
                     const peak = parseFloat(peakMb).toFixed(0);
                     if (limitMb != null && limitMb > 0) {
-                        return Math.round((peakMb / limitMb) * 100) + '%';
+                        return this.formatPercent((peakMb / limitMb) * 100, 0);
                     }
                     return peak + ' MB';
                 },
 
                 shortClass(fqcn) { if (!fqcn) return '-'; return fqcn.split('\\').pop(); },
 
-                copyToClipboard(text) {
-                    navigator.clipboard.writeText(text).then(() => {
-                        this.error = null;
-                    }).catch(() => {});
+                copyToClipboard(text, target = 'link') {
+                    const done = () => {
+                        this.copied = target;
+                        clearTimeout(this.copiedTimeout);
+                        this.copiedTimeout = setTimeout(() => { this.copied = null; }, 1500);
+                    };
+                    if (navigator.clipboard && window.isSecureContext) {
+                        navigator.clipboard.writeText(text).then(done).catch(() => this.copyViaTextarea(text, done));
+                    } else {
+                        // navigator.clipboard is unavailable off HTTPS (e.g. a LAN
+                        // dashboard over plain HTTP), so fall back to execCommand.
+                        this.copyViaTextarea(text, done);
+                    }
+                },
+
+                copyViaTextarea(text, done) {
+                    const textarea = document.createElement('textarea');
+                    textarea.value = text;
+                    textarea.setAttribute('readonly', '');
+                    textarea.style.position = 'fixed';
+                    textarea.style.opacity = '0';
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    try { if (document.execCommand('copy')) done(); } catch (e) {}
+                    document.body.removeChild(textarea);
                 },
 
                 formatStackTrace(trace) {
@@ -4021,6 +4166,14 @@
                     md += `**${exception.message}**\n\n`;
                     md += '```\n' + (exception.trace || '') + '\n```\n';
                     return md;
+                },
+
+                parsedPayload() {
+                    const payload = this.jobDetail?.payload ?? null;
+                    if (payloadCache.key !== payload) {
+                        payloadCache = { key: payload, value: this.parsePayload(payload) };
+                    }
+                    return payloadCache.value;
                 },
 
                 parsePayload(payload) {

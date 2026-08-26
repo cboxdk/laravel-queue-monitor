@@ -129,7 +129,6 @@ class DashboardDrillDownController extends Controller
                         'attempt' => $job->attempt,
                         'server' => $job->server_name,
                         'duration_ms' => $job->duration_ms !== null ? (int) $job->duration_ms : null,
-                        'duration' => $job->duration_ms !== null ? number_format((int) $job->duration_ms).'ms' : '-',
                         'queued_at' => $job->queued_at,
                         'error' => $job->exception_message,
                     ];

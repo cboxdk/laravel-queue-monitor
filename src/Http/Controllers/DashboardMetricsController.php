@@ -53,10 +53,7 @@ class DashboardMetricsController extends Controller
         $perPage = config('queue-monitor.ui.per_page', 35);
 
         $recentJobs = $this->jobRepository->getRecentJobs($perPage)
-            ->map(fn ($job) => array_merge(
-                JobMonitorTransformer::toListArray($job),
-                ['queued_at' => $job->queued_at->diffForHumans()],
-            ));
+            ->map(fn ($job) => JobMonitorTransformer::toListArray($job));
 
         $chartData = $this->statsRepository->getJobClassStatistics();
 
