@@ -7,6 +7,7 @@ namespace Cbox\LaravelQueueMonitor\Services;
 use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\Models\ClusterEvent;
 use Cbox\LaravelQueueMonitor\Models\ScalingEvent;
+use Cbox\LaravelQueueMonitor\Services\Contracts\InfrastructureServiceContract;
 use Cbox\LaravelQueueMonitor\Utilities\DatabaseExpressionHelper;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
@@ -16,7 +17,7 @@ use Illuminate\Support\Facades\Schema;
  * Provides infrastructure query methods for worker utilization, queue capacity,
  * SLA compliance, and scaling data used by the health dashboard.
  */
-final class InfrastructureService
+final class InfrastructureService implements InfrastructureServiceContract
 {
     /**
      * @return array<string, mixed>

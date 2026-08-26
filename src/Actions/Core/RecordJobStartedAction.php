@@ -8,7 +8,7 @@ use Cbox\LaravelQueueMonitor\DataTransferObjects\JobMonitorData;
 use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\Models\JobMonitor;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\JobMonitorRepositoryContract;
-use Cbox\LaravelQueueMonitor\Services\WorkerContextService;
+use Cbox\LaravelQueueMonitor\Services\Contracts\WorkerContextServiceContract;
 use Illuminate\Contracts\Queue\Job;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -17,7 +17,7 @@ final readonly class RecordJobStartedAction
 {
     public function __construct(
         private JobMonitorRepositoryContract $repository,
-        private WorkerContextService $workerContext,
+        private WorkerContextServiceContract $workerContext,
         private RecordJobQueuedAction $recordQueuedAction,
     ) {}
 

@@ -8,7 +8,7 @@ use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\StatisticsRepositoryContract;
-use Cbox\LaravelQueueMonitor\Services\DashboardCacheService;
+use Cbox\LaravelQueueMonitor\Services\Contracts\DashboardCacheServiceContract;
 use Cbox\LaravelQueueMonitor\Utilities\DatabaseExpressionHelper;
 use Illuminate\Contracts\Cache\LockProvider;
 use Illuminate\Database\Query\Builder;
@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\DB;
 final readonly class EloquentStatisticsRepository implements StatisticsRepositoryContract
 {
     public function __construct(
-        private DashboardCacheService $dashboardCache,
+        private DashboardCacheServiceContract $dashboardCache,
     ) {}
 
     public function getGlobalStatistics(): array

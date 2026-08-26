@@ -22,6 +22,18 @@ use Cbox\LaravelQueueMonitor\Repositories\Contracts\TagRepositoryContract;
 use Cbox\LaravelQueueMonitor\Repositories\Eloquent\EloquentJobMonitorRepository;
 use Cbox\LaravelQueueMonitor\Repositories\Eloquent\EloquentStatisticsRepository;
 use Cbox\LaravelQueueMonitor\Repositories\Eloquent\EloquentTagRepository;
+use Cbox\LaravelQueueMonitor\Services\AlertingService;
+use Cbox\LaravelQueueMonitor\Services\Contracts\AlertingServiceContract;
+use Cbox\LaravelQueueMonitor\Services\Contracts\DashboardCacheServiceContract;
+use Cbox\LaravelQueueMonitor\Services\Contracts\ExportServiceContract;
+use Cbox\LaravelQueueMonitor\Services\Contracts\HealthCheckServiceContract;
+use Cbox\LaravelQueueMonitor\Services\Contracts\InfrastructureServiceContract;
+use Cbox\LaravelQueueMonitor\Services\Contracts\WorkerContextServiceContract;
+use Cbox\LaravelQueueMonitor\Services\DashboardCacheService;
+use Cbox\LaravelQueueMonitor\Services\ExportService;
+use Cbox\LaravelQueueMonitor\Services\HealthCheckService;
+use Cbox\LaravelQueueMonitor\Services\InfrastructureService;
+use Cbox\LaravelQueueMonitor\Services\WorkerContextService;
 
 return [
     /*
@@ -304,6 +316,25 @@ return [
         JobMonitorRepositoryContract::class => EloquentJobMonitorRepository::class,
         TagRepositoryContract::class => EloquentTagRepository::class,
         StatisticsRepositoryContract::class => EloquentStatisticsRepository::class,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Service Bindings
+    |--------------------------------------------------------------------------
+    |
+    | Map service contracts to their concrete implementations.
+    | Every domain service is resolved through its contract, so a host can
+    | override or fake any of them by rebinding the contract here.
+    |
+    */
+    'services' => [
+        AlertingServiceContract::class => AlertingService::class,
+        DashboardCacheServiceContract::class => DashboardCacheService::class,
+        ExportServiceContract::class => ExportService::class,
+        HealthCheckServiceContract::class => HealthCheckService::class,
+        InfrastructureServiceContract::class => InfrastructureService::class,
+        WorkerContextServiceContract::class => WorkerContextService::class,
     ],
 
     /*

@@ -10,8 +10,8 @@ use Cbox\LaravelQueueMonitor\Models\JobMonitor;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\JobMonitorRepositoryContract;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\StatisticsRepositoryContract;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\TagRepositoryContract;
-use Cbox\LaravelQueueMonitor\Services\AlertingService;
-use Cbox\LaravelQueueMonitor\Services\DashboardCacheService;
+use Cbox\LaravelQueueMonitor\Services\Contracts\AlertingServiceContract;
+use Cbox\LaravelQueueMonitor\Services\Contracts\DashboardCacheServiceContract;
 use Cbox\LaravelQueueMonitor\Utilities\PayloadRedactor;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -30,8 +30,8 @@ class DashboardMetricsController extends Controller
         private readonly JobMonitorRepositoryContract $jobRepository,
         private readonly StatisticsRepositoryContract $statsRepository,
         private readonly TagRepositoryContract $tagRepository,
-        private readonly DashboardCacheService $dashboardCache,
-        private readonly AlertingService $alertingService,
+        private readonly DashboardCacheServiceContract $dashboardCache,
+        private readonly AlertingServiceContract $alertingService,
     ) {}
 
     /** Time ranges (in minutes) the overview throughput chart may request. */

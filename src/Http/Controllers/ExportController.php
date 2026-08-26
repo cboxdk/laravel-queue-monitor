@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Cbox\LaravelQueueMonitor\Http\Controllers;
 
 use Cbox\LaravelQueueMonitor\DataTransferObjects\JobFilterData;
-use Cbox\LaravelQueueMonitor\Services\ExportService;
+use Cbox\LaravelQueueMonitor\Services\Contracts\ExportServiceContract;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -14,7 +14,7 @@ use Illuminate\Routing\Controller;
 class ExportController extends Controller
 {
     public function __construct(
-        private readonly ExportService $exportService,
+        private readonly ExportServiceContract $exportService,
     ) {}
 
     /**

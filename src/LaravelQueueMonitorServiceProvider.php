@@ -62,9 +62,11 @@ class LaravelQueueMonitorServiceProvider extends PackageServiceProvider
 
     public function packageBooted(): void
     {
-        // Order matters: repositories and actions must be bound before event listeners
-        // because listeners depend on action classes which depend on repositories
+        // Order matters: repositories, services, and actions must be bound before
+        // event listeners because listeners depend on action classes which depend
+        // on repositories and services
         $this->registerRepositories();
+        $this->registerServices();
         $this->registerActions();
         $this->registerEventListeners();
         $this->registerRoutes();
@@ -176,6 +178,19 @@ class LaravelQueueMonitorServiceProvider extends PackageServiceProvider
 
         foreach ($repositories as $contract => $implementation) {
             $this->app->bind($contract, $implementation);
+        }
+    }
+
+    /**
+     * Register service bindings
+     */
+    protected function registerServices(): void
+    {
+        /** @var array<string, string> $services */
+        $services = config('queue-monitor.services', []);
+
+        foreach ($services as $contract => $implementation) {
+            $this->app->singleton($contract, $implementation);
         }
     }
 

@@ -8,7 +8,7 @@ use Cbox\LaravelQueueMonitor\Models\ClusterEvent;
 use Cbox\LaravelQueueMonitor\Models\ScalingEvent;
 use Illuminate\Support\Facades\Cache;
 
-class ScalingEventListener
+final class ScalingEventListener
 {
     public function handleScalingDecision(object $event): void
     {

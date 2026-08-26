@@ -7,12 +7,13 @@ namespace Cbox\LaravelQueueMonitor\Services;
 use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\LaravelQueueMonitor;
 use Cbox\LaravelQueueMonitor\Models\JobMonitor;
+use Cbox\LaravelQueueMonitor\Services\Contracts\HealthCheckServiceContract;
 use Cbox\LaravelQueueMonitor\Utilities\QueryBuilderHelper;
 use Illuminate\Database\Connection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
-final class HealthCheckService
+final class HealthCheckService implements HealthCheckServiceContract
 {
     /**
      * Perform comprehensive health check

@@ -10,7 +10,7 @@ use Cbox\LaravelQueueMonitor\DataTransferObjects\JobMonitorData;
 use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\Models\JobMonitor;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\JobMonitorRepositoryContract;
-use Cbox\LaravelQueueMonitor\Services\DashboardCacheService;
+use Cbox\LaravelQueueMonitor\Services\Contracts\DashboardCacheServiceContract;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\DB;
 final class EloquentJobMonitorRepository implements JobMonitorRepositoryContract
 {
     public function __construct(
-        private readonly DashboardCacheService $dashboardCache,
+        private readonly DashboardCacheServiceContract $dashboardCache,
     ) {}
 
     public function create(JobMonitorData $data): JobMonitor

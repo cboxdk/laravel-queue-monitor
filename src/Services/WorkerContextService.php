@@ -8,8 +8,9 @@ use Cbox\LaravelQueueMetrics\DataTransferObjects\HorizonContext;
 use Cbox\LaravelQueueMetrics\Utilities\HorizonDetector;
 use Cbox\LaravelQueueMonitor\DataTransferObjects\WorkerContextData;
 use Cbox\LaravelQueueMonitor\Enums\WorkerType;
+use Cbox\LaravelQueueMonitor\Services\Contracts\WorkerContextServiceContract;
 
-final readonly class WorkerContextService
+final readonly class WorkerContextService implements WorkerContextServiceContract
 {
     private ?HorizonContext $horizonContext;
 

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Cbox\LaravelQueueMonitor\Utilities;
 
-class PayloadRedactor
+final class PayloadRedactor
 {
     /**
      * Mask sensitive values in the payload array

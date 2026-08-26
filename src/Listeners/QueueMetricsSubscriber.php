@@ -7,7 +7,7 @@ namespace Cbox\LaravelQueueMonitor\Listeners;
 use Cbox\LaravelQueueMetrics\Events\JobMetricsCompleted;
 use Cbox\LaravelQueueMetrics\Events\JobMetricsFailed;
 use Cbox\LaravelQueueMonitor\Models\JobMonitor;
-use Cbox\LaravelQueueMonitor\Services\DashboardCacheService;
+use Cbox\LaravelQueueMonitor\Services\Contracts\DashboardCacheServiceContract;
 use Illuminate\Events\Dispatcher;
 
 /**
@@ -19,7 +19,7 @@ use Illuminate\Events\Dispatcher;
 final class QueueMetricsSubscriber
 {
     public function __construct(
-        private readonly DashboardCacheService $dashboardCache,
+        private readonly DashboardCacheServiceContract $dashboardCache,
     ) {}
 
     public function handleJobMetricsCompleted(JobMetricsCompleted $event): void
