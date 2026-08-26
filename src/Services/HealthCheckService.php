@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Cbox\LaravelQueueMonitor\Services;
 
+use Cbox\LaravelQueueMonitor\DataTransferObjects\HealthCheckResult;
+use Cbox\LaravelQueueMonitor\DataTransferObjects\ReadinessResult;
 use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\LaravelQueueMonitor;
 use Cbox\LaravelQueueMonitor\Models\JobMonitor;
@@ -17,16 +19,14 @@ final class HealthCheckService implements HealthCheckServiceContract
 {
     /**
      * Perform comprehensive health check
-     *
-     * @return array{status: string, checks: array<string, array<string, mixed>>}
      */
-    public function check(): array
+    public function check(): HealthCheckResult
     {
         /** @var string $cachePrefix */
         $cachePrefix = config('queue-monitor.cache.prefix', 'queue_monitor_');
 
         if (config('queue-monitor.cache.enabled', true)) {
-            /** @var array{status: string, checks: array<string, array<string, mixed>>}|null $cached */
+            /** @var HealthCheckResult|null $cached */
             $cached = Cache::get($cachePrefix.'health_check');
             if ($cached !== null) {
                 return $cached;
@@ -44,11 +44,11 @@ final class HealthCheckService implements HealthCheckServiceContract
 
         $healthy = collect($checks)->every(fn ($check) => $check['healthy']);
 
-        $result = [
-            'status' => $healthy ? 'healthy' : 'degraded',
-            'checks' => $checks,
-            'timestamp' => now()->toIso8601String(),
-        ];
+        $result = new HealthCheckResult(
+            status: $healthy ? 'healthy' : 'degraded',
+            checks: $checks,
+            timestamp: now()->toIso8601String(),
+        );
 
         if (config('queue-monitor.cache.enabled', true)) {
             Cache::put($cachePrefix.'health_check', $result, 15);
@@ -59,10 +59,8 @@ final class HealthCheckService implements HealthCheckServiceContract
 
     /**
      * Check production readiness configuration.
-     *
-     * @return array{status: string, checks: array<string, array<string, mixed>>, timestamp: string}
      */
-    public function readiness(): array
+    public function readiness(): ReadinessResult
     {
         $checks = [
             'access_control' => $this->checkAccessControlReadiness(),
@@ -74,11 +72,11 @@ final class HealthCheckService implements HealthCheckServiceContract
 
         $ready = collect($checks)->every(fn (array $check): bool => (bool) $check['healthy']);
 
-        return [
-            'status' => $ready ? 'ready' : 'attention',
-            'checks' => $checks,
-            'timestamp' => now()->toIso8601String(),
-        ];
+        return new ReadinessResult(
+            status: $ready ? 'ready' : 'attention',
+            checks: $checks,
+            timestamp: now()->toIso8601String(),
+        );
     }
 
     /**
@@ -309,7 +307,7 @@ final class HealthCheckService implements HealthCheckServiceContract
      */
     public function getHealthScore(): int
     {
-        return $this->scoreFromChecks($this->check()['checks']);
+        return $this->scoreFromChecks($this->check()->checks);
     }
 
     /**
@@ -331,7 +329,7 @@ final class HealthCheckService implements HealthCheckServiceContract
      */
     public function isHealthy(): bool
     {
-        return $this->check()['status'] === 'healthy';
+        return $this->check()->status === 'healthy';
     }
 
     /**

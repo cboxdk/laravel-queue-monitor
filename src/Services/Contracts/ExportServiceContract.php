@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Cbox\LaravelQueueMonitor\Services\Contracts;
 
+use Cbox\LaravelQueueMonitor\DataTransferObjects\FailedJobsReport;
 use Cbox\LaravelQueueMonitor\DataTransferObjects\JobFilterData;
+use Cbox\LaravelQueueMonitor\DataTransferObjects\StatisticsReport;
 
 interface ExportServiceContract
 {
@@ -22,15 +24,11 @@ interface ExportServiceContract
 
     /**
      * Export statistics report
-     *
-     * @return array<string, mixed>
      */
-    public function statisticsReport(): array;
+    public function statisticsReport(): StatisticsReport;
 
     /**
      * Export failed jobs report
-     *
-     * @return array<string, mixed>
      */
-    public function failedJobsReport(int $limit = 100): array;
+    public function failedJobsReport(int $limit = 100): FailedJobsReport;
 }

@@ -7,7 +7,9 @@ namespace Cbox\LaravelQueueMonitor\Services;
 use Cbox\LaravelQueueMonitor\Actions\Analytics\CalculateJobStatisticsAction;
 use Cbox\LaravelQueueMonitor\Actions\Analytics\CalculateQueueHealthAction;
 use Cbox\LaravelQueueMonitor\Actions\Analytics\CalculateServerStatisticsAction;
+use Cbox\LaravelQueueMonitor\DataTransferObjects\FailedJobsReport;
 use Cbox\LaravelQueueMonitor\DataTransferObjects\JobFilterData;
+use Cbox\LaravelQueueMonitor\DataTransferObjects\StatisticsReport;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\JobMonitorRepositoryContract;
 use Cbox\LaravelQueueMonitor\Services\Contracts\ExportServiceContract;
 
@@ -129,50 +131,50 @@ final readonly class ExportService implements ExportServiceContract
 
     /**
      * Export statistics report
-     *
-     * @return array<string, mixed>
      */
-    public function statisticsReport(): array
+    public function statisticsReport(): StatisticsReport
     {
-        return [
-            'generated_at' => now()->toIso8601String(),
-            'global' => $this->jobStatistics->execute(),
-            'servers' => $this->serverStatistics->execute(),
-            'queue_health' => $this->queueHealth->execute(),
-        ];
+        return new StatisticsReport(
+            generatedAt: now()->toIso8601String(),
+            global: $this->jobStatistics->execute(),
+            servers: $this->serverStatistics->execute(),
+            queueHealth: $this->queueHealth->execute(),
+        );
     }
 
     /**
      * Export failed jobs report
-     *
-     * @return array<string, mixed>
      */
-    public function failedJobsReport(int $limit = 100): array
+    public function failedJobsReport(int $limit = 100): FailedJobsReport
     {
         $failed = $this->repository->getFailedJobs($limit);
 
-        $byException = $failed->groupBy('exception_class')
-            ->map(fn ($jobs) => [
+        $byException = [];
+        foreach ($failed->groupBy('exception_class') as $exceptionClass => $jobs) {
+            $byException[(string) $exceptionClass] = [
                 'count' => $jobs->count(),
-                'jobs' => $jobs->pluck('uuid')->toArray(),
-            ])
-            ->toArray();
+                'jobs' => $jobs->pluck('uuid')->all(),
+            ];
+        }
 
-        $byQueue = $failed->groupBy('queue')
-            ->map(fn ($jobs) => $jobs->count())
-            ->toArray();
+        $byQueue = [];
+        foreach ($failed->groupBy('queue') as $queue => $jobs) {
+            $byQueue[(string) $queue] = $jobs->count();
+        }
 
-        return [
-            'generated_at' => now()->toIso8601String(),
-            'total_failed' => $failed->count(),
-            'by_exception' => $byException,
-            'by_queue' => $byQueue,
-            'recent_failures' => $failed->take(10)->map(fn ($job) => [
-                'uuid' => $job->uuid,
-                'job_class' => $job->job_class,
-                'exception' => $job->exception_class,
-                'failed_at' => $job->completed_at?->toIso8601String(),
-            ])->toArray(),
-        ];
+        $recentFailures = $failed->take(10)->map(fn ($job): array => [
+            'uuid' => $job->uuid,
+            'job_class' => $job->job_class,
+            'exception' => $job->exception_class,
+            'failed_at' => $job->completed_at?->toIso8601String(),
+        ])->values()->all();
+
+        return new FailedJobsReport(
+            generatedAt: now()->toIso8601String(),
+            totalFailed: $failed->count(),
+            byException: $byException,
+            byQueue: $byQueue,
+            recentFailures: $recentFailures,
+        );
     }
 }

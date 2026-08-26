@@ -23,7 +23,7 @@ class HealthCheckController extends Controller
     {
         $health = $this->healthCheck->check();
 
-        $status = $health['status'] === 'healthy' ? 200 : 503;
+        $status = $health->status === 'healthy' ? 200 : 503;
 
         return response()->json($health, $status);
     }
