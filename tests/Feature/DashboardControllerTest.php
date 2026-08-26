@@ -156,6 +156,24 @@ test('metrics endpoint includes throughput data', function () {
     $response->assertJsonStructure(['charts' => ['throughput', 'distribution']]);
 });
 
+test('metrics endpoint honours the requested throughput range', function () {
+    JobMonitor::factory()->count(5)->create(['queued_at' => now()->subMinutes(5)]);
+
+    $response = getJson(route('queue-monitor.dashboard.metrics').'?minutes=15');
+
+    $response->assertOk();
+    expect($response->json('charts.throughput'))->toHaveCount(16);
+});
+
+test('metrics endpoint falls back to an hour for unknown throughput ranges', function () {
+    JobMonitor::factory()->count(5)->create(['queued_at' => now()->subMinutes(5)]);
+
+    $response = getJson(route('queue-monitor.dashboard.metrics').'?minutes=999');
+
+    $response->assertOk();
+    expect($response->json('charts.throughput'))->toHaveCount(61);
+});
+
 test('drill-down endpoint returns queue detail', function () {
     JobMonitor::factory()->count(5)->create(['queue' => 'payments']);
     JobMonitor::factory()->failed()->count(2)->create(['queue' => 'payments']);

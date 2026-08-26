@@ -33,11 +33,19 @@ class DashboardMetricsController extends Controller
         private readonly DashboardCacheService $dashboardCache,
     ) {}
 
+    /** Time ranges (in minutes) the overview throughput chart may request. */
+    private const THROUGHPUT_RANGES = [15, 60, 360, 1440];
+
     /**
      * Overview tab: stats, queues, alerts, recent jobs, charts
      */
-    public function overview(): JsonResponse
+    public function overview(Request $request): JsonResponse
     {
+        $minutes = (int) $request->query('minutes', '60');
+        if (! in_array($minutes, self::THROUGHPUT_RANGES, true)) {
+            $minutes = 60;
+        }
+
         $globalStats = $this->statsRepository->getGlobalStatistics();
         $queueHealth = $this->statsRepository->getQueueHealth();
 
@@ -62,7 +70,7 @@ class DashboardMetricsController extends Controller
             'recent_jobs' => $recentJobs,
             'charts' => [
                 'distribution' => $chartData,
-                'throughput' => $this->statsRepository->getThroughputByMinute(60),
+                'throughput' => $this->statsRepository->getThroughputByMinute($minutes),
             ],
             'horizon_available' => class_exists('Laravel\Horizon\Horizon'),
         ]);

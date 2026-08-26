@@ -315,6 +315,30 @@
             font-weight: 700;
         }
 
+        .qm-error-banner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            background: #fdf0ef;
+            border: 1px solid #f2c6c2;
+            color: #9f2d24;
+            border-radius: 10px;
+            padding: 10px 14px;
+            margin-bottom: 16px;
+            font-size: 13px;
+        }
+
+        .qm-error-banner button {
+            background: none;
+            border: 0;
+            color: inherit;
+            font-size: 16px;
+            line-height: 1;
+            padding: 2px 4px;
+            cursor: pointer;
+        }
+
         .qm-icon-button {
             width: 40px;
             display: grid;
@@ -1184,7 +1208,7 @@
                 <div class="qm-brand-mark">Q</div>
                 <div>
                     <strong>Queue Monitor</strong>
-                    <span>Production</span>
+                    <span>{{ ucfirst(app()->environment()) }}</span>
                 </div>
             </a>
 
@@ -1229,10 +1253,6 @@
                         <input type="text" x-model="filters.search" @keydown.enter.prevent="navigateTo('jobs'); resetPaginationAndFetch()" placeholder="Search job, queue, UUID">
                     </label>
 
-                    <select class="qm-select" aria-label="Environment">
-                        <option>Production</option>
-                    </select>
-
                     <button type="button" class="qm-chip" :class="{ live: isLive }" :aria-pressed="isLive" @click="toggleLive()">
                         <svg viewBox="0 0 24 24"><path d="M5 12h4l3-8 3 16 3-8h1"></path></svg>
                         <span x-text="isLive ? 'Live' : 'Paused'">Live</span>
@@ -1251,6 +1271,11 @@
             </header>
 
             <main class="qm-content">
+
+            <div x-show="error" x-cloak class="qm-error-banner" role="alert">
+                <span x-text="error"></span>
+                <button type="button" aria-label="Dismiss error" @click="error = null">&times;</button>
+            </div>
 
             {{-- ==================== TAB CONTENT (hidden when viewing job detail or drill-down) ==================== --}}
             <div x-show="!jobView && !drillDown">
@@ -1291,13 +1316,13 @@
                             <div class="qm-panel-head">
                                 <div class="qm-panel-title">
                                     <strong>Queue latency and backlog</strong>
-                                    <span>Processing trend over the last 60 minutes</span>
+                                    <span x-text="'Processing trend over the last ' + chartRangeLabel()">Processing trend over the last hour</span>
                                 </div>
                                 <div class="qm-segmented" aria-label="Time range">
-                                    <button type="button" class="qm-segment">15m</button>
-                                    <button type="button" class="qm-segment active">1h</button>
-                                    <button type="button" class="qm-segment">6h</button>
-                                    <button type="button" class="qm-segment">24h</button>
+                                    <button type="button" class="qm-segment" :class="{ active: chartRange === 15 }" @click="setChartRange(15)">15m</button>
+                                    <button type="button" class="qm-segment" :class="{ active: chartRange === 60 }" @click="setChartRange(60)">1h</button>
+                                    <button type="button" class="qm-segment" :class="{ active: chartRange === 360 }" @click="setChartRange(360)">6h</button>
+                                    <button type="button" class="qm-segment" :class="{ active: chartRange === 1440 }" @click="setChartRange(1440)">24h</button>
                                 </div>
                             </div>
                             <div class="qm-chart-area">
@@ -1310,7 +1335,7 @@
                                         </button>
                                     </template>
                                     <template x-if="!loading.overview && overview.queues.length === 0">
-                                        <div class="qm-queue-bar"><span>default</span><div class="qm-bar-track"><i class="qm-bar-fill" style="width: 12%"></i></div></div>
+                                        <div class="qm-queue-bar"><span>No queues seen in the last hour</span></div>
                                     </template>
                                 </div>
                             </div>
@@ -1340,7 +1365,7 @@
                                     </thead>
                                     <tbody>
                                         <template x-for="job in attentionJobs().slice(0, 6)" :key="job.uuid">
-                                            <tr class="cursor-pointer" :class="{ 'selected': selectedOverviewJob()?.uuid === job.uuid }" @click="openJobView(job.uuid)">
+                                            <tr class="cursor-pointer" title="Select job" :class="{ 'selected': selectedOverviewJob()?.uuid === job.uuid }" @click="selectedOverviewUuid = job.uuid">
                                                 <td><span class="qm-status" :class="statusTone(job.status?.value)" x-text="job.status?.label || job.status?.value || 'Unknown'"></span></td>
                                                 <td><strong x-text="job.job_class"></strong><span x-text="job.uuid ? 'uuid ' + job.uuid.slice(0, 8) : ''"></span></td>
                                                 <td x-text="job.queue || '-'"></td>
@@ -1391,7 +1416,7 @@
                             <div class="qm-action-row">
                                 <button type="button" class="qm-action-button primary" @click="replayJob(selectedOverviewJob()?.uuid)">Retry</button>
                                 <button type="button" class="qm-action-button" @click="openJobView(selectedOverviewJob()?.uuid)">Inspect</button>
-                                <button type="button" class="qm-action-button" @click="confirmDeleteJob(selectedOverviewJob()?.uuid)">Ignore</button>
+                                <button type="button" class="qm-action-button" @click="confirmDeleteJob(selectedOverviewJob()?.uuid)">Delete</button>
                             </div>
                         </div>
                         <div class="qm-detail" x-show="!selectedOverviewJob()">
@@ -2996,6 +3021,10 @@
                 autoscale: {},
                 horizonAvailable: false,
 
+                // Overview state
+                chartRange: 60,
+                selectedOverviewUuid: null,
+
                 // Jobs tab state
                 filters: { search: '', statuses: [], queue: '', dateFrom: '', dateTo: '', showAdvanced: false, jobClass: '', server: '', minAttempts: '', minDuration: '' },
                 availableQueues: [],
@@ -3157,7 +3186,11 @@
                     if (this.jobView) { this.fetchJobDetail(this.jobView); return; }
                     if (this.drillDown) { this.refreshDrillDown(); return; }
                     if (this.activeTab === 'overview') { this.fetchOverview(); this.fetchHealth(); }
-                    else if (this.activeTab === 'jobs') this.fetchJobs();
+                    else if (this.activeTab === 'jobs') {
+                        // Don't move rows under the user's cursor while they are
+                        // building a selection; manual refresh still works.
+                        if (force || this.selectedJobs.length === 0) this.fetchJobs();
+                    }
                     else if (this.activeTab === 'analytics') this.fetchAnalytics();
                     else if (this.activeTab === 'health') this.fetchHealth();
                     else if (this.activeTab === 'infrastructure') this.fetchInfrastructure();
@@ -3220,7 +3253,18 @@
                 },
 
                 selectedOverviewJob() {
-                    return this.attentionJobs()[0] || null;
+                    const jobs = this.attentionJobs();
+                    return jobs.find(job => job.uuid === this.selectedOverviewUuid) || jobs[0] || null;
+                },
+
+                setChartRange(minutes) {
+                    if (this.chartRange === minutes) return;
+                    this.chartRange = minutes;
+                    this.fetchOverview();
+                },
+
+                chartRangeLabel() {
+                    return { 15: '15 minutes', 60: 'hour', 360: '6 hours', 1440: '24 hours' }[this.chartRange] || 'hour';
                 },
 
                 failureRateLabel() {
@@ -3449,7 +3493,7 @@
                 async fetchOverview() {
                     return this.runLatest('overview', async () => {
                         try {
-                        const data = await this.fetchWithRetry('{{ route("queue-monitor.dashboard.metrics") }}');
+                        const data = await this.fetchWithRetry('{{ route("queue-monitor.dashboard.metrics") }}?minutes=' + this.chartRange);
                         this.overview.stats = data.stats || {};
                         this.overview.queues = data.queues || [];
                         this.overview.alerts = data.alerts || {};
@@ -3485,6 +3529,9 @@
                         const data = await this.fetchWithRetry(`{{ route("queue-monitor.dashboard.jobs") }}?${params.toString()}`);
                         this.jobs.data = data.data || [];
                         this.jobs.meta = data.meta || {};
+                        // Drop selections that are no longer on the current page so
+                        // batch actions only ever target visible rows.
+                        this.selectedJobs = this.selectedJobs.filter(uuid => this.jobs.data.some(job => job.uuid === uuid));
                         this.pagination.total = data.meta?.total || 0;
                         const metaQueues = data.meta?.available_queues || [];
                         if (Array.isArray(metaQueues)) this.availableQueues = metaQueues;
