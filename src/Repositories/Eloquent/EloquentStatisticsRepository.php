@@ -6,6 +6,14 @@ namespace Cbox\LaravelQueueMonitor\Repositories\Eloquent;
 
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
+use Cbox\LaravelQueueMonitor\DataTransferObjects\FailurePatterns;
+use Cbox\LaravelQueueMonitor\DataTransferObjects\GlobalStatistics;
+use Cbox\LaravelQueueMonitor\DataTransferObjects\JobClassStatistics;
+use Cbox\LaravelQueueMonitor\DataTransferObjects\QueueHealthEntry;
+use Cbox\LaravelQueueMonitor\DataTransferObjects\QueueStatistics;
+use Cbox\LaravelQueueMonitor\DataTransferObjects\QueueTimeline;
+use Cbox\LaravelQueueMonitor\DataTransferObjects\ServerStatistics;
+use Cbox\LaravelQueueMonitor\DataTransferObjects\ThroughputBucket;
 use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\StatisticsRepositoryContract;
 use Cbox\LaravelQueueMonitor\Services\Contracts\DashboardCacheServiceContract;
@@ -21,15 +29,12 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
         private DashboardCacheServiceContract $dashboardCache,
     ) {}
 
-    public function getGlobalStatistics(): array
+    public function getGlobalStatistics(): GlobalStatistics
     {
         return $this->remember('global_statistics', fn () => $this->computeGlobalStatistics());
     }
 
-    /**
-     * @return array<string, mixed>
-     */
-    private function computeGlobalStatistics(): array
+    private function computeGlobalStatistics(): GlobalStatistics
     {
         /** @var string $prefix */
         $prefix = config('queue-monitor.database.table_prefix', 'queue_monitor_');
@@ -61,20 +66,7 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
 
         /** @var object{total: int, completed: int, failed: int, timeout: int, processing: int, queued: int, avg_duration_ms: float|null, max_duration_ms: int|null, avg_memory_mb: float|null, max_memory_mb: float|null}|null $stats */
         if ($stats === null) {
-            return [
-                'total' => 0,
-                'completed' => 0,
-                'failed' => 0,
-                'timeout' => 0,
-                'processing' => 0,
-                'queue_backlog' => 0,
-                'success_rate' => 0,
-                'failure_rate' => 0,
-                'avg_duration_ms' => null,
-                'max_duration_ms' => null,
-                'avg_memory_mb' => null,
-                'max_memory_mb' => null,
-            ];
+            return new GlobalStatistics;
         }
 
         $total = (int) $stats->total;
@@ -82,7 +74,7 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
         $failed = (int) $stats->failed + (int) $stats->timeout;
         $finished = $completed + $failed;
 
-        return [
+        return GlobalStatistics::fromArray([
             'total' => $total,
             'completed' => $completed,
             'failed' => $failed,
@@ -95,11 +87,11 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
             'max_duration_ms' => $stats->max_duration_ms !== null ? (int) $stats->max_duration_ms : null,
             'avg_memory_mb' => $stats->avg_memory_mb !== null ? round((float) $stats->avg_memory_mb, 2) : null,
             'max_memory_mb' => $stats->max_memory_mb !== null ? round((float) $stats->max_memory_mb, 2) : null,
-        ];
+        ]);
     }
 
     /**
-     * @return array<int, array<string, mixed>>
+     * @return array<int, ServerStatistics>
      */
     public function getServerStatistics(?string $serverName = null): array
     {
@@ -109,7 +101,7 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
     }
 
     /**
-     * @return array<int, array<string, mixed>>
+     * @return array<int, ServerStatistics>
      */
     private function computeServerStatistics(?string $serverName = null): array
     {
@@ -137,14 +129,14 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
             $query->where('server_name', $serverName);
         }
 
-        /** @var array<int, array<string, mixed>> $result */
+        /** @var array<int, ServerStatistics> $result */
         $result = $query->get()
             ->map(function ($row) {
                 $completed = (int) $row->completed;
                 $failed = (int) $row->failed;
                 $finished = $completed + $failed;
 
-                return [
+                return ServerStatistics::fromArray([
                     'server_name' => $row->server_name,
                     'total_jobs' => (int) $row->total,
                     'completed' => $completed,
@@ -153,7 +145,7 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
                         ? round(($completed / $finished) * 100, 2)
                         : 0,
                     'avg_duration_ms' => $row->avg_duration_ms !== null ? round((float) $row->avg_duration_ms, 2) : null,
-                ];
+                ]);
             })
             ->values()
             ->all();
@@ -162,7 +154,7 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
     }
 
     /**
-     * @return array<int, array<string, mixed>>
+     * @return array<int, QueueStatistics>
      */
     public function getQueueStatistics(?string $queue = null): array
     {
@@ -172,7 +164,7 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
     }
 
     /**
-     * @return array<int, array<string, mixed>>
+     * @return array<int, QueueStatistics>
      */
     private function computeQueueStatistics(?string $queue = null): array
     {
@@ -203,14 +195,14 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
             $query->where('queue', $queue);
         }
 
-        /** @var array<int, array<string, mixed>> $result */
+        /** @var array<int, QueueStatistics> $result */
         $result = $query->get()
             ->map(function ($row) {
                 $completed = (int) $row->completed;
                 $failed = (int) $row->failed;
                 $finished = $completed + $failed;
 
-                return [
+                return QueueStatistics::fromArray([
                     'queue' => $row->queue,
                     'connection' => $row->connection,
                     'total_jobs' => (int) $row->total,
@@ -221,7 +213,7 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
                         ? round(($completed / $finished) * 100, 2)
                         : 0,
                     'avg_duration_ms' => $row->avg_duration_ms !== null ? round((float) $row->avg_duration_ms, 2) : null,
-                ];
+                ]);
             })
             ->values()
             ->all();
@@ -230,7 +222,7 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
     }
 
     /**
-     * @return array<int, array<string, mixed>>
+     * @return array<int, JobClassStatistics>
      */
     public function getJobClassStatistics(?string $jobClass = null): array
     {
@@ -240,7 +232,7 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
     }
 
     /**
-     * @return array<int, array<string, mixed>>
+     * @return array<int, JobClassStatistics>
      */
     private function computeJobClassStatistics(?string $jobClass = null): array
     {
@@ -270,14 +262,14 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
             $query->where('job_class', $jobClass);
         }
 
-        /** @var array<int, array<string, mixed>> $result */
+        /** @var array<int, JobClassStatistics> $result */
         $result = $query->get()
             ->map(function ($row) {
                 $completed = (int) $row->completed;
                 $failed = (int) $row->failed;
                 $finished = $completed + $failed;
 
-                return [
+                return JobClassStatistics::fromArray([
                     'job_class' => $row->job_class,
                     'total_jobs' => (int) $row->total,
                     'completed' => $completed,
@@ -287,7 +279,7 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
                         : 0,
                     'avg_duration_ms' => $row->avg_duration_ms !== null ? round((float) $row->avg_duration_ms, 2) : null,
                     'max_duration_ms' => $row->max_duration_ms !== null ? (int) $row->max_duration_ms : null,
-                ];
+                ]);
             })
             ->values()
             ->all();
@@ -295,15 +287,12 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
         return $result;
     }
 
-    public function getFailurePatterns(): array
+    public function getFailurePatterns(): FailurePatterns
     {
         return $this->remember('failure_patterns', fn () => $this->computeFailurePatterns());
     }
 
-    /**
-     * @return array{top_exceptions: array<int, array<string, mixed>>}
-     */
-    private function computeFailurePatterns(): array
+    private function computeFailurePatterns(): FailurePatterns
     {
         /** @var string $prefix */
         $prefix = config('queue-monitor.database.table_prefix', 'queue_monitor_');
@@ -332,13 +321,11 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
             ->values()
             ->all();
 
-        return [
-            'top_exceptions' => $exceptionStats,
-        ];
+        return new FailurePatterns($exceptionStats);
     }
 
     /**
-     * @return array<int, array<string, mixed>>
+     * @return array<int, QueueHealthEntry>
      */
     public function getQueueHealth(): array
     {
@@ -346,14 +333,14 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
     }
 
     /**
-     * @return array<int, array<string, mixed>>
+     * @return array<int, QueueHealthEntry>
      */
     private function computeQueueHealth(): array
     {
         /** @var string $prefix */
         $prefix = config('queue-monitor.database.table_prefix', 'queue_monitor_');
 
-        /** @var array<int, array<string, mixed>> $queueHealth */
+        /** @var array<int, QueueHealthEntry> $queueHealth */
         $queueHealth = $this->table($prefix.'jobs')
             ->select([
                 'queue',
@@ -384,7 +371,7 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
                 $failureRate = $finished > 0 ? ($failed / $finished) : 0;
                 $health = 100 - ($failureRate * 100);
 
-                return [
+                return QueueHealthEntry::fromArray([
                     'queue' => $row->queue,
                     'total_last_hour' => $total,
                     'processing' => $processing,
@@ -392,7 +379,7 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
                     'avg_duration_ms' => $avgDuration !== null ? round($avgDuration, 2) : null,
                     'health_score' => round($health, 2),
                     'status' => $health >= 95 ? 'healthy' : ($health >= 75 ? 'degraded' : 'unhealthy'),
-                ];
+                ]);
             })
             ->values()
             ->all();
@@ -400,29 +387,24 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
         return $queueHealth;
     }
 
+    /**
+     * @return array<int, ThroughputBucket>
+     */
     public function getThroughputByMinute(int $minutes = 60): array
     {
         return $this->remember("throughput_{$minutes}", fn () => $this->computeThroughputByMinute($minutes), 30);
     }
 
-    public function getQueueTimeline(string $queue, int $minutes = 60): array
+    public function getQueueTimeline(string $queue, int $minutes = 60): QueueTimeline
     {
-        /** @var array{buckets: array<int, array{minute: string, ts: string, total: int, completed: int, failed: int, avg_duration_ms: float|null, max_duration_ms: int|null, avg_memory_mb: float|null, max_memory_mb: float|null}>, live: array{processing: int, waiting: int, delayed: int}, memory_limit_mb: float|null} */
         return $this->remember(
             'queue_timeline_'.md5($queue).'_'.$minutes,
-            fn (): array => $this->computeQueueTimeline($queue, $minutes),
+            fn (): QueueTimeline => $this->computeQueueTimeline($queue, $minutes),
             15
         );
     }
 
-    /**
-     * @return array{
-     *     buckets: array<int, array{minute: string, ts: string, total: int, completed: int, failed: int, avg_duration_ms: float|null, max_duration_ms: int|null, avg_memory_mb: float|null, max_memory_mb: float|null}>,
-     *     live: array{processing: int, waiting: int, delayed: int},
-     *     memory_limit_mb: float|null
-     * }
-     */
-    public function computeQueueTimeline(string $queue, int $minutes = 60): array
+    public function computeQueueTimeline(string $queue, int $minutes = 60): QueueTimeline
     {
         /** @var string $prefix */
         $prefix = config('queue-monitor.database.table_prefix', 'queue_monitor_');
@@ -500,16 +482,16 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
             ->whereNotNull('worker_memory_limit_mb')
             ->max('worker_memory_limit_mb');
 
-        return [
+        return QueueTimeline::fromArray([
             'buckets' => $buckets,
             'live' => $live,
             'memory_limit_mb' => is_numeric($memoryLimit) ? (float) $memoryLimit : null,
-        ];
+        ]);
     }
 
     /**
      * @param  array<string, string>|null  $filter  Optional filter e.g. ['queue' => 'payments']
-     * @return array<int, array{minute: string, total: int, completed: int, failed: int}>
+     * @return array<int, ThroughputBucket>
      */
     public function computeThroughputByMinute(int $minutes = 60, ?array $filter = null): array
     {
@@ -554,12 +536,12 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
             /** @var Carbon $date */
             $key = $date->format('Y-m-d H:i');
             $row = $rows->get($key);
-            $result[] = [
+            $result[] = ThroughputBucket::fromArray([
                 'minute' => $key,
                 'total' => $row ? (int) $row->total : 0,
                 'completed' => $row ? (int) $row->completed : 0,
                 'failed' => $row ? (int) $row->failed : 0,
-            ];
+            ]);
         }
 
         return $result;

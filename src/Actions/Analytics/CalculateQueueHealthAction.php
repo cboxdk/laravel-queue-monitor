@@ -23,6 +23,9 @@ final readonly class CalculateQueueHealthAction
             return [];
         }
 
-        return $this->repository->getQueueHealth();
+        return array_map(
+            static fn ($entry): array => $entry->toArray(),
+            $this->repository->getQueueHealth(),
+        );
     }
 }

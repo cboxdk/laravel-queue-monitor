@@ -498,8 +498,11 @@ class QueueMonitorDashboardCommand extends Command
     ): void {
         // Only re-query database when data is stale (interval elapsed, filter changed, page changed)
         if ($this->coreDataStale) {
-            $this->cachedStats = $statsRepository->getGlobalStatistics();
-            $this->cachedQueues = $statsRepository->getQueueHealth();
+            $this->cachedStats = $statsRepository->getGlobalStatistics()->toArray();
+            $this->cachedQueues = array_map(
+                static fn ($entry): array => $entry->toArray(),
+                $statsRepository->getQueueHealth(),
+            );
             $this->cachedJobs = $this->getFilteredJobs($jobRepository);
             $this->cachedTotalJobs = $this->getTotalFilteredJobs();
 
@@ -546,10 +549,10 @@ class QueueMonitorDashboardCommand extends Command
             try {
                 $tagRepository = app(TagRepositoryContract::class);
                 $this->analyticsData = [
-                    'job_classes' => $statsRepository->getJobClassStatistics(),
-                    'queues' => $statsRepository->getQueueStatistics(),
-                    'servers' => $statsRepository->getServerStatistics(),
-                    'failure_patterns' => $statsRepository->getFailurePatterns(),
+                    'job_classes' => array_map(static fn ($stat): array => $stat->toArray(), $statsRepository->getJobClassStatistics()),
+                    'queues' => array_map(static fn ($stat): array => $stat->toArray(), $statsRepository->getQueueStatistics()),
+                    'servers' => array_map(static fn ($stat): array => $stat->toArray(), $statsRepository->getServerStatistics()),
+                    'failure_patterns' => $statsRepository->getFailurePatterns()->toArray(),
                     'tags' => $tagRepository->getTagStatistics()->toArray(),
                 ];
                 $this->analyticsLastFetched = $now;

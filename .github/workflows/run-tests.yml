@@ -167,4 +167,4 @@ jobs:
         run: composer show -D
 
       - name: Execute tests
-        run: vendor/bin/pest --ci
+        run: php -d memory_limit=512M vendor/bin/pest --ci

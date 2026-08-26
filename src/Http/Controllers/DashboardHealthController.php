@@ -111,9 +111,9 @@ class DashboardHealthController extends Controller
         return response()->json([
             'queue' => $queue,
             'minutes' => $minutes,
-            'buckets' => $timeline['buckets'],
-            'live' => $timeline['live'],
-            'memory_limit_mb' => $timeline['memory_limit_mb'],
+            'buckets' => $timeline->buckets,
+            'live' => $timeline->live,
+            'memory_limit_mb' => $timeline->memoryLimitMb,
             'workers' => $scaling['events'],
             'worker_range' => $scaling['worker_range'],
         ]);

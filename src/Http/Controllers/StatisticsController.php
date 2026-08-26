@@ -87,7 +87,7 @@ class StatisticsController extends Controller
      */
     public function failurePatterns(): StatisticsResource
     {
-        $patterns = $this->statsRepository->getFailurePatterns();
+        $patterns = $this->statsRepository->getFailurePatterns()->toArray();
 
         return new StatisticsResource($patterns);
     }
