@@ -174,6 +174,39 @@ test('metrics endpoint falls back to an hour for unknown throughput ranges', fun
     expect($response->json('charts.throughput'))->toHaveCount(61);
 });
 
+test('autoscale timeline returns buckets, live counts, and scaling events for a queue', function () {
+    JobMonitor::factory()->count(3)->create(['queue' => 'payments', 'queued_at' => now()->subMinutes(3)]);
+    ScalingEvent::create([
+        'connection' => 'redis',
+        'queue' => 'payments',
+        'action' => 'scale_up',
+        'current_workers' => 2,
+        'target_workers' => 5,
+        'reason' => 'backlog growing',
+        'sla_target' => 30,
+        'created_at' => now()->subMinutes(2),
+    ]);
+
+    $response = getJson(route('queue-monitor.dashboard.autoscale.timeline').'?queue=payments&minutes=15');
+
+    $response->assertOk();
+    $response->assertJsonStructure(['queue', 'minutes', 'buckets', 'live' => ['processing', 'waiting', 'delayed'], 'workers', 'worker_range' => ['min', 'max']]);
+    expect($response->json('buckets'))->toHaveCount(16);
+    expect($response->json('workers'))->toHaveCount(1);
+    expect($response->json('workers.0.action'))->toBe('scale_up');
+    expect($response->json('worker_range'))->toBe(['min' => 2, 'max' => 5]);
+});
+
+test('autoscale timeline requires a queue and falls back on unknown ranges', function () {
+    getJson(route('queue-monitor.dashboard.autoscale.timeline'))->assertStatus(422);
+
+    JobMonitor::factory()->create(['queue' => 'payments']);
+    $response = getJson(route('queue-monitor.dashboard.autoscale.timeline').'?queue=payments&minutes=999');
+    $response->assertOk();
+    expect($response->json('minutes'))->toBe(60);
+    expect($response->json('buckets'))->toHaveCount(61);
+});
+
 test('drill-down endpoint returns queue detail', function () {
     JobMonitor::factory()->count(5)->create(['queue' => 'payments']);
     JobMonitor::factory()->failed()->count(2)->create(['queue' => 'payments']);

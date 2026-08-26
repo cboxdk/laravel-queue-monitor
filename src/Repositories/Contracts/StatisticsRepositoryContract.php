@@ -54,4 +54,16 @@ interface StatisticsRepositoryContract
      * @return array<int, array{minute: string, total: int, completed: int, failed: int}>
      */
     public function getThroughputByMinute(int $minutes = 60): array;
+
+    /**
+     * Per-minute scaling timeline for one queue: job volume, duration, and
+     * memory buckets plus live processing/waiting/delayed counts.
+     *
+     * @return array{
+     *     buckets: array<int, array{minute: string, ts: string, total: int, completed: int, failed: int, avg_duration_ms: float|null, max_duration_ms: int|null, avg_memory_mb: float|null, max_memory_mb: float|null}>,
+     *     live: array{processing: int, waiting: int, delayed: int},
+     *     memory_limit_mb: float|null
+     * }
+     */
+    public function getQueueTimeline(string $queue, int $minutes = 60): array;
 }

@@ -184,6 +184,23 @@ When persistence is on, configure a storage backend in `config/queue-metrics.php
 
 For full metrics configuration options, see the [laravel-queue-metrics documentation](https://github.com/cboxdk/laravel-queue-metrics).
 
+## Scaling Timeline
+
+The autoscale tab opens with a per-queue scaling timeline: job volume, duration,
+memory, and the autoscaler's worker decisions rendered on one shared time axis, so
+you can see how scaling reacted to load — and what it cost — at a glance.
+
+- Job volume, duration, and memory come from the recorded jobs (bucketed per
+  minute over a selectable 15m/1h/6h/24h window).
+- The workers panel steps through the recorded scaling events: the solid line is
+  the actual worker count, the dashed line the autoscaler's target.
+- The strip above the charts shows the queue's live processing/waiting/delayed
+  counts, the worker range observed in the window, and the worker memory limit.
+
+Nothing needs configuring. The load panels work with the data Queue Monitor already
+records; the workers panel appears when scaling events exist (i.e. when
+[queue-autoscale](https://github.com/cboxdk/laravel-queue-autoscale) is installed).
+
 ## Autoscale Failure Fuse
 
 When [queue-autoscale](https://github.com/cboxdk/laravel-queue-autoscale) trips its

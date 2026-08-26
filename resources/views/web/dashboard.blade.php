@@ -2178,6 +2178,45 @@
                 <template x-if="!loading.autoscale">
                     <div class="space-y-6">
 
+                        {{-- Scaling timeline: queue load and worker decisions on one time axis --}}
+                        <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm overflow-hidden">
+                            <div class="px-5 py-4 border-b border-gray-100">
+                                <div class="flex items-center justify-between gap-3 flex-wrap">
+                                    <div class="min-w-0">
+                                        <h3 class="text-sm font-semibold text-gray-900">Scaling timeline</h3>
+                                        <p class="text-[11px] text-gray-500" x-text="'Queue load and worker decisions over the last ' + rangeLabel(timeline.range)">Queue load and worker decisions</p>
+                                    </div>
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                        <div class="flex items-center gap-1 flex-wrap" role="group" aria-label="Timeline queue">
+                                            <template x-for="q in timelineQueues()" :key="'tlq-' + q">
+                                                <button type="button" class="px-2.5 py-1 text-[11px] font-medium border rounded-lg transition" :class="timeline.queue === q ? 'text-blue-700 bg-blue-50 border-blue-200' : 'text-gray-600 bg-white border-gray-200 hover:bg-gray-50'" :aria-pressed="timeline.queue === q" @click="setTimelineQueue(q)" x-text="q"></button>
+                                            </template>
+                                        </div>
+                                        <div class="qm-segmented" aria-label="Timeline range">
+                                            <button type="button" class="qm-segment" :class="{ active: timeline.range === 15 }" @click="setTimelineRange(15)">15m</button>
+                                            <button type="button" class="qm-segment" :class="{ active: timeline.range === 60 }" @click="setTimelineRange(60)">1h</button>
+                                            <button type="button" class="qm-segment" :class="{ active: timeline.range === 360 }" @click="setTimelineRange(360)">6h</button>
+                                            <button type="button" class="qm-segment" :class="{ active: timeline.range === 1440 }" @click="setTimelineRange(1440)">24h</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="px-5 py-2.5 border-b border-gray-100 flex items-center gap-4 flex-wrap text-[11px] text-gray-600" x-show="timeline.data">
+                                <span><strong class="text-gray-900 font-semibold tabular-nums" x-text="formatNumber(timeline.data?.live?.processing ?? 0)"></strong> processing</span>
+                                <span><strong class="text-gray-900 font-semibold tabular-nums" x-text="formatNumber(timeline.data?.live?.waiting ?? 0)"></strong> waiting</span>
+                                <span><strong class="text-gray-900 font-semibold tabular-nums" x-text="formatNumber(timeline.data?.live?.delayed ?? 0)"></strong> delayed</span>
+                                <span x-show="timelineWorkerRangeLabel()"><strong class="text-gray-900 font-semibold tabular-nums" x-text="timelineWorkerRangeLabel()"></strong> workers</span>
+                                <span x-show="timeline.data?.memory_limit_mb" class="text-gray-500" x-text="formatNumber(timeline.data?.memory_limit_mb) + ' MB memory limit'"></span>
+                            </div>
+                            <template x-if="timelineQueues().length === 0">
+                                <div class="px-6 py-12 text-center text-sm text-gray-500">No queues seen yet — the timeline appears once jobs are recorded.</div>
+                            </template>
+                            <template x-if="timelineQueues().length > 0 && loading.autoscaleTimeline && !timeline.data">
+                                <div class="flex items-center justify-center py-16"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-brand"></div></div>
+                            </template>
+                            <div id="autoscale-timeline-chart" class="w-full" style="height: 240px;" x-show="timelineQueues().length > 0 && timeline.data"></div>
+                        </div>
+
                         {{-- Not Available State --}}
                         <template x-if="!autoscale.available">
                             <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm p-12 text-center">
@@ -3026,6 +3065,11 @@
             // not on every Alpine evaluation of the payload panel.
             let payloadCache = { key: undefined, value: null };
 
+            // ECharts instances must stay out of Alpine's reactive state: the
+            // deep proxy Alpine wraps state in breaks ECharts' internal
+            // identity checks (resize() throws through the proxy).
+            let autoscaleTimelineChart = null;
+
             return {
                 activeTab: 'overview',
                 previousTab: 'overview',
@@ -3050,6 +3094,9 @@
                 chartRange: 60,
                 selectedOverviewUuid: null,
 
+                // Autoscale scaling timeline
+                timeline: { queue: null, range: 60, data: null },
+
                 // Jobs tab state
                 filters: { search: '', statuses: [], queue: '', dateFrom: '', dateTo: '', showAdvanced: false, jobClass: '', server: '', minAttempts: '', minDuration: '' },
                 availableQueues: [],
@@ -3060,10 +3107,10 @@
                 // Auto-refresh
                 refreshInterval: null,
                 isLive: true,
-                inFlight: { overview: false, jobs: false, analytics: false, health: false, infrastructure: false, autoscale: false, detail: false, drillDown: false },
-                pendingRefresh: { overview: false, jobs: false, analytics: false, health: false, infrastructure: false, autoscale: false, detail: false, drillDown: false },
-                refreshing: { overview: false, jobs: false, analytics: false, health: false, infrastructure: false, autoscale: false, detail: false, drillDown: false },
-                loading: { overview: true, jobs: false, analytics: false, health: false, infrastructure: false, autoscale: false, detail: false },
+                inFlight: { overview: false, jobs: false, analytics: false, health: false, infrastructure: false, autoscale: false, autoscaleTimeline: false, detail: false, drillDown: false },
+                pendingRefresh: { overview: false, jobs: false, analytics: false, health: false, infrastructure: false, autoscale: false, autoscaleTimeline: false, detail: false, drillDown: false },
+                refreshing: { overview: false, jobs: false, analytics: false, health: false, infrastructure: false, autoscale: false, autoscaleTimeline: false, detail: false, drillDown: false },
+                loading: { overview: true, jobs: false, analytics: false, health: false, infrastructure: false, autoscale: false, autoscaleTimeline: false, detail: false },
                 lastMetaRefreshAt: 0,
                 error: null,
                 retryCount: 0,
@@ -3181,6 +3228,7 @@
                         this.throughputChart?.resize();
                         this.distributionChart?.resize();
                         this.drillDownChart?.resize();
+                        autoscaleTimelineChart?.resize();
                     });
 
                     window.addEventListener('keydown', (e) => {
@@ -3231,7 +3279,7 @@
                     else if (this.activeTab === 'analytics') this.fetchAnalytics();
                     else if (this.activeTab === 'health') this.fetchHealth();
                     else if (this.activeTab === 'infrastructure') this.fetchInfrastructure();
-                    else if (this.activeTab === 'autoscale') this.fetchAutoscale();
+                    else if (this.activeTab === 'autoscale') { this.fetchAutoscale(); this.fetchAutoscaleTimeline(); }
                 },
 
                 tabLabels: { overview: 'Overview', jobs: 'Jobs', analytics: 'Analytics', health: 'Health', autoscale: 'Autoscale', infrastructure: 'Infrastructure' },
@@ -3303,8 +3351,35 @@
                     this.fetchOverview();
                 },
 
+                rangeLabel(minutes) {
+                    return { 15: '15 minutes', 60: 'hour', 360: '6 hours', 1440: '24 hours' }[minutes] || 'hour';
+                },
+
                 chartRangeLabel() {
-                    return { 15: '15 minutes', 60: 'hour', 360: '6 hours', 1440: '24 hours' }[this.chartRange] || 'hour';
+                    return this.rangeLabel(this.chartRange);
+                },
+
+                timelineQueues() {
+                    return this.availableQueues.slice(0, 8);
+                },
+
+                setTimelineQueue(queue) {
+                    if (this.timeline.queue === queue) return;
+                    this.timeline.queue = queue;
+                    this.timeline.data = null;
+                    this.fetchAutoscaleTimeline();
+                },
+
+                setTimelineRange(minutes) {
+                    if (this.timeline.range === minutes) return;
+                    this.timeline.range = minutes;
+                    this.fetchAutoscaleTimeline();
+                },
+
+                timelineWorkerRangeLabel() {
+                    const range = this.timeline.data?.worker_range;
+                    if (!range || range.min === null) return '';
+                    return range.min === range.max ? String(range.min) : `${range.min}–${range.max}`;
                 },
 
                 failureRateLabel() {
@@ -3463,6 +3538,7 @@
                     else if (scope === 'health') this.fetchHealth();
                     else if (scope === 'infrastructure') this.fetchInfrastructure();
                     else if (scope === 'autoscale') this.fetchAutoscale();
+                    else if (scope === 'autoscaleTimeline') this.fetchAutoscaleTimeline();
                     else if (scope === 'detail' && this.jobView) this.fetchJobDetail(this.jobView);
                     else if (scope === 'drillDown') this.refreshDrillDown();
                 },
@@ -3487,10 +3563,11 @@
                     else if (tab === 'analytics') this.fetchAnalytics();
                     else if (tab === 'health') this.fetchHealth();
                     else if (tab === 'infrastructure') this.fetchInfrastructure();
-                    else if (tab === 'autoscale') this.fetchAutoscale();
+                    else if (tab === 'autoscale') { this.fetchAutoscale(); this.fetchAutoscaleTimeline(); }
                     this.$nextTick(() => {
                         if (tab === 'overview') this.initThroughputChart();
                         if (tab === 'analytics') this.initDistributionChart();
+                        if (tab === 'autoscale') this.initAutoscaleTimelineChart();
                     });
                 },
 
@@ -3651,6 +3728,24 @@
                     return this.runLatest('autoscale', async () => {
                         if (Object.keys(this.autoscale).length === 0) this.loading.autoscale = true;
                         try { this.autoscale = await this.fetchWithRetry('{{ route("queue-monitor.dashboard.autoscale") }}'); } catch (e) { console.error('fetchAutoscale error:', e); } finally { this.loading.autoscale = false; }
+                    });
+                },
+
+                async fetchAutoscaleTimeline() {
+                    if (!this.timeline.queue) {
+                        this.timeline.queue = this.timelineQueues()[0] || null;
+                        if (!this.timeline.queue) return;
+                    }
+                    return this.runLatest('autoscaleTimeline', async () => {
+                        if (!this.timeline.data) this.loading.autoscaleTimeline = true;
+                        try {
+                            const url = '{{ route("queue-monitor.dashboard.autoscale.timeline") }}?queue=' + encodeURIComponent(this.timeline.queue) + '&minutes=' + this.timeline.range;
+                            const data = await this.fetchWithRetry(url);
+                            // Ignore responses for a queue the user has already switched away from.
+                            if (data.queue !== this.timeline.queue) return;
+                            this.timeline.data = data;
+                            this.$nextTick(() => { this.initAutoscaleTimelineChart(); this.updateAutoscaleTimelineChart(); });
+                        } catch (e) { console.error('fetchAutoscaleTimeline error:', e); } finally { this.loading.autoscaleTimeline = false; }
                     });
                 },
 
@@ -4003,6 +4098,102 @@
                             series: [{ type: 'pie', radius: ['45%', '75%'], center: ['35%', '50%'], avoidLabelOverlap: false, itemStyle: { borderRadius: 6, borderColor: '#fff', borderWidth: 2 }, label: { show: false }, emphasis: { label: { show: true, fontSize: 13, fontWeight: 'bold' } }, data: items }],
                         });
                     } catch (e) { console.warn('Distribution chart error:', e.message); }
+                },
+
+                initAutoscaleTimelineChart(retries = 0) {
+                    const el = document.getElementById('autoscale-timeline-chart');
+                    if (!el) return;
+                    if (el.offsetWidth === 0) {
+                        if (retries < 10) requestAnimationFrame(() => this.initAutoscaleTimelineChart(retries + 1));
+                        return;
+                    }
+                    // The panel sits inside an x-if, so a teardown/rebuild leaves a
+                    // chart instance bound to a detached node — re-init on the new one.
+                    if (autoscaleTimelineChart && autoscaleTimelineChart.getDom() !== el) {
+                        try { autoscaleTimelineChart.dispose(); } catch (e) {}
+                        autoscaleTimelineChart = null;
+                    }
+                    if (autoscaleTimelineChart) return;
+                    autoscaleTimelineChart = echarts.init(el);
+                    this.updateAutoscaleTimelineChart();
+                },
+
+                updateAutoscaleTimelineChart() {
+                    const d = this.timeline.data;
+                    if (!autoscaleTimelineChart || !d || !Array.isArray(d.buckets)) return;
+                    try {
+                        const buckets = d.buckets;
+                        const volCompleted = buckets.map(b => [b.ts, b.completed]);
+                        const volFailed = buckets.map(b => [b.ts, b.failed]);
+                        const durAvg = buckets.map(b => [b.ts, b.avg_duration_ms]);
+                        const durMax = buckets.map(b => [b.ts, b.max_duration_ms]);
+                        const memMax = buckets.map(b => [b.ts, b.max_memory_mb]);
+
+                        // Worker step series: hold each level until the next decision,
+                        // and extend the last known level to the window edge.
+                        const events = d.workers || [];
+                        const workersCurrent = [];
+                        const workersTarget = [];
+                        if (events.length > 0 && buckets.length > 0) {
+                            const windowStart = buckets[0].ts;
+                            const windowEnd = buckets[buckets.length - 1].ts;
+                            workersCurrent.push([windowStart, events[0].current_workers]);
+                            workersTarget.push([windowStart, events[0].target_workers]);
+                            events.forEach(e => {
+                                workersCurrent.push([e.t, e.current_workers]);
+                                workersTarget.push([e.t, e.target_workers]);
+                            });
+                            const last = events[events.length - 1];
+                            workersCurrent.push([windowEnd, last.current_workers]);
+                            workersTarget.push([windowEnd, last.target_workers]);
+                        }
+
+                        const gridDefs = [
+                            { left: '3%' }, { left: '28%' }, { left: '53%' }, { left: '78%' },
+                        ];
+                        const titleStyle = { fontSize: 11, fontWeight: 600, color: '#697386' };
+                        const axisStyle = {
+                            axisLine: { lineStyle: { color: '#d9e0e8' } },
+                            axisTick: { show: false },
+                            axisLabel: { fontSize: 10, color: '#697386', hideOverlap: true },
+                        };
+                        const yStyle = {
+                            axisLine: { show: false },
+                            axisTick: { show: false },
+                            splitLine: { lineStyle: { color: '#eef1f5' } },
+                            axisLabel: { fontSize: 10, color: '#697386' },
+                        };
+
+                        autoscaleTimelineChart.setOption({
+                            title: [
+                                { text: 'Job volume', left: '3%', top: 4, textStyle: titleStyle },
+                                { text: 'Duration', left: '28%', top: 4, textStyle: titleStyle },
+                                { text: 'Memory', left: '53%', top: 4, textStyle: titleStyle },
+                                { text: 'Workers', left: '78%', top: 4, textStyle: titleStyle },
+                            ],
+                            tooltip: { trigger: 'axis', axisPointer: { type: 'line' } },
+                            axisPointer: { link: [{ xAxisIndex: 'all' }] },
+                            grid: gridDefs.map(g => ({ left: g.left, width: '19%', top: 30, bottom: 26 })),
+                            xAxis: [0, 1, 2, 3].map(i => ({ type: 'time', gridIndex: i, ...axisStyle })),
+                            yAxis: [
+                                { type: 'value', gridIndex: 0, minInterval: 1, ...yStyle },
+                                { type: 'value', gridIndex: 1, ...yStyle, axisLabel: { ...yStyle.axisLabel, formatter: v => this.formatDuration(v) } },
+                                { type: 'value', gridIndex: 2, ...yStyle, axisLabel: { ...yStyle.axisLabel, formatter: v => v + ' MB' } },
+                                { type: 'value', gridIndex: 3, minInterval: 1, ...yStyle },
+                            ],
+                            series: [
+                                { name: 'Completed', type: 'line', xAxisIndex: 0, yAxisIndex: 0, showSymbol: false, data: volCompleted, lineStyle: { color: '#2563eb', width: 2 }, itemStyle: { color: '#2563eb' }, areaStyle: { color: 'rgba(37, 99, 235, 0.08)' } },
+                                { name: 'Failed', type: 'line', xAxisIndex: 0, yAxisIndex: 0, showSymbol: false, data: volFailed, lineStyle: { color: '#ef4444', width: 1.5 }, itemStyle: { color: '#ef4444' } },
+                                { name: 'Avg duration', type: 'line', xAxisIndex: 1, yAxisIndex: 1, showSymbol: false, connectNulls: false, data: durAvg, lineStyle: { color: '#f59e0b', width: 2 }, itemStyle: { color: '#f59e0b' } },
+                                { name: 'Max duration', type: 'line', xAxisIndex: 1, yAxisIndex: 1, showSymbol: false, connectNulls: false, data: durMax, lineStyle: { color: '#fbbf24', width: 1, type: 'dashed' }, itemStyle: { color: '#fbbf24' } },
+                                { name: 'Peak memory', type: 'line', xAxisIndex: 2, yAxisIndex: 2, showSymbol: false, connectNulls: false, data: memMax, lineStyle: { color: '#7c5bf5', width: 2 }, itemStyle: { color: '#7c5bf5' },
+                                  markLine: d.memory_limit_mb ? { silent: true, symbol: 'none', label: { formatter: 'limit', fontSize: 9, color: '#9ca3af' }, lineStyle: { color: '#9ca3af', type: 'dashed', width: 1 }, data: [{ yAxis: d.memory_limit_mb }] } : undefined },
+                                { name: 'Workers', type: 'line', step: 'end', xAxisIndex: 3, yAxisIndex: 3, showSymbol: false, data: workersCurrent, lineStyle: { color: '#0f766e', width: 2 }, itemStyle: { color: '#0f766e' } },
+                                { name: 'Target', type: 'line', step: 'end', xAxisIndex: 3, yAxisIndex: 3, showSymbol: false, data: workersTarget, lineStyle: { color: '#94a3b8', width: 1.5, type: 'dashed' }, itemStyle: { color: '#94a3b8' } },
+                            ],
+                            graphic: events.length > 0 ? [] : [{ type: 'text', left: '82%', top: 'middle', style: { text: 'No scaling activity', fill: '#9ca3af', fontSize: 11 } }],
+                        }, { notMerge: true });
+                    } catch (e) { console.warn('Timeline chart error:', e.message); }
                 },
 
                 // ========== FORMATTING HELPERS ==========
