@@ -23,6 +23,9 @@ final readonly class CalculateServerStatisticsAction
             return [];
         }
 
-        return $this->repository->getServerStatistics($serverName);
+        return array_map(
+            static fn ($stat): array => $stat->toArray(),
+            $this->repository->getServerStatistics($serverName),
+        );
     }
 }

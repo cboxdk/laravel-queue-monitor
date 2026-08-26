@@ -23,6 +23,6 @@ final readonly class CalculateJobStatisticsAction
             return [];
         }
 
-        return $this->repository->getGlobalStatistics();
+        return $this->repository->getGlobalStatistics()->toArray();
     }
 }
