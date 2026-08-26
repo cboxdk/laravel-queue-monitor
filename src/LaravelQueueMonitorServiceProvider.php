@@ -37,7 +37,6 @@ class LaravelQueueMonitorServiceProvider extends PackageServiceProvider
             ->hasConfigFile('queue-monitor')
             ->hasMigration('create_queue_monitor_jobs_table')
             ->hasMigration('extend_autoscale_v3_support')
-            ->runsMigrations()
             ->hasViews()
             ->hasAssets()
             ->hasCommands([
@@ -47,6 +46,13 @@ class LaravelQueueMonitorServiceProvider extends PackageServiceProvider
                 HealthCheckCommand::class,
                 QueueMonitorDashboardCommand::class,
             ]);
+    }
+
+    public function bootingPackage(): void
+    {
+        if (config('queue-monitor.enable_migrations', true)) {
+            $this->package->runsMigrations();
+        }
     }
 
     public function packageRegistered(): void
