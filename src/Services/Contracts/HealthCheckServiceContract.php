@@ -38,6 +38,13 @@ interface HealthCheckServiceContract
     public function getHealthScore(): int;
 
     /**
+     * Compute the health score (0-100) from an already-run set of checks.
+     *
+     * @param  array<string, array<string, mixed>>  $checks
+     */
+    public function scoreFromChecks(array $checks): int;
+
+    /**
      * Check if system is healthy
      */
     public function isHealthy(): bool;
