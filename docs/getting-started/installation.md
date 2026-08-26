@@ -90,6 +90,8 @@ Publish migrations for customization:
 php artisan vendor:publish --tag="queue-monitor-migrations"
 ```
 
+If you publish and manage the migrations yourself (for example to run them with a dedicated database user), disable the package's automatic migration loading by setting `QUEUE_MONITOR_ENABLE_MIGRATIONS=false` (config key `enable_migrations`). Publishing keeps working with the flag disabled.
+
 Publish views for customization:
 
 ```bash

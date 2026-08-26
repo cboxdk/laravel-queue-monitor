@@ -40,10 +40,12 @@ return [
     | Run Package Migrations
     |--------------------------------------------------------------------------
     |
-    | Whether the package should register and run its own migrations.
+    | Whether the package should automatically load and run its own
+    | migrations. Disable this when you publish the migrations and manage
+    | them yourself; publishing via vendor:publish keeps working either way.
     |
     */
-    'enable_migrations' => true,
+    'enable_migrations' => env('QUEUE_MONITOR_ENABLE_MIGRATIONS', true),
 
     /*
     |--------------------------------------------------------------------------
