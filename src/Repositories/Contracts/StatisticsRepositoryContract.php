@@ -56,6 +56,15 @@ interface StatisticsRepositoryContract
     public function getThroughputByMinute(int $minutes = 60): array;
 
     /**
+     * Compute per-minute throughput, optionally filtered to a single entity
+     * (e.g. ['queue' => 'payments']). Uncached; used by drill-downs.
+     *
+     * @param  array<string, string>|null  $filter
+     * @return array<int, array{minute: string, total: int, completed: int, failed: int}>
+     */
+    public function computeThroughputByMinute(int $minutes = 60, ?array $filter = null): array;
+
+    /**
      * Per-minute scaling timeline for one queue: job volume, duration, and
      * memory buckets plus live processing/waiting/delayed counts.
      *

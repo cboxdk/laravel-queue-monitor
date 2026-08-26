@@ -6,7 +6,6 @@ namespace Cbox\LaravelQueueMonitor\Http\Controllers;
 
 use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\StatisticsRepositoryContract;
-use Cbox\LaravelQueueMonitor\Repositories\Eloquent\EloquentStatisticsRepository;
 use Cbox\LaravelQueueMonitor\Services\DashboardCacheService;
 use Cbox\LaravelQueueMonitor\Utilities\PayloadRedactor;
 use Illuminate\Database\Query\Builder as QueryBuilder;
@@ -108,9 +107,7 @@ class DashboardDrillDownController extends Controller
             ];
 
             // Throughput (per-minute for this entity)
-            /** @var EloquentStatisticsRepository $statsRepo */
-            $statsRepo = $this->statsRepository;
-            $throughput = $statsRepo->computeThroughputByMinute(60, [$column => $value]);
+            $throughput = $this->statsRepository->computeThroughputByMinute(60, [$column => $value]);
 
             // Recent jobs (last 20) with identifiable summary from payload
             $recentJobs = $this->jobsTable()

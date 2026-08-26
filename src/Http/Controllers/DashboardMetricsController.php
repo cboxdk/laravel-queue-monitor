@@ -31,6 +31,7 @@ class DashboardMetricsController extends Controller
         private readonly StatisticsRepositoryContract $statsRepository,
         private readonly TagRepositoryContract $tagRepository,
         private readonly DashboardCacheService $dashboardCache,
+        private readonly AlertingService $alertingService,
     ) {}
 
     /** Time ranges (in minutes) the overview throughput chart may request. */
@@ -57,8 +58,7 @@ class DashboardMetricsController extends Controller
 
         $chartData = $this->statsRepository->getJobClassStatistics();
 
-        $alertingService = app(AlertingService::class);
-        $alerts = $alertingService->checkAlertConditions();
+        $alerts = $this->alertingService->checkAlertConditions();
 
         return response()->json([
             'stats' => $globalStats,

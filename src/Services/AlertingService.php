@@ -19,12 +19,20 @@ final class AlertingService
     {
         $alerts = [];
 
+        // Thresholds are single-sourced from queue-monitor.health so the alerts
+        // panel and the health checks agree on what "stuck", "high error rate",
+        // and "high backlog" mean.
+        $stuckMinutes = $this->intConfig('queue-monitor.health.stuck_job_minutes', 30);
+        $errorWarn = $this->floatConfig('queue-monitor.health.error_rate_threshold', 10.0);
+        $errorCritical = $this->floatConfig('queue-monitor.health.error_rate_critical_threshold', 20.0);
+        $backlogThreshold = $this->intConfig('queue-monitor.health.queued_jobs_threshold', 1000);
+
         // Check for stuck jobs
-        $stuck = QueryBuilderHelper::stuck(30)->count();
+        $stuck = QueryBuilderHelper::stuck($stuckMinutes)->count();
         if ($stuck > 0) {
             $alerts['stuck_jobs'] = [
                 'severity' => 'warning',
-                'message' => "{$stuck} jobs stuck in processing for > 30 minutes",
+                'message' => "{$stuck} jobs stuck in processing for > {$stuckMinutes} minutes",
                 'count' => $stuck,
             ];
         }
@@ -34,26 +42,26 @@ final class AlertingService
         $recentFailed = QueryBuilderHelper::lastHours(1)->failed()->count();
         $errorRate = $recentTotal > 0 ? ($recentFailed / $recentTotal) * 100 : 0;
 
-        if ($errorRate > 20) {
+        if ($errorRate > $errorCritical) {
             $alerts['high_error_rate'] = [
                 'severity' => 'critical',
-                'message' => sprintf('Error rate %.2f%% exceeds threshold (20%%)', $errorRate),
+                'message' => sprintf('Error rate %.2f%% exceeds threshold (%s%%)', $errorRate, rtrim(rtrim(sprintf('%.1f', $errorCritical), '0'), '.')),
                 'count' => $recentFailed,
             ];
-        } elseif ($errorRate > 10) {
+        } elseif ($errorRate > $errorWarn) {
             $alerts['elevated_error_rate'] = [
                 'severity' => 'warning',
-                'message' => sprintf('Error rate %.2f%% elevated (threshold: 10%%)', $errorRate),
+                'message' => sprintf('Error rate %.2f%% elevated (threshold: %s%%)', $errorRate, rtrim(rtrim(sprintf('%.1f', $errorWarn), '0'), '.')),
                 'count' => $recentFailed,
             ];
         }
 
         // Check for high backlog
         $queued = JobMonitor::where('status', JobStatus::QUEUED)->count();
-        if ($queued > 1000) {
+        if ($queued > $backlogThreshold) {
             $alerts['high_backlog'] = [
                 'severity' => 'warning',
-                'message' => "{$queued} jobs queued (threshold: 1000)",
+                'message' => "{$queued} jobs queued (threshold: {$backlogThreshold})",
                 'count' => $queued,
             ];
         }
@@ -95,5 +103,19 @@ final class AlertingService
     public function requiresAttention(): bool
     {
         return ! empty($this->getCriticalAlerts());
+    }
+
+    private function intConfig(string $key, int $default): int
+    {
+        $value = config($key, $default);
+
+        return is_numeric($value) ? (int) $value : $default;
+    }
+
+    private function floatConfig(string $key, float $default): float
+    {
+        $value = config($key, $default);
+
+        return is_numeric($value) ? (float) $value : $default;
     }
 }
