@@ -2,6 +2,34 @@
 
 All notable changes to `laravel-queue-monitor` will be documented in this file.
 
+## v1.9.0 — Scaling timeline and a hardening pass - 2026-08-26
+
+### Features
+
+- **Per-queue scaling timeline on the autoscale tab.** The tab now opens with the queue's load and the autoscaler's worker decisions on one shared time axis: per-minute job volume, duration (average and max), and peak memory drawn from the recorded jobs, next to a step chart of the actual worker count against the autoscaler's target. Queue chips and a 15m/1h/6h/24h range selector pick the view; a live strip shows the queue's processing/waiting/delayed counts, the worker range observed in the window, and the worker memory limit. It reads the data the package already records — no new instrumentation — and the worker panel appears when scaling events exist. (#35)
+- **Opt out of automatically running the package migrations.** Hosts that publish the migrations and manage them under their own database user can set `QUEUE_MONITOR_ENABLE_MIGRATIONS=false` (config `enable_migrations`); publishing via `vendor:publish` keeps working with the flag disabled. (#28, thanks @jackbayliss)
+
+### Fixes
+
+- **The dashboard refreshed even when auto-refresh was off.** Three causes compounded: the autoscale tab's toggle was inverted (with it off, the global loop still refreshed the tab; with it on, a second timer took over — so "off" refreshed *faster* than "on"), `isLive` gated only the interval and not the popstate, pending-refresh, and retry paths, and Alpine's auto-invoked `init()` ran a second time because of a stray `x-init`, doubling requests and listeners on load. Live/Paused is now the single authoritative gate, persisted across reloads and reflected in the chip and pause button; polling stops in hidden tabs and resumes on return. (#31)
+- **The storage health check reported "not available" for hosts using a Laravel connection-level table prefix.** Its raw `information_schema` lookup didn't apply the connection prefix that the query builders add automatically. The physical table name now combines both prefixes, and `table_prefix` is overridable via `QUEUE_MONITOR_TABLE_PREFIX`. (#32)
+- **Batch and prune filters failed open on a bad status.** An unrecognised status in a batch delete/replay or prune filter was silently dropped, widening a scoped delete to every matching job; invalid statuses are now rejected with a 422. (#36)
+- **The drill-down job summary leaked redacted payload values.** It was parsed from the raw serialized command, which the payload redactor never sees, so a property named e.g. `password` showed its value even though every other surface masks it; the summary now applies the `api.sensitive_keys` policy. Dashboard job-detail tags are redacted too, and the queued-job capture path restricts `unserialize()` to the declared command class. (#36)
+- **Timeout recording could mark the wrong retry attempt,** and resolving a stuck job wrote a non-existent `finished_at` column that was silently dropped. Timeout now targets the latest attempt like completed/failed recording, and stuck-job resolution records `completed_at` and a duration. `queue-monitor:health --json` now carries the failing exit code on the readiness and health paths — the exact path a CI or deploy gate scripts. (#36)
+- **Statistics caching was cold under load.** A busy queue bumped the cache version on every job lifecycle write, so it invalidated faster than any entry could be reused. The bump is now throttled (configurable via `cache.bust_throttle_seconds`); the first write after a quiet period still invalidates immediately. Per-queue SLA compliance is aggregated in SQL instead of hydrating every last-hour job row into PHP. (#36)
+- **Eight high-severity dashboard UX issues:** failures now show a dismissible error banner instead of serving stale data silently; the mislabelled "Ignore" control that deleted a job is now "Delete"; the time-range control is wired to the chart; the attention list is genuinely selectable (it tracked whichever job sorted first, so actions could hit a different job every few seconds); batch actions only target visible rows; the fabricated "default" queue empty state and the dead Environment control are gone. (#33)
+- **Consistency and accessibility pass:** one time/duration/percent formatting story across every tab, a fully keyboard-operable jobs table with `aria-sort` and focus-visible outlines, a unified confirm dialog (role, Escape, focus management) replacing the native `confirm()` calls, corrected Back-button behaviour, and `prefers-reduced-motion` support. (#34)
+- **Dashboard history and dialog follow-ups:** Back from a freshly loaded dashboard restores the right tab and resets pagination/sorting; action errors survive a background refresh instead of being wiped a moment later; the confirm dialog dismisses on a backdrop click; the document title reflects the active view on load. (#37)
+- **Keep the sidebar column dark for the full page height without losing the sticky nav.** The dark background moves to the grid column so it follows tall content, while the sidebar stays sticky at viewport height and the menu scrolls internally when the viewport is shorter than the nav. (#27, thanks @jackbayliss)
+
+### Documentation
+
+- Rewrote the REST API reference to cover all 26 endpoints (it documented seven), with correct defaults, error codes, and payload-redaction notes; corrected the retention defaults that contradicted the shipped config (`days` 7, not 30; `['completed','failed','timeout']`, not `['completed']`); documented the new configuration keys; moved the docs into the standard topic-folder layout with a generated `requirements.md`; and reframed the Horizon mention as an optional integration. (#32, #38)
+
+### Maintenance
+
+- Added a supply-chain gate: a dependency license check (`composer license-check`), a deterministic CycloneDX SBOM published as a CI artifact, a `SECURITY.md` with GitHub private vulnerability reporting, and a `composer qa` aggregate. CI now gates `pint --test`, the license check, and `composer audit` on every pull request, adds a lowest-dependencies test leg, and drops the redundant redis service and the auto-fixer that pushed unreviewed style commits. (#39)
+
 ## v1.8.0 — Failure fuse visibility - 2026-08-25
 
 ### Features
@@ -308,6 +336,7 @@ First stable release of Queue Monitor for Laravel - a comprehensive job monitori
 
 ```bash
 composer require cboxdk/laravel-queue-monitor
+
 
 
 
