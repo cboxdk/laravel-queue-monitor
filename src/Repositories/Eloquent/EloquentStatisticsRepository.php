@@ -405,6 +405,108 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
         return $this->remember("throughput_{$minutes}", fn () => $this->computeThroughputByMinute($minutes), 30);
     }
 
+    public function getQueueTimeline(string $queue, int $minutes = 60): array
+    {
+        /** @var array{buckets: array<int, array{minute: string, ts: string, total: int, completed: int, failed: int, avg_duration_ms: float|null, max_duration_ms: int|null, avg_memory_mb: float|null, max_memory_mb: float|null}>, live: array{processing: int, waiting: int, delayed: int}, memory_limit_mb: float|null} */
+        return $this->remember(
+            'queue_timeline_'.md5($queue).'_'.$minutes,
+            fn (): array => $this->computeQueueTimeline($queue, $minutes),
+            15
+        );
+    }
+
+    /**
+     * @return array{
+     *     buckets: array<int, array{minute: string, ts: string, total: int, completed: int, failed: int, avg_duration_ms: float|null, max_duration_ms: int|null, avg_memory_mb: float|null, max_memory_mb: float|null}>,
+     *     live: array{processing: int, waiting: int, delayed: int},
+     *     memory_limit_mb: float|null
+     * }
+     */
+    public function computeQueueTimeline(string $queue, int $minutes = 60): array
+    {
+        /** @var string $prefix */
+        $prefix = config('queue-monitor.database.table_prefix', 'queue_monitor_');
+
+        $dateFormat = DatabaseExpressionHelper::minuteBucket('queued_at', $this->databaseDriver());
+
+        $rows = $this->table($prefix.'jobs')
+            ->select([
+                DB::raw("{$dateFormat} as minute"),
+                DB::raw('COUNT(*) as total'),
+                DB::raw('SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as completed'),
+                DB::raw('SUM(CASE WHEN status IN (?, ?) THEN 1 ELSE 0 END) as failed'),
+                DB::raw('AVG(duration_ms) as avg_duration_ms'),
+                DB::raw('MAX(duration_ms) as max_duration_ms'),
+                DB::raw('AVG(memory_peak_mb) as avg_memory_mb'),
+                DB::raw('MAX(memory_peak_mb) as max_memory_mb'),
+            ])
+            ->addBinding([
+                JobStatus::COMPLETED->value,
+                JobStatus::FAILED->value,
+                JobStatus::TIMEOUT->value,
+            ])
+            ->where('queue', $queue)
+            ->where('queued_at', '>=', now()->subMinutes($minutes))
+            ->groupBy(DB::raw($dateFormat))
+            ->orderBy(DB::raw($dateFormat))
+            ->get()
+            ->keyBy('minute');
+
+        $buckets = [];
+        $period = CarbonPeriod::create(
+            now()->subMinutes($minutes)->startOfMinute(),
+            '1 minute',
+            now()->startOfMinute()
+        );
+
+        foreach ($period as $date) {
+            /** @var Carbon $date */
+            $key = $date->format('Y-m-d H:i');
+            $row = $rows->get($key);
+            $buckets[] = [
+                'minute' => $key,
+                'ts' => $date->toIso8601String(),
+                'total' => $row ? (int) $row->total : 0,
+                'completed' => $row ? (int) $row->completed : 0,
+                'failed' => $row ? (int) $row->failed : 0,
+                'avg_duration_ms' => $row && $row->avg_duration_ms !== null ? round((float) $row->avg_duration_ms, 1) : null,
+                'max_duration_ms' => $row && $row->max_duration_ms !== null ? (int) $row->max_duration_ms : null,
+                'avg_memory_mb' => $row && $row->avg_memory_mb !== null ? round((float) $row->avg_memory_mb, 1) : null,
+                'max_memory_mb' => $row && $row->max_memory_mb !== null ? round((float) $row->max_memory_mb, 1) : null,
+            ];
+        }
+
+        $now = now();
+
+        $live = [
+            'processing' => (int) $this->table($prefix.'jobs')
+                ->where('queue', $queue)
+                ->where('status', JobStatus::PROCESSING->value)
+                ->count(),
+            'waiting' => (int) $this->table($prefix.'jobs')
+                ->where('queue', $queue)
+                ->where('status', JobStatus::QUEUED->value)
+                ->where(fn (Builder $q) => $q->whereNull('available_at')->orWhere('available_at', '<=', $now))
+                ->count(),
+            'delayed' => (int) $this->table($prefix.'jobs')
+                ->where('queue', $queue)
+                ->where('status', JobStatus::QUEUED->value)
+                ->where('available_at', '>', $now)
+                ->count(),
+        ];
+
+        $memoryLimit = $this->table($prefix.'jobs')
+            ->where('queue', $queue)
+            ->whereNotNull('worker_memory_limit_mb')
+            ->max('worker_memory_limit_mb');
+
+        return [
+            'buckets' => $buckets,
+            'live' => $live,
+            'memory_limit_mb' => is_numeric($memoryLimit) ? (float) $memoryLimit : null,
+        ];
+    }
+
     /**
      * @param  array<string, string>|null  $filter  Optional filter e.g. ['queue' => 'payments']
      * @return array<int, array{minute: string, total: int, completed: int, failed: int}>

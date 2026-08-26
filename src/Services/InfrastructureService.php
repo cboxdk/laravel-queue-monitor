@@ -783,6 +783,58 @@ final class InfrastructureService
         return $open;
     }
 
+    /**
+     * Scaling decisions for one queue in chronological order, for the
+     * dashboard's scaling timeline chart, plus the worker range observed
+     * in the window.
+     *
+     * @return array{
+     *     events: array<int, array{t: string, current_workers: int, target_workers: int, action: string, reason: string}>,
+     *     worker_range: array{min: int|null, max: int|null}
+     * }
+     */
+    public function getScalingTimeline(string $queue, int $minutes = 60): array
+    {
+        /** @var string $prefix */
+        $prefix = config('queue-monitor.database.table_prefix', 'queue_monitor_');
+        /** @var string|null $dbConnection */
+        $dbConnection = config('queue-monitor.database.connection');
+
+        if (! Schema::connection($dbConnection)->hasTable($prefix.'scaling_events')) {
+            return ['events' => [], 'worker_range' => ['min' => null, 'max' => null]];
+        }
+
+        $events = ScalingEvent::query()
+            ->where('queue', $queue)
+            ->where('created_at', '>=', now()->subMinutes($minutes))
+            ->orderBy('created_at')
+            ->limit(500)
+            ->get();
+
+        $min = null;
+        $max = null;
+
+        $series = $events->map(function (ScalingEvent $event) use (&$min, &$max): array {
+            $low = min($event->current_workers, $event->target_workers);
+            $high = max($event->current_workers, $event->target_workers);
+            $min = $min === null ? $low : min($min, $low);
+            $max = $max === null ? $high : max($max, $high);
+
+            return [
+                't' => $event->created_at->toIso8601String(),
+                'current_workers' => $event->current_workers,
+                'target_workers' => $event->target_workers,
+                'action' => $event->action,
+                'reason' => $event->reason,
+            ];
+        })->all();
+
+        return [
+            'events' => $series,
+            'worker_range' => ['min' => $min, 'max' => $max],
+        ];
+    }
+
     private function intConfig(string $key, int $default): int
     {
         $value = config($key, $default);

@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace Cbox\LaravelQueueMonitor\Http\Controllers;
 
+use Cbox\LaravelQueueMonitor\Repositories\Contracts\StatisticsRepositoryContract;
 use Cbox\LaravelQueueMonitor\Services\AlertingService;
 use Cbox\LaravelQueueMonitor\Services\HealthCheckService;
 use Cbox\LaravelQueueMonitor\Services\InfrastructureService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 
 /**
@@ -20,6 +22,7 @@ class DashboardHealthController extends Controller
 {
     public function __construct(
         private readonly InfrastructureService $infrastructureService,
+        private readonly StatisticsRepositoryContract $statsRepository,
     ) {}
 
     /**
@@ -82,6 +85,40 @@ class DashboardHealthController extends Controller
             'live' => $live,
             'sla' => $this->infrastructureService->getSlaData(),
             'available' => ($scaling['has_autoscale'] ?? false) || (is_array($cluster) && ($cluster['has_cluster'] ?? false)) || $live !== null,
+        ]);
+    }
+
+    /** Time ranges (in minutes) the scaling timeline may request. */
+    private const TIMELINE_RANGES = [15, 60, 360, 1440];
+
+    /**
+     * Scaling timeline for one queue: per-minute job volume, duration, and
+     * memory buckets correlated with the autoscaler's worker decisions.
+     */
+    public function autoscaleTimeline(Request $request): JsonResponse
+    {
+        $queue = (string) $request->query('queue', '');
+
+        if ($queue === '') {
+            return response()->json(['message' => 'The queue parameter is required.'], 422);
+        }
+
+        $minutes = (int) $request->query('minutes', '60');
+        if (! in_array($minutes, self::TIMELINE_RANGES, true)) {
+            $minutes = 60;
+        }
+
+        $timeline = $this->statsRepository->getQueueTimeline($queue, $minutes);
+        $scaling = $this->infrastructureService->getScalingTimeline($queue, $minutes);
+
+        return response()->json([
+            'queue' => $queue,
+            'minutes' => $minutes,
+            'buckets' => $timeline['buckets'],
+            'live' => $timeline['live'],
+            'memory_limit_mb' => $timeline['memory_limit_mb'],
+            'workers' => $scaling['events'],
+            'worker_range' => $scaling['worker_range'],
         ]);
     }
 }
