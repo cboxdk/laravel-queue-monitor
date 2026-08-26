@@ -42,15 +42,27 @@ Control how job payloads are stored for replay functionality:
 
 ## Data Retention
 
-Configure automatic cleanup of old job records:
+Configure automatic cleanup of old job records. Both time-based and row-count
+limits are enforced — whichever triggers first wins:
 
 ```php
 'retention' => [
-    // Number of days to retain job records
-    'days' => 30,
+    // Number of days to retain job records (applies to the statuses below)
+    'days' => 7,
 
-    // Which statuses to prune (empty array = prune all statuses)
-    'prune_statuses' => ['completed'],
+    // Maximum number of rows to keep in the jobs table.
+    // When exceeded, the oldest prunable rows are deleted first.
+    // Set to null to disable row-count pruning (time-based only).
+    'max_rows' => env('QUEUE_MONITOR_MAX_ROWS', 500_000),
+
+    // Which statuses to prune (empty array = prune all statuses).
+    // Failed and timeout jobs are included to prevent unbounded growth.
+    'prune_statuses' => ['completed', 'failed', 'timeout'],
+
+    // Days to retain full JSON payloads in cluster_events.meta.
+    // After this period the meta is nulled but typed columns are preserved for
+    // trends. Set to null to disable payload pruning.
+    'payload_days' => env('QUEUE_MONITOR_PAYLOAD_DAYS', 2),
 ],
 ```
 
@@ -106,6 +118,55 @@ You can add custom middleware for authentication:
 ```php
 'middleware' => ['api', 'auth:sanctum'],
 ```
+
+## Cache
+
+Statistics queries are cached to keep the dashboard responsive on large tables:
+
+```php
+'cache' => [
+    'enabled' => env('QUEUE_MONITOR_CACHE_ENABLED', true),
+    'store' => env('QUEUE_MONITOR_CACHE_STORE'), // null uses the default cache store
+    'ttl' => env('QUEUE_MONITOR_CACHE_TTL', 300), // seconds
+
+    // Minimum seconds between statistics-cache version bumps.
+    'bust_throttle_seconds' => env('QUEUE_MONITOR_CACHE_BUST_THROTTLE', 5),
+
+    'prefix' => 'queue_monitor_',
+],
+```
+
+Job lifecycle writes invalidate the statistics cache. On a busy queue that would
+invalidate faster than any cached entry could be reused, so `bust_throttle_seconds`
+sets a floor on how often the cache version is bumped. The first write after a
+quiet period still invalidates immediately; only sustained write bursts are
+throttled.
+
+## Web Dashboard
+
+Configure the built-in web dashboard:
+
+```php
+'ui' => [
+    'enabled' => env('QUEUE_MONITOR_UI_ENABLED', true),
+    'route_prefix' => 'queue-monitor',
+    'middleware' => ['web'],
+
+    // Rows shown in the jobs table and the overview "recent jobs" list.
+    'per_page' => 35,
+
+    // Auto-refresh cadence for live dashboard data, in milliseconds.
+    'refresh_interval' => 3000,
+],
+```
+
+- `per_page` controls the page size of the jobs table and the recent-jobs list on
+  the overview tab.
+- `refresh_interval` sets how often (in milliseconds) the dashboard polls for
+  fresh data while it is in **Live** mode.
+- The Live/Paused toggle is persisted per browser in `localStorage` (key
+  `qm.live`), so a paused dashboard stays paused across reloads until you resume
+  it. No configuration is involved.
 
 ## Dashboard Assets
 

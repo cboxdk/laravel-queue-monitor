@@ -20,7 +20,7 @@ That's it! Jobs are now being monitored automatically.
 
 ## Access Control
 
-Before you use the dashboard or API outside local development, read the [Authentication & Access Control](../guides/authentication) guide.
+Before you use the dashboard or API outside local development, read the [Authentication & Access Control](guides/authentication) guide.
 
 Queue Monitor allows access in the `local` environment by default. In non-local environments, access is blocked unless you explicitly authorize it with `LaravelQueueMonitor::auth(...)`.
 
@@ -46,7 +46,7 @@ Queue Monitor uses [laravel-queue-metrics](https://github.com/cboxdk/laravel-que
 QUEUE_METRICS_PERSISTENCE=false
 ```
 
-You still get per-job CPU and memory tracking. Keep persistence enabled if you want the full metrics stack (Prometheus, baselines, worker heartbeats) or use [queue-autoscale](https://github.com/cboxdk/laravel-queue-autoscale), which requires persistence to read worker heartbeats and baselines. See the [installation guide](installation) for details.
+You still get per-job CPU and memory tracking. Keep persistence enabled if you want the full metrics stack (Prometheus, baselines, worker heartbeats) or use [queue-autoscale](https://github.com/cboxdk/laravel-queue-autoscale), which requires persistence to read worker heartbeats and baselines. See the [installation guide](getting-started/installation) for details.
 
 ## View Your First Job
 
@@ -115,7 +115,7 @@ curl -X POST http://localhost/api/queue-monitor/jobs/{uuid}/replay
 curl http://localhost/api/queue-monitor/statistics
 ```
 
-Do not expose these endpoints in production without authentication and an explicit `LaravelQueueMonitor::auth(...)` rule. See [Authentication & Access Control](../guides/authentication).
+Do not expose these endpoints in production without authentication and an explicit `LaravelQueueMonitor::auth(...)` rule. See [Authentication & Access Control](guides/authentication).
 
 ## Filter Jobs
 
@@ -188,9 +188,9 @@ php artisan queue-monitor:prune --days=30 --statuses=completed
 
 ## What's Next?
 
-- [Facade Usage](../guides/facade-usage) - Learn all facade methods
-- [Job Replay](../guides/job-replay) - Master the replay system
-- [Authentication & Access Control](../guides/authentication) - Secure the dashboard and REST API
-- [API Reference](../reference/api-reference) - Explore all endpoints
-- [Advanced Usage](../advanced/advanced-usage) - Custom monitoring and dashboards
-- [Configuration](../guides/configuration) - Customize behavior
+- [Facade Usage](guides/facade-usage) - Learn all facade methods
+- [Job Replay](guides/job-replay) - Master the replay system
+- [Authentication & Access Control](guides/authentication) - Secure the dashboard and REST API
+- [API Reference](reference/api-reference) - Explore all endpoints
+- [Advanced Usage](advanced/advanced-usage) - Custom monitoring and dashboards
+- [Configuration](guides/configuration) - Customize behavior
