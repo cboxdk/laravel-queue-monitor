@@ -10,8 +10,6 @@ use Illuminate\Console\Command;
 class LaravelQueueMonitorCommand extends Command
 {
     public $signature = 'queue-monitor:stats
-                        {--connection= : The connection to show stats for}
-                        {--queue= : The queue to show stats for}
                         {--json : Output as JSON}';
 
     public $description = 'Show queue monitor statistics';

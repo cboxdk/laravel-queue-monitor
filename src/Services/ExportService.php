@@ -14,6 +14,9 @@ final readonly class ExportService
 {
     public function __construct(
         private JobMonitorRepositoryContract $repository,
+        private CalculateJobStatisticsAction $jobStatistics,
+        private CalculateServerStatisticsAction $serverStatistics,
+        private CalculateQueueHealthAction $queueHealth,
     ) {}
 
     /**
@@ -130,20 +133,11 @@ final readonly class ExportService
      */
     public function statisticsReport(): array
     {
-        $stats = app(CalculateJobStatisticsAction::class)
-            ->execute();
-
-        $serverStats = app(CalculateServerStatisticsAction::class)
-            ->execute();
-
-        $queueHealth = app(CalculateQueueHealthAction::class)
-            ->execute();
-
         return [
             'generated_at' => now()->toIso8601String(),
-            'global' => $stats,
-            'servers' => $serverStats,
-            'queue_health' => $queueHealth,
+            'global' => $this->jobStatistics->execute(),
+            'servers' => $this->serverStatistics->execute(),
+            'queue_health' => $this->queueHealth->execute(),
         ];
     }
 

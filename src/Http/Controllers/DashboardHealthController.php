@@ -23,6 +23,8 @@ class DashboardHealthController extends Controller
     public function __construct(
         private readonly InfrastructureService $infrastructureService,
         private readonly StatisticsRepositoryContract $statsRepository,
+        private readonly HealthCheckService $healthService,
+        private readonly AlertingService $alertingService,
     ) {}
 
     /**
@@ -30,11 +32,8 @@ class DashboardHealthController extends Controller
      */
     public function health(): JsonResponse
     {
-        $healthService = app(HealthCheckService::class);
-        $alertingService = app(AlertingService::class);
-
-        $healthCheck = $healthService->check();
-        $alerts = $alertingService->checkAlertConditions();
+        $healthCheck = $this->healthService->check();
+        $alerts = $this->alertingService->checkAlertConditions();
 
         // Derive score from already-computed checks to avoid running health queries twice
         $checks = $healthCheck['checks'];

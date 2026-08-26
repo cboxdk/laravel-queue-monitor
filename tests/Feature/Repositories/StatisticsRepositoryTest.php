@@ -215,3 +215,10 @@ test('global statistics cache is invalidated after repository update', function 
     expect($updated['failed'])->toBe(1);
     expect($updated['completed'])->toBe(0);
 });
+
+test('the filtered throughput method is part of the contract, not just the concrete', function () {
+    // The drill-down depends on the contract for computeThroughputByMinute; if
+    // it were only on the concrete, a host binding a custom StatisticsRepository
+    // implementation would fatal on the drill-down endpoint.
+    expect(method_exists(StatisticsRepositoryContract::class, 'computeThroughputByMinute'))->toBeTrue();
+});

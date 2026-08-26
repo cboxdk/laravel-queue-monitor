@@ -30,6 +30,37 @@ test('detects stuck jobs', function () {
     expect($alerts['stuck_jobs']['count'])->toBe(1);
 });
 
+test('stuck-job alert honours the configured stuck_job_minutes threshold', function () {
+    // A job stuck 20 minutes: alerts only when the threshold is below 20.
+    JobMonitor::factory()->processing()->create([
+        'started_at' => now()->subMinutes(20),
+    ]);
+
+    config()->set('queue-monitor.health.stuck_job_minutes', 60);
+    expect(app(AlertingService::class)->checkAlertConditions())->not->toHaveKey('stuck_jobs');
+
+    config()->set('queue-monitor.health.stuck_job_minutes', 10);
+    $alerts = app(AlertingService::class)->checkAlertConditions();
+    expect($alerts)->toHaveKey('stuck_jobs');
+    expect($alerts['stuck_jobs']['message'])->toContain('> 10 minutes');
+});
+
+test('error-rate escalation honours the configured critical threshold', function () {
+    // 50% error rate (1 of 2 failed).
+    JobMonitor::factory()->create(['queued_at' => now()->subMinutes(5), 'created_at' => now()->subMinutes(5)]);
+    JobMonitor::factory()->failed()->create(['queued_at' => now()->subMinutes(5), 'created_at' => now()->subMinutes(5)]);
+
+    config()->set('queue-monitor.health.error_rate_critical_threshold', 80.0);
+    $alerts = app(AlertingService::class)->checkAlertConditions();
+    // Below the 80% critical bar but above the 10% warning bar → warning.
+    expect($alerts)->toHaveKey('elevated_error_rate');
+    expect($alerts)->not->toHaveKey('high_error_rate');
+
+    config()->set('queue-monitor.health.error_rate_critical_threshold', 40.0);
+    $alerts = app(AlertingService::class)->checkAlertConditions();
+    expect($alerts)->toHaveKey('high_error_rate');
+});
+
 test('detects high error rate above 20 percent', function () {
     // 3 failed out of 10 = 30% error rate
     JobMonitor::factory()->count(7)->create([
