@@ -57,7 +57,7 @@ class PayloadRedactor
      *
      * @param  array<string>  $sensitiveKeys
      */
-    private static function isSensitive(string $key, array $sensitiveKeys): bool
+    public static function isSensitive(string $key, array $sensitiveKeys): bool
     {
         $normalizedKey = strtolower($key);
 

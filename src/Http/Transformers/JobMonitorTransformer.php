@@ -102,7 +102,7 @@ final class JobMonitorTransformer
                 'started_at' => $job->started_at?->toIso8601String(),
                 'completed_at' => $job->completed_at?->toIso8601String(),
             ],
-            'tags' => $job->tags,
+            'tags' => is_array($job->tags) ? PayloadRedactor::redact($job->tags, $sensitiveKeys) : $job->tags,
             'is_failed' => $job->isFailed(),
             'is_retryable' => $job->isRetryable(),
         ];

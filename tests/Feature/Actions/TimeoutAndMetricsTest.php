@@ -31,6 +31,32 @@ test('timeout action marks job as timed out', function () {
     expect($monitor->exception_message)->toBe('Job exceeded maximum execution time');
 });
 
+test('timeout action marks the latest attempt, not the first', function () {
+    $first = JobMonitor::factory()->failed()->create([
+        'job_id' => 'retry-job',
+        'attempt' => 1,
+        'started_at' => now()->subMinutes(5),
+    ]);
+    $latest = JobMonitor::factory()->processing()->create([
+        'job_id' => 'retry-job',
+        'attempt' => 2,
+        'started_at' => now()->subSeconds(30),
+    ]);
+
+    $mockJob = Mockery::mock(Job::class);
+    $mockJob->shouldReceive('getJobId')->andReturn('retry-job');
+
+    $event = new stdClass;
+    $event->job = $mockJob;
+
+    app(RecordJobTimeoutAction::class)->execute($event);
+
+    $first->refresh();
+    $latest->refresh();
+    expect($latest->status)->toBe(JobStatus::TIMEOUT);
+    expect($first->status)->toBe(JobStatus::FAILED);
+});
+
 test('timeout action returns early when no job in event', function () {
     $event = new stdClass;
 

@@ -25,7 +25,7 @@ class PruneController extends Controller
             'days' => 'sometimes|integer|min:1',
             'max_rows' => 'sometimes|integer|min:1',
             'statuses' => 'sometimes|array',
-            'statuses.*' => 'string',
+            'statuses.*' => 'string|in:'.implode(',', JobStatus::values()),
         ]);
 
         $daysValue = $validated['days'] ?? null;

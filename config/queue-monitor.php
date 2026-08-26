@@ -162,6 +162,13 @@ return [
         'enabled' => env('QUEUE_MONITOR_CACHE_ENABLED', true),
         'store' => env('QUEUE_MONITOR_CACHE_STORE'),
         'ttl' => env('QUEUE_MONITOR_CACHE_TTL', 300), // seconds
+
+        // Minimum seconds between statistics-cache version bumps. Job lifecycle
+        // writes invalidate the cache; without this throttle a busy queue
+        // invalidates faster than any entry can be reused. The first write
+        // after a quiet period still invalidates immediately.
+        'bust_throttle_seconds' => env('QUEUE_MONITOR_CACHE_BUST_THROTTLE', 5),
+
         'prefix' => 'queue_monitor_',
     ],
 

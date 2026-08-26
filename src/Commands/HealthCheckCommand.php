@@ -25,31 +25,35 @@ class HealthCheckCommand extends Command
 
         if ($this->option('readiness')) {
             $readiness = $healthCheck->readiness();
+            // The exit code reflects the check outcome regardless of output
+            // format — the --json path is exactly what CI/deploy gates script.
+            $exit = $readiness['status'] === 'ready' ? self::SUCCESS : self::FAILURE;
 
             if ($this->option('json')) {
                 $json = json_encode($readiness, JSON_PRETTY_PRINT);
                 $this->line($json !== false ? $json : '{}');
 
-                return self::SUCCESS;
+                return $exit;
             }
 
             $this->displayReadinessStatus($readiness);
 
-            return $readiness['status'] === 'ready' ? self::SUCCESS : self::FAILURE;
+            return $exit;
         }
 
         $health = $healthCheck->check();
+        $exit = $health['status'] === 'healthy' ? self::SUCCESS : self::FAILURE;
 
         if ($this->option('json')) {
             $json = json_encode($health, JSON_PRETTY_PRINT);
             $this->line($json !== false ? $json : '{}');
 
-            return self::SUCCESS;
+            return $exit;
         }
 
         $this->displayHealthStatus($health);
 
-        return $health['status'] === 'healthy' ? self::SUCCESS : self::FAILURE;
+        return $exit;
     }
 
     /**

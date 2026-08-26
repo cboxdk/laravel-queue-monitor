@@ -8,6 +8,7 @@ use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\StatisticsRepositoryContract;
 use Cbox\LaravelQueueMonitor\Repositories\Eloquent\EloquentStatisticsRepository;
 use Cbox\LaravelQueueMonitor\Services\DashboardCacheService;
+use Cbox\LaravelQueueMonitor\Utilities\PayloadRedactor;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -236,11 +237,27 @@ class DashboardDrillDownController extends Controller
             'maxExceptions', 'failOnTimeout', 'tries', 'timeout', 'uniqueFor',
             'uniqueId', 'uniqueVia'];
 
+        /** @var array<string> $sensitiveKeys */
+        $sensitiveKeys = config('queue-monitor.api.sensitive_keys', []);
+
         // Match property name followed by its value
         if (preg_match_all('/s:\d+:"([^"]+)";(s:\d+:"([^"]*)"|i:(\d+)|d:([\d.]+)|b:([01])|N;)/', $command, $matches, PREG_SET_ORDER)) {
             foreach ($matches as $match) {
                 $name = $match[1];
                 if (in_array($name, $skip, true)) {
+                    continue;
+                }
+
+                // This summary is built from the raw serialized command, which
+                // the payload redactor never sees — so apply the operator's
+                // sensitive-key policy here too, or a property named e.g.
+                // "password" would leak its value on the drill-down.
+                if (PayloadRedactor::isSensitive($name, $sensitiveKeys)) {
+                    $props[] = "{$name}: [REDACTED]";
+                    if (count($props) >= 3) {
+                        break;
+                    }
+
                     continue;
                 }
 
