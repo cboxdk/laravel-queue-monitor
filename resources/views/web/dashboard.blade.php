@@ -350,6 +350,16 @@
             cursor: pointer;
         }
 
+        .qm-nav-item:focus-visible,
+        .qm-chip:focus-visible,
+        .qm-icon-button:focus-visible,
+        .qm-segment:focus-visible,
+        .qm-action-button:focus-visible,
+        .qm-queue-bar:focus-visible {
+            outline: 2px solid var(--qm-blue, #2563eb);
+            outline-offset: 2px;
+        }
+
         .qm-content {
             padding: 24px 28px 34px;
             display: grid;
@@ -1172,6 +1182,17 @@
         .stagger-in > *:nth-child(5) { animation-delay: 160ms; }
         .stagger-in > *:nth-child(6) { animation-delay: 200ms; }
 
+        @media (prefers-reduced-motion: reduce) {
+            .shimmer,
+            .pulse-dot,
+            .pulse-alert,
+            .stagger-in > *,
+            .animate-pulse,
+            .animate-spin {
+                animation: none !important;
+            }
+        }
+
         /* Scrollbar */
         .custom-scroll::-webkit-scrollbar { width: 5px; }
         .custom-scroll::-webkit-scrollbar-track { background: transparent; }
@@ -1208,7 +1229,7 @@
     <div class="qm-app">
         <div class="qm-mobile-overlay" :class="{ 'open': mobileMenuOpen }" @click="mobileMenuOpen = false" aria-hidden="true"></div>
 
-        <aside class="qm-sidebar" :class="{ 'open': mobileMenuOpen }">
+        <aside class="qm-sidebar" :class="{ 'open': mobileMenuOpen }" :aria-hidden="isMobile && !mobileMenuOpen ? 'true' : null" :inert="isMobile && !mobileMenuOpen">
             <a :href="dashboardUrl" class="qm-brand">
                 <div class="qm-brand-mark">Q</div>
                 <div>
@@ -1220,19 +1241,11 @@
             <nav class="qm-nav-section" aria-label="Primary navigation">
                 <div class="qm-nav-title">Monitor</div>
                 <template x-for="tab in sidebarTabs" :key="tab.id">
-                    <button type="button" class="qm-nav-item" :class="{ 'active': activeTab === tab.id && !jobView && !drillDown }" x-show="!tab.horizon || horizonAvailable" @click="navigateTo(tab.id)">
+                    <button type="button" class="qm-nav-item" :class="{ 'active': activeTab === tab.id && !jobView && !drillDown }" :aria-current="activeTab === tab.id && !jobView && !drillDown ? 'page' : null" x-show="!tab.horizon || horizonAvailable" @click="navigateTo(tab.id)">
                         <svg viewBox="0 0 24 24" x-html="tab.svg"></svg>
                         <span x-text="tab.label"></span>
                     </button>
                 </template>
-            </nav>
-
-            <nav class="qm-nav-section" aria-label="Administration navigation">
-                <div class="qm-nav-title">Admin</div>
-                <button type="button" class="qm-nav-item" @click="navigateTo('health')">
-                    <svg viewBox="0 0 24 24"><path d="M12 15.5A3.5 3.5 0 1 0 12 8a3.5 3.5 0 0 0 0 7.5z"></path><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.7 1.7 0 0 0 15 19.37a1.7 1.7 0 0 0-1 .28 1.7 1.7 0 0 0-.8 1.45V21a2 2 0 0 1-4 0v-.09a1.7 1.7 0 0 0-.8-1.45 1.7 1.7 0 0 0-1-.28 1.7 1.7 0 0 0-1.88.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.63 15a1.7 1.7 0 0 0-.28-1 1.7 1.7 0 0 0-1.45-.8H3a2 2 0 0 1 0-4h.09a1.7 1.7 0 0 0 1.45-.8 1.7 1.7 0 0 0 .28-1 1.7 1.7 0 0 0-.34-1.88l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.63a1.7 1.7 0 0 0 1-.28 1.7 1.7 0 0 0 .8-1.45V3a2 2 0 0 1 4 0v.09a1.7 1.7 0 0 0 .8 1.45 1.7 1.7 0 0 0 1 .28 1.7 1.7 0 0 0 1.88-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.37 9c0 .36.1.7.28 1 .3.5.84.8 1.45.8H21a2 2 0 0 1 0 4h-.09a1.7 1.7 0 0 0-1.45.8 1.7 1.7 0 0 0-.06.4z"></path></svg>
-                    <span>Settings</span>
-                </button>
             </nav>
 
             <div class="qm-sidebar-footer">
@@ -1243,7 +1256,7 @@
 
         <div class="qm-main">
             <header class="qm-topbar">
-                <button type="button" class="qm-menu-button" aria-label="Open navigation" @click="mobileMenuOpen = true">
+                <button type="button" class="qm-menu-button" aria-label="Open navigation" :aria-expanded="mobileMenuOpen" @click="mobileMenuOpen = true">
                     <svg viewBox="0 0 24 24"><path d="M4 7h16"></path><path d="M4 12h16"></path><path d="M4 17h16"></path></svg>
                 </button>
 
@@ -1255,7 +1268,7 @@
                 <div class="qm-toolbar">
                     <label class="qm-search">
                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21 21-4.3-4.3"></path><circle cx="11" cy="11" r="7"></circle></svg>
-                        <input type="text" x-model="filters.search" @keydown.enter.prevent="navigateTo('jobs'); resetPaginationAndFetch()" placeholder="Search job, queue, UUID">
+                        <input type="text" x-model="filters.search" @keydown.enter.prevent="pagination.offset = 0; selectedJobs = []; navigateTo('jobs')" aria-label="Search jobs" placeholder="Search job, queue, UUID">
                     </label>
 
                     <button type="button" class="qm-chip" :class="{ live: isLive }" :aria-pressed="isLive" @click="toggleLive()">
@@ -1283,7 +1296,7 @@
             </div>
 
             {{-- ==================== TAB CONTENT (hidden when viewing job detail or drill-down) ==================== --}}
-            <div x-show="!jobView && !drillDown">
+            <div x-show="!jobView && !drillDown" x-cloak>
 
             {{-- ==================== OVERVIEW TAB ==================== --}}
             <div x-show="activeTab === 'overview'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0">
@@ -1370,7 +1383,7 @@
                                     </thead>
                                     <tbody>
                                         <template x-for="job in attentionJobs().slice(0, 6)" :key="job.uuid">
-                                            <tr class="cursor-pointer" title="Select job" :class="{ 'selected': selectedOverviewJob()?.uuid === job.uuid }" @click="selectedOverviewUuid = job.uuid">
+                                            <tr class="cursor-pointer" title="Select job" :class="{ 'selected': selectedOverviewJob()?.uuid === job.uuid }" tabindex="0" role="button" @click="selectedOverviewUuid = job.uuid" @keydown.enter="selectedOverviewUuid = job.uuid" @keydown.space.prevent="selectedOverviewUuid = job.uuid">
                                                 <td><span class="qm-status" :class="statusTone(job.status?.value)" x-text="job.status?.label || job.status?.value || 'Unknown'"></span></td>
                                                 <td><strong x-text="job.job_class"></strong><span x-text="job.uuid ? 'uuid ' + job.uuid.slice(0, 8) : ''"></span></td>
                                                 <td x-text="job.queue || '-'"></td>
@@ -1480,7 +1493,7 @@
                             <span class="qm-status qm-info" x-text="formatNumber((overview.alerts?.active || []).length) + ' open'">0 open</span>
                         </div>
                         <div class="qm-health-list">
-                            <template x-for="alert in (overview.alerts?.active || []).slice(0, 3)" :key="alert.message">
+                            <template x-for="(alert, idx) in (overview.alerts?.active || []).slice(0, 3)" :key="idx">
                                 <div class="qm-health-item">
                                     <div><strong x-text="alert.message"></strong><span x-text="alert.type || 'queue monitor'"></span></div>
                                     <span class="qm-status" :class="alert.severity === 'critical' ? 'qm-bad' : (alert.severity === 'warning' ? 'qm-warn' : 'qm-info')" x-text="alert.severity || 'info'"></span>
@@ -1609,16 +1622,16 @@
                         <table class="min-w-full divide-y divide-gray-100">
                             <thead>
                                 <tr class="bg-gray-50/60">
-                                    <th class="px-4 py-2.5 w-10"><input type="checkbox" @change="toggleAllJobs($event)" :checked="selectedJobs.length > 0 && selectedJobs.length === jobs.data.length" class="rounded border-gray-300 text-brand focus:ring-brand"></th>
-                                    <th class="px-4 py-2.5 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider cursor-pointer select-none" @click="toggleSort('status')"><span class="flex items-center gap-1">Status <span x-text="sortIndicator('status')"></span></span></th>
-                                    <th class="px-4 py-2.5 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider cursor-pointer select-none" @click="toggleSort('job_class')"><span class="flex items-center gap-1">Job <span x-text="sortIndicator('job_class')"></span></span></th>
+                                    <th class="px-4 py-2.5 w-10"><input type="checkbox" aria-label="Select all jobs on this page" @change="toggleAllJobs($event)" :checked="selectedJobs.length > 0 && selectedJobs.length === jobs.data.length" x-effect="$el.indeterminate = selectedJobs.length > 0 && selectedJobs.length < jobs.data.length" class="rounded border-gray-300 text-brand focus:ring-brand"></th>
+                                    <th class="px-4 py-2.5 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider" :aria-sort="ariaSort('status')"><button type="button" class="inline-flex items-center gap-1 uppercase cursor-pointer select-none" @click="toggleSort('status')">Status <span x-text="sortIndicator('status')"></span></button></th>
+                                    <th class="px-4 py-2.5 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider" :aria-sort="ariaSort('job_class')"><button type="button" class="inline-flex items-center gap-1 uppercase cursor-pointer select-none" @click="toggleSort('job_class')">Job <span x-text="sortIndicator('job_class')"></span></button></th>
                                     <th class="px-4 py-2.5 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider">Queue</th>
-                                    <th class="px-4 py-2.5 text-right text-[10px] font-bold text-gray-400 uppercase tracking-wider cursor-pointer select-none" @click="toggleSort('duration_ms')"><span class="flex items-center gap-1 justify-end">Duration <span x-text="sortIndicator('duration_ms')"></span></span></th>
+                                    <th class="px-4 py-2.5 text-right text-[10px] font-bold text-gray-400 uppercase tracking-wider" :aria-sort="ariaSort('duration_ms')"><button type="button" class="inline-flex items-center gap-1 uppercase cursor-pointer select-none" @click="toggleSort('duration_ms')">Duration <span x-text="sortIndicator('duration_ms')"></span></button></th>
                                     <th class="px-4 py-2.5 text-right text-[10px] font-bold text-gray-400 uppercase tracking-wider">CPU</th>
                                     <th class="px-4 py-2.5 text-right text-[10px] font-bold text-gray-400 uppercase tracking-wider">Memory</th>
                                     <th class="px-4 py-2.5 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider">Server</th>
                                     <th class="px-4 py-2.5 text-center text-[10px] font-bold text-gray-400 uppercase tracking-wider">Attempt</th>
-                                    <th class="px-4 py-2.5 text-right text-[10px] font-bold text-gray-400 uppercase tracking-wider cursor-pointer select-none" @click="toggleSort('queued_at')"><span class="flex items-center gap-1 justify-end">Time <span x-text="sortIndicator('queued_at')"></span></span></th>
+                                    <th class="px-4 py-2.5 text-right text-[10px] font-bold text-gray-400 uppercase tracking-wider" :aria-sort="ariaSort('queued_at')"><button type="button" class="inline-flex items-center gap-1 uppercase cursor-pointer select-none" @click="toggleSort('queued_at')">Time <span x-text="sortIndicator('queued_at')"></span></button></th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-50">
@@ -1629,7 +1642,7 @@
                                 </template>
                                 <template x-if="!loading.jobs">
                                     <template x-for="job in jobs.data" :key="job.uuid">
-                                        <tr class="hover:bg-brand-faint/40 cursor-pointer transition-colors" @click="openJobView(job.uuid)">
+                                        <tr class="hover:bg-brand-faint/40 cursor-pointer transition-colors" tabindex="0" role="button" @click="openJobView(job.uuid)" @keydown.enter="openJobView(job.uuid)" @keydown.space.prevent="openJobView(job.uuid)">
                                             <td class="px-4 py-2.5" @click.stop><input type="checkbox" :value="job.uuid" x-model="selectedJobs" class="rounded border-gray-300 text-brand focus:ring-brand"></td>
                                             <td class="px-4 py-2.5 whitespace-nowrap"><span class="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold" :class="statusClass(job.status?.value)" x-text="job.status?.label"></span></td>
                                             <td class="px-4 py-2.5 whitespace-nowrap">
@@ -1828,7 +1841,7 @@
                 <div class="mt-6 bg-white border border-gray-200/80 rounded-xl shadow-sm overflow-hidden">
                     <div class="px-5 py-4 border-b border-gray-100"><h4 class="text-sm font-semibold text-gray-900">Active Alerts</h4></div>
                     <div class="divide-y divide-gray-50">
-                        <template x-for="alert in (health.alerts?.active || [])" :key="alert.message">
+                        <template x-for="(alert, idx) in (health.alerts?.active || [])" :key="idx">
                             <div class="px-5 py-3 flex items-start gap-3">
                                 <span class="mt-0.5 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase" :class="{ 'bg-red-100 text-red-700': alert.severity === 'critical', 'bg-amber-100 text-amber-700': alert.severity === 'warning', 'bg-blue-100 text-blue-700': alert.severity === 'info' }" x-text="alert.severity"></span>
                                 <span class="text-sm text-gray-700" x-text="alert.message"></span>
@@ -2632,13 +2645,13 @@
             </div>{{-- END TAB CONTENT --}}
 
             {{-- ==================== FULL-PAGE JOB DETAIL VIEW ==================== --}}
-            <div x-show="jobView" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
+            <div x-show="jobView" x-cloak x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
 
                 {{-- Back nav + header --}}
                 <div class="mb-6">
                     <button @click="closeJobView()" class="inline-flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-700 transition mb-4 group">
                         <svg class="h-4 w-4 transition-transform group-hover:-translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" /></svg>
-                        Back to <span x-text="previousTab === 'jobs' ? 'Jobs' : 'Overview'"></span>
+                        Back to <span x-text="tabLabels[previousTab] || 'Overview'"></span>
                     </button>
 
                     {{-- Loading state --}}
@@ -2659,9 +2672,10 @@
                                 </div>
                                 <div class="flex items-center gap-3 text-[11px] text-gray-500">
                                     <span class="font-mono text-gray-400 select-all" x-text="jobDetail?.job?.uuid"></span>
-                                    <button @click="copyToClipboard(window.location.href)" class="text-gray-400 hover:text-brand transition" title="Copy link">
+                                    <button @click="copyToClipboard(window.location.href, 'link')" class="text-gray-400 hover:text-brand transition" title="Copy link">
                                         <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m9.86-4.122a4.5 4.5 0 00-6.364-6.364L4.5 6.75a4.5 4.5 0 006.364 6.364l4.5-4.5z" /></svg>
                                     </button>
+                                    <span x-show="copied === 'link'" x-transition.opacity class="text-[10px] font-semibold text-emerald-600">Copied</span>
                                 </div>
                             </div>
                             <div class="flex gap-2 flex-shrink-0">
@@ -2711,11 +2725,11 @@
                                     <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" /></svg>
                                     Exception
                                 </h3>
-                                <button @click="copyToClipboard(formatExceptionMarkdown(jobDetail?.exception))"
+                                <button @click="copyToClipboard(formatExceptionMarkdown(jobDetail?.exception), 'exception')"
                                         class="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-[11px] font-medium text-red-700 bg-red-100 hover:bg-red-200 rounded-lg transition"
                                         title="Copy exception as markdown">
                                     <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9.75a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184" /></svg>
-                                    Copy
+                                    <span x-text="copied === 'exception' ? 'Copied' : 'Copy'">Copy</span>
                                 </button>
                             </div>
                             <div class="p-5 space-y-3">
@@ -2863,7 +2877,7 @@
             </div>
 
             {{-- ==================== FULL-PAGE DRILL-DOWN VIEW ==================== --}}
-            <div x-show="drillDown" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
+            <div x-show="drillDown" x-cloak x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
 
                 {{-- Back nav + header --}}
                 <div class="mb-6">
@@ -2937,7 +2951,7 @@
                                 </div>
                                 <div class="divide-y divide-gray-50">
                                     <template x-for="job in (drillDownData?.recent_jobs || [])" :key="job.uuid">
-                                        <div class="flex items-center gap-3 px-5 py-2.5 hover:bg-brand-faint/40 cursor-pointer transition-colors" @click="closeDrillDown(); openJobView(job.uuid)">
+                                        <div class="flex items-center gap-3 px-5 py-2.5 hover:bg-brand-faint/40 cursor-pointer transition-colors" @click="openJobView(job.uuid)">
                                             <span class="flex-shrink-0 h-2 w-2 rounded-full" :class="drillDownStatusClass(job.status)"></span>
                                             <div class="flex-1 min-w-0">
                                                 <span x-show="job.summary" class="text-sm text-gray-700 truncate block" x-text="job.summary"></span>
@@ -2990,16 +3004,16 @@
     </div>
     </div>
 
-    {{-- ==================== CONFIRM DELETE DIALOG ==================== --}}
+    {{-- ==================== CONFIRM ACTION DIALOG ==================== --}}
     <div x-show="confirmDelete" x-cloak class="relative z-50">
         <div class="fixed inset-0 bg-gray-900/30 backdrop-blur-sm" @click="confirmDelete = null"></div>
         <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div x-show="confirmDelete" x-transition class="bg-white rounded-xl shadow-xl max-w-sm w-full p-6">
-                <h3 class="text-base font-semibold text-gray-900">Delete Job</h3>
-                <p class="mt-2 text-sm text-gray-500">Are you sure you want to delete this job? This action cannot be undone.</p>
+            <div x-show="confirmDelete" x-transition role="dialog" aria-modal="true" aria-labelledby="qm-confirm-title" class="bg-white rounded-xl shadow-xl max-w-sm w-full p-6">
+                <h3 id="qm-confirm-title" class="text-base font-semibold text-gray-900" x-text="confirmDelete?.title || 'Delete Job'">Delete Job</h3>
+                <p class="mt-2 text-sm text-gray-500" x-text="confirmDelete?.message">Are you sure you want to delete this job? This action cannot be undone.</p>
                 <div class="mt-5 flex gap-3 justify-end">
-                    <button @click="confirmDelete = null" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition">Cancel</button>
-                    <button @click="deleteJob(confirmDelete)" class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition">Delete</button>
+                    <button x-ref="confirmCancel" @click="confirmDelete = null" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition">Cancel</button>
+                    <button @click="runConfirm()" class="px-4 py-2 text-sm font-medium text-white rounded-lg transition" :class="confirmDelete?.danger === false ? 'bg-amber-600 hover:bg-amber-700' : 'bg-red-600 hover:bg-red-700'" x-text="confirmDelete?.confirmLabel || 'Delete'">Delete</button>
                 </div>
             </div>
         </div>
@@ -3016,6 +3030,7 @@
                 activeTab: 'overview',
                 previousTab: 'overview',
                 mobileMenuOpen: false,
+                isMobile: window.innerWidth <= 900,
 
                 // Job detail view (replaces slide-over)
                 jobView: null,
@@ -3024,7 +3039,7 @@
                 // Data stores
                 overview: { stats: {}, queues: [], alerts: {}, recentJobs: [], charts: {} },
                 attention: [],
-                jobs: { data: [], meta: { total: 0, limit: 50, offset: 0 } },
+                jobs: { data: [], meta: { total: 0, limit: {{ config('queue-monitor.ui.per_page', 35) }}, offset: 0 } },
                 analytics: {},
                 health: {},
                 infrastructure: {},
@@ -3040,7 +3055,7 @@
                 availableQueues: [],
                 selectedJobs: [],
                 sorting: { field: 'queued_at', direction: 'desc' },
-                pagination: { offset: 0, limit: 50 },
+                pagination: { offset: 0, limit: {{ config('queue-monitor.ui.per_page', 35) }} },
 
                 // Auto-refresh
                 refreshInterval: null,
@@ -3054,7 +3069,7 @@
                 retryCount: 0,
                 maxRetries: 3,
 
-                // Confirm dialog
+                // Confirm dialog: { title, message, confirmLabel, danger, onConfirm }
                 confirmDelete: null,
 
                 // Drill-down panel
@@ -3062,6 +3077,7 @@
                 drillDownData: null,
                 drillDownLoading: false,
                 drillDownChart: null,
+                drillDownFromTab: false,
 
                 // Chart instances
                 throughputChart: null,
@@ -3069,6 +3085,8 @@
                 lastRefreshAt: null,
                 clock: Date.now(),
                 clockInterval: null,
+                copied: null,
+                copiedTimeout: null,
                 sidebarTabs: [
                     { id: 'overview', label: 'Overview', svg: '<path d="M3 13h8V3H3z"></path><path d="M13 21h8V11h-8z"></path><path d="M13 9h8V3h-8z"></path><path d="M3 21h8v-6H3z"></path>' },
                     { id: 'jobs', label: 'Jobs', svg: '<path d="M4 7h16"></path><path d="M4 12h16"></path><path d="M4 17h10"></path>' },
@@ -3117,11 +3135,13 @@
 
                         // Restore tab from hash fragment (#jobs, #analytics, etc.)
                         const hash = window.location.hash.replace('#', '');
+                        // replaceHistory: the restored tab must not duplicate the entry
+                        // the browser already holds, or Back wipes filters instead of leaving.
                         if (hasFilters && this.activeTab !== 'jobs') {
                             // Filters present — switch to jobs tab (navigateTo will fetch with correct filters)
-                            this.navigateTo('jobs');
+                            this.navigateTo('jobs', true);
                         } else if (['jobs', 'analytics', 'health', 'infrastructure', 'autoscale'].includes(hash)) {
-                            this.navigateTo(hash);
+                            this.navigateTo(hash, true);
                         }
                     }
 
@@ -3148,6 +3168,7 @@
                             this.restoreFiltersFromUrl();
                             this.refreshCurrentView(true);
                         }
+                        this.updateDocumentTitle();
                     });
 
                     document.addEventListener('visibilitychange', () => {
@@ -3155,7 +3176,8 @@
                     });
 
                     window.addEventListener('resize', () => {
-                        if (window.innerWidth > 900) this.mobileMenuOpen = false;
+                        this.isMobile = window.innerWidth <= 900;
+                        if (!this.isMobile) this.mobileMenuOpen = false;
                         this.throughputChart?.resize();
                         this.distributionChart?.resize();
                         this.drillDownChart?.resize();
@@ -3163,10 +3185,15 @@
 
                     window.addEventListener('keydown', (e) => {
                         if (e.key === 'Escape') {
-                            if (this.mobileMenuOpen) this.mobileMenuOpen = false;
+                            if (this.confirmDelete) this.confirmDelete = null;
+                            else if (this.mobileMenuOpen) this.mobileMenuOpen = false;
                             else if (this.drillDown) this.closeDrillDown();
                             else if (this.jobView) this.closeJobView();
                         }
+                    });
+
+                    this.$watch('confirmDelete', (value) => {
+                        if (value) this.$nextTick(() => this.$refs.confirmCancel?.focus());
                     });
                 },
 
@@ -3207,11 +3234,16 @@
                     else if (this.activeTab === 'autoscale') this.fetchAutoscale();
                 },
 
+                tabLabels: { overview: 'Overview', jobs: 'Jobs', analytics: 'Analytics', health: 'Health', autoscale: 'Autoscale', infrastructure: 'Infrastructure' },
+
                 pageTitle() {
                     if (this.jobView) return 'Selected job';
                     if (this.drillDown) return this.drillDown?.type === 'job_class' ? this.shortClass(this.drillDown?.value) : (this.drillDown?.value || 'Drill-down');
-                    const labels = { overview: 'Overview', jobs: 'Jobs', analytics: 'Analytics', health: 'Health', autoscale: 'Autoscale', infrastructure: 'Infrastructure' };
-                    return labels[this.activeTab] || 'Overview';
+                    return this.tabLabels[this.activeTab] || 'Overview';
+                },
+
+                updateDocumentTitle() {
+                    document.title = 'Queue Monitor — ' + this.pageTitle();
                 },
 
                 pageSubtitle() {
@@ -3437,7 +3469,7 @@
 
                 // ========== NAVIGATION ==========
 
-                navigateTo(tab) {
+                navigateTo(tab, replaceHistory = false) {
                     this.mobileMenuOpen = false;
 
                     // Close sub-views without pushing their own state
@@ -3448,7 +3480,8 @@
                         this.drillDown = null; this.drillDownData = null;
                     }
                     this.activeTab = tab;
-                    this.pushTabState(tab);
+                    this.pushTabState(tab, replaceHistory);
+                    this.updateDocumentTitle();
                     if (tab === 'overview') this.fetchOverview();
                     else if (tab === 'jobs') this.fetchJobs();
                     else if (tab === 'analytics') this.fetchAnalytics();
@@ -3461,10 +3494,12 @@
                     });
                 },
 
-                pushTabState(tab) {
+                pushTabState(tab, replace = false) {
                     const hash = tab === 'overview' ? '' : '#' + tab;
                     const qs = window.location.search;
-                    history.pushState({ tab }, '', this.dashboardUrl + qs + hash);
+                    const url = this.dashboardUrl + qs + hash;
+                    if (replace) history.replaceState({ tab }, '', url);
+                    else history.pushState({ tab }, '', url);
                 },
 
                 openJobView(uuid, pushHistory = true) {
@@ -3474,6 +3509,7 @@
                     this.drillDownChart = null;
                     this.jobView = uuid;
                     this.jobDetail = null;
+                    this.updateDocumentTitle();
                     this.fetchJobDetail(uuid);
                     if (pushHistory) {
                         const url = this.jobViewUrlBase + uuid;
@@ -3485,6 +3521,7 @@
                     this.jobView = null;
                     this.jobDetail = null;
                     this.pushTabState(this.previousTab);
+                    this.updateDocumentTitle();
                 },
 
                 // ========== DATA FETCHING ==========
@@ -3628,11 +3665,27 @@
                     } catch (e) { this.error = 'Failed to replay job'; console.error('replayJob error:', e); }
                 },
 
-                confirmDeleteJob(uuid) { this.confirmDelete = uuid; },
+                askConfirm(config) {
+                    this.confirmDelete = { danger: true, confirmLabel: 'Delete', ...config };
+                },
+
+                runConfirm() {
+                    const action = this.confirmDelete?.onConfirm;
+                    this.confirmDelete = null;
+                    if (action) action();
+                },
+
+                confirmDeleteJob(uuid) {
+                    if (!uuid) return;
+                    this.askConfirm({
+                        title: 'Delete Job',
+                        message: 'Are you sure you want to delete this job? This action cannot be undone.',
+                        onConfirm: () => this.deleteJob(uuid),
+                    });
+                },
 
                 async deleteJob(uuid) {
                     if (!uuid) return;
-                    this.confirmDelete = null;
                     try {
                         const res = await fetch(this.dashboardUrl + '/jobs/' + uuid + '/delete', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' } });
                         if (!res.ok) { const err = await res.json().catch(() => ({})); this.error = err.message || 'Failed to delete job (HTTP ' + res.status + ')'; return; }
@@ -3650,9 +3703,20 @@
                     } catch (e) { this.error = 'Failed to replay jobs'; console.error('batchReplay error:', e); }
                 },
 
-                async resolveStuckJob(uuid, action) {
+                resolveStuckJob(uuid, action) {
                     if (!uuid) return;
-                    if (action === 'delete' && !confirm('Delete this stuck job? This cannot be undone.')) return;
+                    if (action === 'delete') {
+                        this.askConfirm({
+                            title: 'Delete Stuck Job',
+                            message: 'Delete this stuck job? This cannot be undone.',
+                            onConfirm: () => this.performResolveStuckJob(uuid, action),
+                        });
+                        return;
+                    }
+                    this.performResolveStuckJob(uuid, action);
+                },
+
+                async performResolveStuckJob(uuid, action) {
                     try {
                         const res = await fetch(this.dashboardUrl + '/stuck-jobs/resolve', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' }, body: JSON.stringify({ uuids: [uuid], action }) });
                         if (!res.ok) throw new Error('Request failed');
@@ -3660,23 +3724,36 @@
                     } catch (e) { this.error = `Failed to ${action} stuck job`; console.error('resolveStuckJob error:', e); }
                 },
 
-                async resolveAllStuckJobs(action) {
-                    const label = action === 'delete' ? 'delete' : 'retry';
-                    if (!confirm(`${label.charAt(0).toUpperCase() + label.slice(1)} all stuck jobs?`)) return;
-                    try {
-                        const res = await fetch(this.dashboardUrl + '/stuck-jobs/resolve-all', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' }, body: JSON.stringify({ action }) });
-                        if (!res.ok) throw new Error('Request failed');
-                        this.fetchHealth();
-                    } catch (e) { this.error = `Failed to ${label} stuck jobs`; console.error('resolveAllStuckJobs error:', e); }
+                resolveAllStuckJobs(action) {
+                    const label = action === 'delete' ? 'Delete' : 'Retry';
+                    this.askConfirm({
+                        title: `${label} All Stuck Jobs`,
+                        message: `${label} all stuck jobs?${action === 'delete' ? ' This cannot be undone.' : ''}`,
+                        confirmLabel: `${label} All`,
+                        danger: action === 'delete',
+                        onConfirm: async () => {
+                            try {
+                                const res = await fetch(this.dashboardUrl + '/stuck-jobs/resolve-all', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' }, body: JSON.stringify({ action }) });
+                                if (!res.ok) throw new Error('Request failed');
+                                this.fetchHealth();
+                            } catch (e) { this.error = `Failed to ${label.toLowerCase()} stuck jobs`; console.error('resolveAllStuckJobs error:', e); }
+                        },
+                    });
                 },
 
-                async batchDelete() {
+                batchDelete() {
                     if (this.selectedJobs.length === 0) return;
-                    if (!confirm(`Delete ${this.selectedJobs.length} job(s)? This cannot be undone.`)) return;
-                    try {
-                        await fetch(this.dashboardUrl + '/batch/delete', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' }, body: JSON.stringify({ uuids: this.selectedJobs }) });
-                        this.selectedJobs = []; this.fetchJobs();
-                    } catch (e) { this.error = 'Failed to delete jobs'; console.error('batchDelete error:', e); }
+                    const count = this.selectedJobs.length;
+                    this.askConfirm({
+                        title: 'Delete Jobs',
+                        message: `Delete ${count} job${count === 1 ? '' : 's'}? This cannot be undone.`,
+                        onConfirm: async () => {
+                            try {
+                                await fetch(this.dashboardUrl + '/batch/delete', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' }, body: JSON.stringify({ uuids: this.selectedJobs }) });
+                                this.selectedJobs = []; this.fetchJobs();
+                            } catch (e) { this.error = 'Failed to delete jobs'; console.error('batchDelete error:', e); }
+                        },
+                    });
                 },
 
                 // ========== DRILL-DOWN ==========
@@ -3686,6 +3763,10 @@
                     this.drillDown = { type, value };
                     this.drillDownLoading = true;
                     this.drillDownData = null;
+                    // Only an in-app open sits on top of a tab entry; deep links and
+                    // popstate restores do not, so closing them cannot history.back().
+                    this.drillDownFromTab = pushHistory;
+                    this.updateDocumentTitle();
                     if (pushHistory) {
                         const base = this.drillDownUrlBase[type] || this.dashboardUrl;
                         history.pushState({ drillDown: { type, value } }, '', base + encodeURIComponent(value));
@@ -3700,12 +3781,19 @@
                     }
                 },
 
-                closeDrillDown() {
+                closeDrillDown(adjustHistory = true) {
                     try { if (this.drillDownChart) { this.drillDownChart.dispose(); } } catch (e) {}
                     this.drillDownChart = null;
                     this.drillDown = null;
                     this.drillDownData = null;
-                    this.pushTabState(this.activeTab);
+                    if (!adjustHistory) return;
+                    if (this.drillDownFromTab) {
+                        this.drillDownFromTab = false;
+                        history.back();
+                    } else {
+                        this.pushTabState(this.activeTab);
+                    }
+                    this.updateDocumentTitle();
                 },
 
                 async refreshDrillDown() {
@@ -3722,7 +3810,7 @@
                 },
 
                 drillDownToJobs(type, value) {
-                    this.closeDrillDown();
+                    this.closeDrillDown(false);
                     this.filters = { search: '', statuses: [], queue: '', dateFrom: '', dateTo: '', showAdvanced: false, jobClass: '', server: '', minAttempts: '', minDuration: '' };
                     this.pagination.offset = 0;
                     this.selectedJobs = [];
@@ -3837,9 +3925,12 @@
                     if (params.has('server')) { this.filters.server = params.get('server'); restored = true; }
                     if (params.has('attempts')) { this.filters.minAttempts = params.get('attempts'); restored = true; }
                     if (params.has('duration')) { this.filters.minDuration = params.get('duration'); restored = true; }
-                    if (params.has('sort')) { this.sorting.field = params.get('sort'); restored = true; }
-                    if (params.has('dir')) { this.sorting.direction = params.get('dir'); restored = true; }
-                    if (params.has('offset')) { this.pagination.offset = parseInt(params.get('offset')) || 0; restored = true; }
+                    // Whitelist sort/dir so arbitrary URL params never reach the API.
+                    const sort = params.get('sort');
+                    if (sort && ['queued_at', 'duration_ms', 'job_class', 'status'].includes(sort)) { this.sorting.field = sort; restored = true; }
+                    const dir = params.get('dir');
+                    if (dir && ['asc', 'desc'].includes(dir)) { this.sorting.direction = dir; restored = true; }
+                    if (params.has('offset')) { this.pagination.offset = Math.max(0, parseInt(params.get('offset'), 10) || 0); restored = true; }
 
                     // Show advanced filters panel if any advanced filter is active
                     if (this.filters.jobClass || this.filters.server || this.filters.minAttempts || this.filters.minDuration) {
@@ -3850,6 +3941,7 @@
                 },
 
                 sortIndicator(field) { if (this.sorting.field !== field) return ''; return this.sorting.direction === 'asc' ? '\u2191' : '\u2193'; },
+                ariaSort(field) { if (this.sorting.field !== field) return 'none'; return this.sorting.direction === 'asc' ? 'ascending' : 'descending'; },
                 toggleAllJobs(event) { this.selectedJobs = event.target.checked ? this.jobs.data.map(j => j.uuid) : []; },
                 prevPage() { this.pagination.offset = Math.max(0, this.pagination.offset - this.pagination.limit); this.selectedJobs = []; this.syncFiltersToUrl(); this.fetchJobs(); },
                 nextPage() { this.pagination.offset += this.pagination.limit; this.selectedJobs = []; this.syncFiltersToUrl(); this.fetchJobs(); },
@@ -4016,10 +4108,31 @@
 
                 shortClass(fqcn) { if (!fqcn) return '-'; return fqcn.split('\\').pop(); },
 
-                copyToClipboard(text) {
-                    navigator.clipboard.writeText(text).then(() => {
-                        this.error = null;
-                    }).catch(() => {});
+                copyToClipboard(text, target = 'link') {
+                    const done = () => {
+                        this.copied = target;
+                        clearTimeout(this.copiedTimeout);
+                        this.copiedTimeout = setTimeout(() => { this.copied = null; }, 1500);
+                    };
+                    if (navigator.clipboard && window.isSecureContext) {
+                        navigator.clipboard.writeText(text).then(done).catch(() => this.copyViaTextarea(text, done));
+                    } else {
+                        // navigator.clipboard is unavailable off HTTPS (e.g. a LAN
+                        // dashboard over plain HTTP), so fall back to execCommand.
+                        this.copyViaTextarea(text, done);
+                    }
+                },
+
+                copyViaTextarea(text, done) {
+                    const textarea = document.createElement('textarea');
+                    textarea.value = text;
+                    textarea.setAttribute('readonly', '');
+                    textarea.style.position = 'fixed';
+                    textarea.style.opacity = '0';
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    try { if (document.execCommand('copy')) done(); } catch (e) {}
+                    document.body.removeChild(textarea);
                 },
 
                 formatStackTrace(trace) {
