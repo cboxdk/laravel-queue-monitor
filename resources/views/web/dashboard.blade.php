@@ -288,7 +288,6 @@
             font-size: 14px;
         }
 
-        .qm-select,
         .qm-chip,
         .qm-icon-button {
             height: 40px;
@@ -296,11 +295,6 @@
             border-radius: 8px;
             background: var(--qm-surface);
             color: var(--qm-text);
-        }
-
-        .qm-select {
-            padding: 0 12px;
-            min-width: 132px;
         }
 
         .qm-chip {
@@ -934,10 +928,6 @@
                 width: auto;
                 min-width: 220px;
             }
-
-            .qm-select {
-                flex: 0 0 132px;
-            }
         }
 
         @media (max-width: 900px) {
@@ -1041,7 +1031,6 @@
                 width: 100%;
             }
 
-            .qm-select,
             .qm-chip {
                 flex: 1 1 calc(50% - 4px);
                 min-width: 0;
@@ -1290,9 +1279,9 @@
 
             <main class="qm-content">
 
-            <div x-show="error" x-cloak class="qm-error-banner" role="alert">
-                <span x-text="error"></span>
-                <button type="button" aria-label="Dismiss error" @click="error = null">&times;</button>
+            <div x-show="error || actionError" x-cloak class="qm-error-banner" role="alert">
+                <span x-text="actionError || error"></span>
+                <button type="button" aria-label="Dismiss error" @click="error = null; actionError = null">&times;</button>
             </div>
 
             {{-- ==================== TAB CONTENT (hidden when viewing job detail or drill-down) ==================== --}}
@@ -2156,7 +2145,6 @@
                                     </template>
                                 </div>
                             </div>
-                        </div>
                     </div>
                 </template>
             </div>
@@ -2926,7 +2914,7 @@
                             Back
                         </button>
                         <button @click="refreshDrillDown()" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition">
-                            <svg class="h-3.5 w-3.5" :class="drillDownLoading && 'animate-spin'" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" /></svg>
+                            <svg class="h-3.5 w-3.5" :class="(drillDownLoading || refreshing.drillDown) && 'animate-spin'" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" /></svg>
                             Refresh
                         </button>
                     </div>
@@ -3045,8 +3033,8 @@
 
     {{-- ==================== CONFIRM ACTION DIALOG ==================== --}}
     <div x-show="confirmDelete" x-cloak class="relative z-50">
-        <div class="fixed inset-0 bg-gray-900/30 backdrop-blur-sm" @click="confirmDelete = null"></div>
-        <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="fixed inset-0 bg-gray-900/30 backdrop-blur-sm"></div>
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="confirmDelete = null">
             <div x-show="confirmDelete" x-transition role="dialog" aria-modal="true" aria-labelledby="qm-confirm-title" class="bg-white rounded-xl shadow-xl max-w-sm w-full p-6">
                 <h3 id="qm-confirm-title" class="text-base font-semibold text-gray-900" x-text="confirmDelete?.title || 'Delete Job'">Delete Job</h3>
                 <p class="mt-2 text-sm text-gray-500" x-text="confirmDelete?.message">Are you sure you want to delete this job? This action cannot be undone.</p>
@@ -3113,6 +3101,10 @@
                 loading: { overview: true, jobs: false, analytics: false, health: false, infrastructure: false, autoscale: false, autoscaleTimeline: false, detail: false },
                 lastMetaRefreshAt: 0,
                 error: null,
+                // Action failures (delete/replay/resolve) live in a separate
+                // field so a successful background poll can't wipe them off the
+                // banner a moment after the user triggered the action.
+                actionError: null,
                 retryCount: 0,
                 maxRetries: 3,
 
@@ -3189,6 +3181,11 @@
                             this.navigateTo('jobs', true);
                         } else if (['jobs', 'analytics', 'health', 'infrastructure', 'autoscale'].includes(hash)) {
                             this.navigateTo(hash, true);
+                        } else {
+                            // Seed the base history entry with the current tab so Back
+                            // from a later tab restores this one instead of leaving a
+                            // null state that the popstate handler can't act on.
+                            this.pushTabState(this.activeTab, true);
                         }
                     }
 
@@ -3209,9 +3206,13 @@
                         } else {
                             this.jobView = null; this.jobDetail = null;
                             this.drillDown = null; this.drillDownData = null;
-                            if (e.state?.tab) this.activeTab = e.state.tab;
-                            // Restore filters from URL on back/forward
+                            this.activeTab = e.state?.tab || 'overview';
+                            // Reset pagination and sorting before restoring from the URL,
+                            // so Back to a URL without those params doesn't keep the
+                            // previous page/sort while the URL says otherwise.
                             this.filters = { search: '', statuses: [], queue: '', dateFrom: '', dateTo: '', showAdvanced: false, jobClass: '', server: '', minAttempts: '', minDuration: '' };
+                            this.pagination.offset = 0;
+                            this.sorting = { field: 'queued_at', direction: 'desc' };
                             this.restoreFiltersFromUrl();
                             this.refreshCurrentView(true);
                         }
@@ -3243,6 +3244,11 @@
                     this.$watch('confirmDelete', (value) => {
                         if (value) this.$nextTick(() => this.$refs.confirmCancel?.focus());
                     });
+
+                    // Reflect the initial view in the tab title, so a freshly
+                    // loaded dashboard isn't a bare "Queue Monitor" until the
+                    // first navigation.
+                    this.updateDocumentTitle();
                 },
 
                 startAutoRefresh() {
@@ -3753,14 +3759,16 @@
 
                 async replayJob(uuid) {
                     if (!uuid) return;
+                    this.actionError = null;
                     try {
                         await fetch(this.dashboardUrl + '/jobs/' + uuid + '/replay', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' } });
                         if (this.activeTab === 'overview') this.fetchOverview();
                         if (this.activeTab === 'jobs') this.fetchJobs();
-                    } catch (e) { this.error = 'Failed to replay job'; console.error('replayJob error:', e); }
+                    } catch (e) { this.actionError = 'Failed to replay job'; console.error('replayJob error:', e); }
                 },
 
                 askConfirm(config) {
+                    this.actionError = null;
                     this.confirmDelete = { danger: true, confirmLabel: 'Delete', ...config };
                 },
 
@@ -3783,11 +3791,11 @@
                     if (!uuid) return;
                     try {
                         const res = await fetch(this.dashboardUrl + '/jobs/' + uuid + '/delete', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' } });
-                        if (!res.ok) { const err = await res.json().catch(() => ({})); this.error = err.message || 'Failed to delete job (HTTP ' + res.status + ')'; return; }
+                        if (!res.ok) { const err = await res.json().catch(() => ({})); this.actionError = err.message || 'Failed to delete job (HTTP ' + res.status + ')'; return; }
                         if (this.jobView) this.closeJobView();
                         if (this.activeTab === 'overview') this.fetchOverview();
                         if (this.activeTab === 'jobs') this.fetchJobs();
-                    } catch (e) { this.error = 'Failed to delete job'; console.error('deleteJob error:', e); }
+                    } catch (e) { this.actionError = 'Failed to delete job'; console.error('deleteJob error:', e); }
                 },
 
                 async batchReplay() {
@@ -3795,7 +3803,7 @@
                     try {
                         await fetch(this.dashboardUrl + '/batch/replay', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' }, body: JSON.stringify({ uuids: this.selectedJobs }) });
                         this.selectedJobs = []; this.fetchJobs();
-                    } catch (e) { this.error = 'Failed to replay jobs'; console.error('batchReplay error:', e); }
+                    } catch (e) { this.actionError = 'Failed to replay jobs'; console.error('batchReplay error:', e); }
                 },
 
                 resolveStuckJob(uuid, action) {
@@ -3816,7 +3824,7 @@
                         const res = await fetch(this.dashboardUrl + '/stuck-jobs/resolve', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' }, body: JSON.stringify({ uuids: [uuid], action }) });
                         if (!res.ok) throw new Error('Request failed');
                         this.fetchHealth();
-                    } catch (e) { this.error = `Failed to ${action} stuck job`; console.error('resolveStuckJob error:', e); }
+                    } catch (e) { this.actionError = `Failed to ${action} stuck job`; console.error('resolveStuckJob error:', e); }
                 },
 
                 resolveAllStuckJobs(action) {
@@ -3831,7 +3839,7 @@
                                 const res = await fetch(this.dashboardUrl + '/stuck-jobs/resolve-all', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' }, body: JSON.stringify({ action }) });
                                 if (!res.ok) throw new Error('Request failed');
                                 this.fetchHealth();
-                            } catch (e) { this.error = `Failed to ${label.toLowerCase()} stuck jobs`; console.error('resolveAllStuckJobs error:', e); }
+                            } catch (e) { this.actionError = `Failed to ${label.toLowerCase()} stuck jobs`; console.error('resolveAllStuckJobs error:', e); }
                         },
                     });
                 },
@@ -3846,7 +3854,7 @@
                             try {
                                 await fetch(this.dashboardUrl + '/batch/delete', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' }, body: JSON.stringify({ uuids: this.selectedJobs }) });
                                 this.selectedJobs = []; this.fetchJobs();
-                            } catch (e) { this.error = 'Failed to delete jobs'; console.error('batchDelete error:', e); }
+                            } catch (e) { this.actionError = 'Failed to delete jobs'; console.error('batchDelete error:', e); }
                         },
                     });
                 },
