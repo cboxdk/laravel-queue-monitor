@@ -95,6 +95,14 @@ php artisan migrate
 
 > **Performance note:** The database driver is for low-scale workloads (< 10 workers). At higher scale, metrics writes compete with your queue jobs for database connections. Set `QUEUE_METRICS_MAX_SAMPLES=500` to keep table sizes manageable. See the [laravel-queue-metrics docs](https://github.com/cboxdk/laravel-queue-metrics) for details.
 
+### Optional: Publish migrations for customization
+
+```bash
+php artisan vendor:publish --tag="queue-monitor-migrations"
+```
+
+If you publish the migrations, also set `QUEUE_MONITOR_ENABLE_MIGRATIONS=false` so the vendor copies stop registering. Otherwise both the vendor migration and the published copy run, and a `migrate:rollback` of the published copy will drop the live queue-monitor tables.
+
 ### Optional: Publish views for customization
 
 ```bash
