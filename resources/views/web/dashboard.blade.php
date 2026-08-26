@@ -1289,7 +1289,7 @@
             <div x-show="activeTab === 'overview'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0">
                 <div class="qm-metrics">
                     <article class="qm-metric">
-                        <div class="qm-metric-head"><span>Failed jobs</span><span class="qm-status qm-bad" x-text="formatNumber(overview.stats.failed || 0)">0</span></div>
+                        <div class="qm-metric-head"><span>Failure rate</span><span class="qm-status qm-bad" x-text="formatNumber(overview.stats.failed || 0)">0</span></div>
                         <div class="qm-metric-value" x-text="failureRateLabel()">0%</div>
                         <div class="qm-metric-foot"><span class="qm-delta" :class="(overview.stats.failed || 0) > 0 ? 'qm-bad' : 'qm-good'" x-text="(overview.stats.failed || 0) > 0 ? 'Watch' : 'Clean'">Clean</span><span>last 24h failure share</span></div>
                     </article>
@@ -1304,12 +1304,12 @@
                         <div class="qm-metric-foot"><span class="qm-delta" :class="(overview.stats.avg_duration_ms || 0) > 8000 ? 'qm-warn' : 'qm-good'" x-text="(overview.stats.avg_duration_ms || 0) > 8000 ? 'Above target' : 'On target'">On target</span><span>average runtime</span></div>
                     </article>
                     <article class="qm-metric">
-                        <div class="qm-metric-head"><span>Workers</span><span class="qm-status qm-good" x-text="workerStatusLabel()">Healthy</span></div>
+                        <div class="qm-metric-head"><span>Workers</span><span class="qm-status" :class="workerStatusTone()" x-text="workerStatusLabel()">Healthy</span></div>
                         <div class="qm-metric-value" x-text="workerCountLabel()">-</div>
-                        <div class="qm-metric-foot"><span class="qm-delta qm-good" x-text="autoscaleStatusLabel()">Ready</span><span>autoscale signal</span></div>
+                        <div class="qm-metric-foot"><span class="qm-delta" :class="autoscaleStatusTone()" x-text="autoscaleStatusLabel()">Ready</span><span>autoscale signal</span></div>
                     </article>
                     <article class="qm-metric">
-                        <div class="qm-metric-head"><span>Throughput</span><span class="qm-status qm-good">Stable</span></div>
+                        <div class="qm-metric-head"><span>Throughput</span><span class="qm-status" :class="throughputTotal() > 0 ? 'qm-good' : 'qm-info'" x-text="throughputTotal() > 0 ? 'Active' : 'Idle'">Idle</span></div>
                         <div class="qm-metric-value" x-text="formatCompact(throughputTotal())">0</div>
                         <div class="qm-metric-foot"><span class="qm-delta qm-good" x-text="formatNumber(overview.stats.total || 0)">0</span><span>jobs in current window</span></div>
                     </article>
@@ -1375,10 +1375,10 @@
                                                 <td><strong x-text="job.job_class"></strong><span x-text="job.uuid ? 'uuid ' + job.uuid.slice(0, 8) : ''"></span></td>
                                                 <td x-text="job.queue || '-'"></td>
                                                 <td x-text="attemptLabel(job)"></td>
-                                                <td x-text="formatDuration(job.pickup_time_ms || job.duration_ms)"></td>
+                                                <td x-text="formatDuration(job.pickup_time_ms ?? job.duration_ms)"></td>
                                                 <td x-text="formatDuration(job.duration_ms)"></td>
                                                 <td x-text="job.server || job.server_name || '-'"></td>
-                                                <td x-text="job.queued_at || '-'"></td>
+                                                <td x-text="formatTime(job.queued_at)"></td>
                                             </tr>
                                         </template>
                                     </tbody>
@@ -1406,7 +1406,7 @@
                                 <div><span>Queue</span><strong x-text="selectedOverviewJob()?.queue || '-'"></strong></div>
                                 <div><span>Attempts</span><strong x-text="attemptLabel(selectedOverviewJob())"></strong></div>
                                 <div><span>Server</span><strong x-text="selectedOverviewJob()?.server || selectedOverviewJob()?.server_name || '-'"></strong></div>
-                                <div><span>Updated</span><strong x-text="selectedOverviewJob()?.queued_at || '-'"></strong></div>
+                                <div><span>Updated</span><strong x-text="formatTime(selectedOverviewJob()?.queued_at)"></strong></div>
                                 <div><span>Runtime</span><strong x-text="formatDuration(selectedOverviewJob()?.duration_ms)"></strong></div>
                                 <div><span>Impact</span><strong x-text="selectedOverviewJob()?.is_failed ? 'Retry required' : 'Monitor'"></strong></div>
                             </div>
@@ -1416,7 +1416,7 @@
                                 <span x-text="selectedOverviewJob()?.is_failed ? 'Inspect the exception and retry after correction.' : 'Continue monitoring current throughput.'"></span>
                             </div>
 
-                            <div class="qm-trace" x-text="selectedOverviewJob()?.error || selectedOverviewJob()?.uuid || 'No exception captured for this job.'"></div>
+                            <div class="qm-trace" x-text="selectedOverviewJob()?.error || 'No exception captured for this job.'"></div>
 
                             <div class="qm-action-row">
                                 <button type="button" class="qm-action-button primary" @click="replayJob(selectedOverviewJob()?.uuid)">Retry</button>
@@ -1437,7 +1437,7 @@
                                 <strong>Autoscale</strong>
                                 <span>Worker allocation by queue group</span>
                             </div>
-                            <span class="qm-status qm-good" x-text="autoscaleStatusLabel()">Ready</span>
+                            <span class="qm-status" :class="autoscaleStatusTone()" x-text="autoscaleStatusLabel()">Ready</span>
                         </div>
                         <div class="qm-health-list">
                             <template x-for="q in overview.queues.slice(0, 3)" :key="'auto-' + q.queue">
@@ -1624,14 +1624,14 @@
                             <tbody class="divide-y divide-gray-50">
                                 <template x-if="loading.jobs">
                                     <template x-for="i in 8" :key="'jskel-'+i">
-                                        <tr><td class="px-4 py-3"><div class="h-4 w-4 shimmer rounded"></div></td><td class="px-4 py-3"><div class="h-5 w-16 shimmer rounded-full"></div></td><td class="px-4 py-3"><div class="h-4 w-36 shimmer rounded"></div></td><td class="px-4 py-3"><div class="h-4 w-16 shimmer rounded"></div></td><td class="px-4 py-3"><div class="h-4 w-14 shimmer rounded ml-auto"></div></td><td class="px-4 py-3"><div class="h-4 w-20 shimmer rounded"></div></td><td class="px-4 py-3"><div class="h-4 w-6 shimmer rounded mx-auto"></div></td><td class="px-4 py-3"><div class="h-4 w-24 shimmer rounded ml-auto"></div></td></tr>
+                                        <tr><td class="px-4 py-3"><div class="h-4 w-4 shimmer rounded"></div></td><td class="px-4 py-3"><div class="h-5 w-16 shimmer rounded-full"></div></td><td class="px-4 py-3"><div class="h-4 w-36 shimmer rounded"></div></td><td class="px-4 py-3"><div class="h-4 w-16 shimmer rounded"></div></td><td class="px-4 py-3"><div class="h-4 w-14 shimmer rounded ml-auto"></div></td><td class="px-4 py-3"><div class="h-4 w-10 shimmer rounded ml-auto"></div></td><td class="px-4 py-3"><div class="h-4 w-10 shimmer rounded ml-auto"></div></td><td class="px-4 py-3"><div class="h-4 w-20 shimmer rounded"></div></td><td class="px-4 py-3"><div class="h-4 w-6 shimmer rounded mx-auto"></div></td><td class="px-4 py-3"><div class="h-4 w-24 shimmer rounded ml-auto"></div></td></tr>
                                     </template>
                                 </template>
                                 <template x-if="!loading.jobs">
                                     <template x-for="job in jobs.data" :key="job.uuid">
                                         <tr class="hover:bg-brand-faint/40 cursor-pointer transition-colors" @click="openJobView(job.uuid)">
                                             <td class="px-4 py-2.5" @click.stop><input type="checkbox" :value="job.uuid" x-model="selectedJobs" class="rounded border-gray-300 text-brand focus:ring-brand"></td>
-                                            <td class="px-4 py-2.5 whitespace-nowrap"><span class="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold" :class="statusClass(job.status.value)" x-text="job.status.label"></span></td>
+                                            <td class="px-4 py-2.5 whitespace-nowrap"><span class="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold" :class="statusClass(job.status?.value)" x-text="job.status?.label"></span></td>
                                             <td class="px-4 py-2.5 whitespace-nowrap">
                                                 <div class="flex items-center gap-1.5">
                                                     <span class="text-sm font-mono text-brand hover:underline drill-arrow" x-text="job.job_class" @click.stop="openDrillDown('job_class', job.full_job_class || job.job_class)"></span>
@@ -1694,7 +1694,7 @@
                         <div class="px-5 py-4 border-b border-gray-100"><h4 class="text-sm font-semibold text-gray-900">Per-Queue Statistics</h4></div>
                         <div class="overflow-x-auto">
                             <table class="min-w-full divide-y divide-gray-100">
-                                <thead><tr class="bg-gray-50/60"><th class="px-4 py-2.5 text-left text-[10px] font-bold text-gray-400 uppercase">Queue</th><th class="px-4 py-2.5 text-right text-[10px] font-bold text-gray-400 uppercase">Total</th><th class="px-4 py-2.5 text-right text-[10px] font-bold text-gray-400 uppercase">Completed</th><th class="px-4 py-2.5 text-right text-[10px] font-bold text-gray-400 uppercase">Failed</th><th class="px-4 py-2.5 text-right text-[10px] font-bold text-gray-400 uppercase">Avg ms</th><th class="px-4 py-2.5 text-right text-[10px] font-bold text-gray-400 uppercase">Success %</th></tr></thead>
+                                <thead><tr class="bg-gray-50/60"><th class="px-4 py-2.5 text-left text-[10px] font-bold text-gray-400 uppercase">Queue</th><th class="px-4 py-2.5 text-right text-[10px] font-bold text-gray-400 uppercase">Total</th><th class="px-4 py-2.5 text-right text-[10px] font-bold text-gray-400 uppercase">Completed</th><th class="px-4 py-2.5 text-right text-[10px] font-bold text-gray-400 uppercase">Failed</th><th class="px-4 py-2.5 text-right text-[10px] font-bold text-gray-400 uppercase">Avg Duration</th><th class="px-4 py-2.5 text-right text-[10px] font-bold text-gray-400 uppercase">Success %</th></tr></thead>
                                 <tbody class="divide-y divide-gray-50">
                                     <template x-for="q in (analytics.queues || [])" :key="q.queue">
                                         <tr class="hover:bg-gray-50/60">
@@ -1702,8 +1702,8 @@
                                             <td class="px-4 py-2.5 text-sm text-gray-500 text-right tabular-nums" x-text="formatNumber(q.total_jobs)"></td>
                                             <td class="px-4 py-2.5 text-sm text-emerald-600 text-right tabular-nums" x-text="formatNumber(q.completed)"></td>
                                             <td class="px-4 py-2.5 text-sm text-red-600 text-right tabular-nums" x-text="formatNumber(q.failed)"></td>
-                                            <td class="px-4 py-2.5 text-sm text-gray-500 text-right tabular-nums" x-text="formatNumber(q.avg_duration_ms, 0)"></td>
-                                            <td class="px-4 py-2.5 text-sm text-right font-medium tabular-nums" :class="q.success_rate >= 95 ? 'text-emerald-600' : q.success_rate >= 80 ? 'text-amber-600' : 'text-red-600'" x-text="formatNumber(q.success_rate, 1) + '%'"></td>
+                                            <td class="px-4 py-2.5 text-sm text-gray-500 text-right tabular-nums" x-text="formatDuration(q.avg_duration_ms)"></td>
+                                            <td class="px-4 py-2.5 text-sm text-right font-medium tabular-nums" :class="q.success_rate >= 95 ? 'text-emerald-600' : q.success_rate >= 80 ? 'text-amber-600' : 'text-red-600'" x-text="formatPercent(q.success_rate)"></td>
                                         </tr>
                                     </template>
                                 </tbody>
@@ -1717,14 +1717,14 @@
                         <div class="px-5 py-4 border-b border-gray-100"><h4 class="text-sm font-semibold text-gray-900">Per-Server Statistics</h4></div>
                         <div class="overflow-x-auto">
                             <table class="min-w-full divide-y divide-gray-100">
-                                <thead><tr class="bg-gray-50/60"><th class="px-4 py-2.5 text-left text-[10px] font-bold text-gray-400 uppercase">Server</th><th class="px-4 py-2.5 text-right text-[10px] font-bold text-gray-400 uppercase">Jobs</th><th class="px-4 py-2.5 text-right text-[10px] font-bold text-gray-400 uppercase">Avg ms</th><th class="px-4 py-2.5 text-right text-[10px] font-bold text-gray-400 uppercase">Success %</th></tr></thead>
+                                <thead><tr class="bg-gray-50/60"><th class="px-4 py-2.5 text-left text-[10px] font-bold text-gray-400 uppercase">Server</th><th class="px-4 py-2.5 text-right text-[10px] font-bold text-gray-400 uppercase">Jobs</th><th class="px-4 py-2.5 text-right text-[10px] font-bold text-gray-400 uppercase">Avg Duration</th><th class="px-4 py-2.5 text-right text-[10px] font-bold text-gray-400 uppercase">Success %</th></tr></thead>
                                 <tbody class="divide-y divide-gray-50">
                                     <template x-for="s in (analytics.servers || [])" :key="s.server_name">
                                         <tr class="hover:bg-gray-50/60">
                                             <td class="px-4 py-2.5 text-sm font-mono text-brand hover:underline cursor-pointer drill-arrow" x-text="s.server_name" @click="openDrillDown('server', s.server_name)"></td>
                                             <td class="px-4 py-2.5 text-sm text-gray-500 text-right tabular-nums" x-text="formatNumber(s.total_jobs)"></td>
-                                            <td class="px-4 py-2.5 text-sm text-gray-500 text-right tabular-nums" x-text="formatNumber(s.avg_duration_ms, 0)"></td>
-                                            <td class="px-4 py-2.5 text-sm text-gray-500 tabular-nums" x-text="formatNumber(s.success_rate, 1) + '%'"></td>
+                                            <td class="px-4 py-2.5 text-sm text-gray-500 text-right tabular-nums" x-text="formatDuration(s.avg_duration_ms)"></td>
+                                            <td class="px-4 py-2.5 text-sm text-gray-500 text-right tabular-nums" x-text="formatPercent(s.success_rate)"></td>
                                         </tr>
                                     </template>
                                 </tbody>
@@ -1736,7 +1736,7 @@
                         <div class="px-5 py-4 border-b border-gray-100"><h4 class="text-sm font-semibold text-gray-900">Failure Patterns</h4></div>
                         <div class="overflow-x-auto">
                             <table class="min-w-full divide-y divide-gray-100">
-                                <thead><tr class="bg-gray-50/60"><th class="px-4 py-2.5 text-left text-[10px] font-bold text-gray-400 uppercase">Exception</th><th class="px-4 py-2.5 text-right text-[10px] font-bold text-gray-400 uppercase">Count</th><th class="px-4 py-2.5 text-left text-[10px] font-bold text-gray-400 uppercase">Affected Jobs</th></tr></thead>
+                                <thead><tr class="bg-gray-50/60"><th class="px-4 py-2.5 text-left text-[10px] font-bold text-gray-400 uppercase">Exception</th><th class="px-4 py-2.5 text-right text-[10px] font-bold text-gray-400 uppercase">Count</th><th class="px-4 py-2.5 text-right text-[10px] font-bold text-gray-400 uppercase">Affected Jobs</th></tr></thead>
                                 <tbody class="divide-y divide-gray-50">
                                     <template x-for="fp in (analytics.failure_patterns?.top_exceptions || [])" :key="fp.exception_class">
                                         <tr class="hover:bg-gray-50/60">
@@ -1996,7 +1996,7 @@
                                         <circle cx="80" cy="80" r="65" fill="none" stroke="url(#gaugeGradient)" stroke-width="12" stroke-linecap="round" :stroke-dasharray="(2 * Math.PI * 65 * (infrastructure.scaling?.utilization?.percentage ?? 0) / 100) + ' ' + (2 * Math.PI * 65)" transform="rotate(-90 80 80)" style="transition: stroke-dasharray 0.6s ease" />
                                     </svg>
                                     <div class="absolute inset-0 flex flex-col items-center justify-center">
-                                        <span class="text-4xl font-bold tabular-nums" :class="(infrastructure.scaling?.utilization?.percentage ?? 0) > 85 ? 'text-red-600' : (infrastructure.scaling?.utilization?.percentage ?? 0) > 60 ? 'text-emerald-600' : (infrastructure.scaling?.utilization?.percentage ?? 0) > 30 ? 'text-amber-600' : 'text-gray-500'" x-text="(infrastructure.scaling?.utilization?.percentage ?? 0) + '%'"></span>
+                                        <span class="text-4xl font-bold tabular-nums" :class="(infrastructure.scaling?.utilization?.percentage ?? 0) > 85 ? 'text-red-600' : (infrastructure.scaling?.utilization?.percentage ?? 0) > 60 ? 'text-amber-600' : (infrastructure.scaling?.utilization?.percentage ?? 0) > 0 ? 'text-emerald-600' : 'text-gray-500'" x-text="formatPercent(infrastructure.scaling?.utilization?.percentage ?? 0)"></span>
                                         <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mt-1">Utilization</span>
                                     </div>
                                 </div>
@@ -2088,7 +2088,7 @@
                                                 <td class="px-4 py-2.5 text-sm text-gray-600 text-right tabular-nums" x-text="formatDuration(q.avg_duration_ms)"></td>
                                                 <td class="px-4 py-2.5 text-sm text-gray-600 text-right tabular-nums" x-text="q.max_jobs_per_minute"></td>
                                                 <td class="px-4 py-2.5 text-sm text-gray-600 text-right tabular-nums" x-text="q.peak_jobs_per_minute"></td>
-                                                <td class="px-4 py-2.5 text-sm text-right tabular-nums" :class="q.headroom_percent < 15 ? 'text-red-600 font-semibold' : q.headroom_percent < 40 ? 'text-amber-600' : 'text-gray-600'" x-text="q.headroom_percent + '%'"></td>
+                                                <td class="px-4 py-2.5 text-sm text-right tabular-nums" :class="q.headroom_percent < 15 ? 'text-red-600 font-semibold' : q.headroom_percent < 40 ? 'text-amber-600' : 'text-gray-600'" x-text="formatPercent(q.headroom_percent)"></td>
                                                 <td class="px-4 py-2.5 text-center"><span class="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold" :class="{ 'bg-blue-100 text-blue-700': q.status === 'over_provisioned', 'bg-emerald-50 text-emerald-700': q.status === 'optimal', 'bg-red-50 text-red-700': q.status === 'at_capacity', 'bg-gray-100 text-gray-600': q.status === 'no_data' }" x-text="q.status === 'over_provisioned' ? 'Over-provisioned' : q.status === 'at_capacity' ? 'At Capacity' : q.status === 'optimal' ? 'Optimal' : 'No Data'"></span></td>
                                             </tr>
                                         </template>
@@ -2112,7 +2112,7 @@
                                             <span class="text-[10px] font-medium text-gray-400" x-text="'<' + sla.target_seconds + 's target'"></span>
                                         </div>
                                         <div class="flex items-baseline gap-2 mb-2">
-                                            <span class="text-2xl font-bold tabular-nums" :class="sla.compliance >= 99 ? 'text-emerald-600' : sla.compliance >= 95 ? 'text-amber-600' : 'text-red-600'" x-text="sla.compliance + '%'"></span>
+                                            <span class="text-2xl font-bold tabular-nums" :class="sla.compliance >= 99 ? 'text-emerald-600' : sla.compliance >= 95 ? 'text-amber-600' : 'text-red-600'" x-text="formatPercent(sla.compliance)"></span>
                                             <span class="text-[11px] text-gray-400" x-text="sla.within + '/' + sla.total + ' jobs'"></span>
                                         </div>
                                         <div class="w-full bg-gray-100 rounded-full h-2"><div class="h-2 rounded-full transition-all duration-500" :class="sla.compliance >= 99 ? 'bg-emerald-500' : sla.compliance >= 95 ? 'bg-amber-500' : 'bg-red-500'" :style="'width: ' + sla.compliance + '%'"></div></div>
@@ -2126,12 +2126,12 @@
                         {{-- Horizon Workload --}}
                         <div x-show="infrastructure.workers?.available && (infrastructure.workers?.workload || []).length > 0" class="bg-white border border-gray-200/80 rounded-xl shadow-sm overflow-hidden">
                                 <div class="px-5 py-4 border-b border-gray-100"><h4 class="text-sm font-semibold text-gray-900">Horizon Workload</h4></div>
-                                <div x-show="(infrastructure.workers?.workload || []).every(w => w.length === 0 && w.wait === 0)" class="py-10 text-center">
+                                <div x-show="(infrastructure.workers?.workload || []).length > 0 && (infrastructure.workers?.workload || []).every(w => w.length === 0 && w.wait === 0)" class="py-10 text-center">
                                     <div class="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-emerald-50 mb-2"><svg class="h-5 w-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></div>
                                     <p class="text-sm text-emerald-600 font-medium">All queues clear</p>
                                     <p class="text-[11px] text-gray-400 mt-1">No pending jobs across <span x-text="(infrastructure.workers?.workload || []).length"></span> queues</p>
                                 </div>
-                                <div x-show="!(infrastructure.workers?.workload || []).every(w => w.length === 0 && w.wait === 0)" class="divide-y divide-gray-50">
+                                <div x-show="!((infrastructure.workers?.workload || []).length > 0 && (infrastructure.workers?.workload || []).every(w => w.length === 0 && w.wait === 0))" class="divide-y divide-gray-50">
                                     <template x-for="w in (infrastructure.workers?.workload || [])" :key="w.queue">
                                         <div class="px-5 py-3">
                                             <div class="flex items-center justify-between mb-1.5">
@@ -2296,7 +2296,7 @@
                                         </div>
                                         <div class="flex items-center gap-3 text-[11px] text-gray-400">
                                             <span><span class="font-semibold text-gray-700" x-text="autoscale.live?.total_workers ?? 0"></span> / <span x-text="autoscale.live?.total_worker_capacity ?? 0"></span> workers</span>
-                                            <span><span class="font-semibold" :class="(autoscale.live?.utilization_percent ?? 0) > 85 ? 'text-red-600' : (autoscale.live?.utilization_percent ?? 0) > 60 ? 'text-amber-600' : 'text-gray-700'" x-text="Math.round(autoscale.live?.utilization_percent ?? 0) + '%'"></span> utilization</span>
+                                            <span><span class="font-semibold" :class="(autoscale.live?.utilization_percent ?? 0) > 85 ? 'text-red-600' : (autoscale.live?.utilization_percent ?? 0) > 60 ? 'text-amber-600' : 'text-gray-700'" x-text="formatPercent(autoscale.live?.utilization_percent ?? 0, 0)"></span> utilization</span>
                                         </div>
                                     </div>
                                 </div>
@@ -2341,7 +2341,7 @@
                                                             <div class="w-12 bg-gray-100 rounded-full h-1.5">
                                                                 <div class="h-1.5 rounded-full transition-all" :class="(host.cpu_percent ?? 0) > 85 ? 'bg-red-500' : (host.cpu_percent ?? 0) > 60 ? 'bg-amber-500' : 'bg-emerald-500'" :style="'width: ' + Math.min(host.cpu_percent ?? 0, 100) + '%'"></div>
                                                             </div>
-                                                            <span class="tabular-nums font-medium" :class="(host.cpu_percent ?? 0) > 85 ? 'text-red-600' : (host.cpu_percent ?? 0) > 60 ? 'text-amber-600' : 'text-gray-700'" x-text="Math.round(host.cpu_percent ?? 0) + '%'"></span>
+                                                            <span class="tabular-nums font-medium" :class="(host.cpu_percent ?? 0) > 85 ? 'text-red-600' : (host.cpu_percent ?? 0) > 60 ? 'text-amber-600' : 'text-gray-700'" x-text="formatPercent(host.cpu_percent ?? 0, 0)"></span>
                                                         </div>
                                                         <div class="text-[10px] text-gray-400 mt-0.5" x-show="host.cpu_cores" x-text="host.cpu_cores + ' cores'"></div>
                                                     </td>
@@ -2350,7 +2350,7 @@
                                                             <div class="w-12 bg-gray-100 rounded-full h-1.5">
                                                                 <div class="h-1.5 rounded-full transition-all" :class="(host.memory_percent ?? 0) > 85 ? 'bg-red-500' : (host.memory_percent ?? 0) > 60 ? 'bg-amber-500' : 'bg-emerald-500'" :style="'width: ' + Math.min(host.memory_percent ?? 0, 100) + '%'"></div>
                                                             </div>
-                                                            <span class="tabular-nums font-medium" :class="(host.memory_percent ?? 0) > 85 ? 'text-red-600' : (host.memory_percent ?? 0) > 60 ? 'text-amber-600' : 'text-gray-700'" x-text="Math.round(host.memory_percent ?? 0) + '%'"></span>
+                                                            <span class="tabular-nums font-medium" :class="(host.memory_percent ?? 0) > 85 ? 'text-red-600' : (host.memory_percent ?? 0) > 60 ? 'text-amber-600' : 'text-gray-700'" x-text="formatPercent(host.memory_percent ?? 0, 0)"></span>
                                                         </div>
                                                         <div class="text-[10px] text-gray-400 mt-0.5" x-text="Math.round(host.memory_used_mb ?? 0) + ' / ' + Math.round(host.memory_total_mb ?? 0) + ' MB'"></div>
                                                     </td>
@@ -2487,15 +2487,15 @@
                                                     <td class="px-4 py-2.5 text-right whitespace-nowrap tabular-nums" :class="(wl.pending ?? 0) > 0 ? 'font-semibold text-amber-600' : 'text-gray-500'" x-text="wl.pending"></td>
                                                     <td class="px-4 py-2.5 text-right whitespace-nowrap tabular-nums text-gray-700" x-text="(wl.throughput_per_minute ?? 0).toFixed(1)"></td>
                                                     <td class="px-4 py-2.5 text-right whitespace-nowrap">
-                                                        <span class="tabular-nums font-medium" :class="{ 'text-red-600': wl.oldest_job_age_status === 'breached', 'text-amber-600': wl.oldest_job_age_status === 'warning', 'text-gray-700': wl.oldest_job_age_status === 'normal' }" x-text="(wl.oldest_job_age ?? 0) + 's'"></span>
+                                                        <span class="tabular-nums font-medium" :class="{ 'text-red-600': wl.oldest_job_age_status === 'breached', 'text-amber-600': wl.oldest_job_age_status === 'warning', 'text-gray-700': wl.oldest_job_age_status === 'normal' }" x-text="formatDuration((wl.oldest_job_age ?? 0) * 1000)"></span>
                                                     </td>
-                                                    <td class="px-4 py-2.5 text-right whitespace-nowrap tabular-nums text-gray-500" x-text="(wl.sla_target_seconds ?? '-') + 's'"></td>
+                                                    <td class="px-4 py-2.5 text-right whitespace-nowrap tabular-nums text-gray-500" x-text="wl.sla_target_seconds != null ? formatDuration(wl.sla_target_seconds * 1000) : '-'"></td>
                                                     <td class="px-4 py-2.5 text-right whitespace-nowrap">
                                                         <div class="flex items-center justify-end gap-2">
                                                             <div class="w-12 bg-gray-100 rounded-full h-1.5">
                                                                 <div class="h-1.5 rounded-full transition-all" :class="(wl.utilization_percent ?? 0) > 85 ? 'bg-red-500' : (wl.utilization_percent ?? 0) > 60 ? 'bg-amber-500' : 'bg-emerald-500'" :style="'width: ' + Math.min(wl.utilization_percent ?? 0, 100) + '%'"></div>
                                                             </div>
-                                                            <span class="tabular-nums font-medium text-gray-700" x-text="Math.round(wl.utilization_percent ?? 0) + '%'"></span>
+                                                            <span class="tabular-nums font-medium text-gray-700" x-text="formatPercent(wl.utilization_percent ?? 0, 0)"></span>
                                                         </div>
                                                     </td>
                                                     <td class="px-4 py-2.5 whitespace-nowrap">
@@ -2525,7 +2525,7 @@
                                                     <div class="w-24 bg-gray-100 rounded-full h-1.5">
                                                         <div class="h-1.5 rounded-full transition-all duration-500" :class="sla.compliance >= 99 ? 'bg-emerald-500' : sla.compliance >= 95 ? 'bg-amber-500' : 'bg-red-500'" :style="'width: ' + Math.min(sla.compliance, 100) + '%'"></div>
                                                     </div>
-                                                    <span class="text-sm font-bold tabular-nums w-14 text-right" :class="sla.compliance >= 99 ? 'text-emerald-600' : sla.compliance >= 95 ? 'text-amber-600' : 'text-red-600'" x-text="sla.compliance.toFixed(1) + '%'"></span>
+                                                    <span class="text-sm font-bold tabular-nums w-14 text-right" :class="sla.compliance >= 99 ? 'text-emerald-600' : sla.compliance >= 95 ? 'text-amber-600' : 'text-red-600'" x-text="formatPercent(sla.compliance)"></span>
                                                     <span x-show="sla.breached > 0" class="text-[10px] text-red-500 font-semibold" x-text="sla.breached + ' breached'"></span>
                                                 </div>
                                             </div>
@@ -2738,11 +2738,11 @@
                             <template x-if="jobDetail?.payload">
                                 <div class="p-5">
                                     {{-- Meta badges --}}
-                                    <div class="flex flex-wrap gap-2 mb-4" x-data="{ parsed: parsePayload(jobDetail.payload) }">
-                                        <template x-if="parsed.meta.maxTries"><span class="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] bg-gray-100 text-gray-600 rounded-full">max tries: <span x-text="parsed.meta.maxTries" class="font-semibold"></span></span></template>
-                                        <template x-if="parsed.meta.timeout !== undefined"><span class="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] bg-gray-100 text-gray-600 rounded-full">timeout: <span x-text="parsed.meta.timeout ?? 'none'" class="font-semibold"></span></span></template>
-                                        <template x-if="parsed.meta.maxExceptions"><span class="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] bg-gray-100 text-gray-600 rounded-full">max exceptions: <span x-text="parsed.meta.maxExceptions" class="font-semibold"></span></span></template>
-                                        <template x-if="parsed.meta.backoff"><span class="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] bg-gray-100 text-gray-600 rounded-full">backoff: <span x-text="parsed.meta.backoff" class="font-semibold"></span></span></template>
+                                    <div class="flex flex-wrap gap-2 mb-4">
+                                        <template x-if="parsedPayload().meta.maxTries"><span class="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] bg-gray-100 text-gray-600 rounded-full">max tries: <span x-text="parsedPayload().meta.maxTries" class="font-semibold"></span></span></template>
+                                        <template x-if="parsedPayload().meta.timeout !== undefined"><span class="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] bg-gray-100 text-gray-600 rounded-full">timeout: <span x-text="parsedPayload().meta.timeout ?? 'none'" class="font-semibold"></span></span></template>
+                                        <template x-if="parsedPayload().meta.maxExceptions"><span class="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] bg-gray-100 text-gray-600 rounded-full">max exceptions: <span x-text="parsedPayload().meta.maxExceptions" class="font-semibold"></span></span></template>
+                                        <template x-if="parsedPayload().meta.backoff"><span class="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] bg-gray-100 text-gray-600 rounded-full">backoff: <span x-text="parsedPayload().meta.backoff" class="font-semibold"></span></span></template>
                                     </div>
                                     {{-- Command --}}
                                     <div x-show="jobDetail.payload?.data?.commandName" class="mb-4">
@@ -2750,10 +2750,10 @@
                                         <div class="text-sm font-mono font-medium text-gray-800 bg-gray-50 rounded-lg px-3 py-2" x-text="jobDetail.payload.data.commandName"></div>
                                     </div>
                                     {{-- Extracted properties --}}
-                                    <div class="mb-4" x-data="{ parsed: parsePayload(jobDetail.payload) }">
+                                    <div class="mb-4">
                                         <div class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Job Parameters</div>
                                         <div class="space-y-1.5">
-                                            <template x-for="prop in parsed.properties" :key="prop.name">
+                                            <template x-for="prop in parsedPayload().properties" :key="prop.name">
                                                 <div class="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg">
                                                     <span class="text-[11px] font-mono font-semibold text-gray-700" x-text="prop.name"></span>
                                                     <span class="text-[11px] text-gray-400">=</span>
@@ -2761,7 +2761,7 @@
                                                 </div>
                                             </template>
                                         </div>
-                                        <div x-show="parsed.properties.length === 0" class="text-[11px] text-gray-400 mt-1">No extractable parameters</div>
+                                        <div x-show="parsedPayload().properties.length === 0" class="text-[11px] text-gray-400 mt-1">No extractable parameters</div>
                                     </div>
                                     {{-- Raw toggle --}}
                                     <button @click="showRaw = !showRaw" class="text-[11px] text-gray-400 hover:text-gray-600 transition mb-2 flex items-center gap-1">
@@ -2833,17 +2833,17 @@
                                         {{-- Status dot --}}
                                         <div class="mt-1 flex-shrink-0">
                                             <div class="w-2.5 h-2.5 rounded-full" :class="{
-                                                'bg-emerald-500': attempt.status.value === 'completed',
-                                                'bg-red-500': attempt.status.value === 'failed' || attempt.status.value === 'timeout',
-                                                'bg-blue-500': attempt.status.value === 'processing',
-                                                'bg-amber-500': attempt.status.value === 'queued'
+                                                'bg-emerald-500': attempt.status?.value === 'completed',
+                                                'bg-red-500': attempt.status?.value === 'failed' || attempt.status?.value === 'timeout',
+                                                'bg-blue-500': attempt.status?.value === 'processing',
+                                                'bg-amber-500': attempt.status?.value === 'queued'
                                             }"></div>
                                         </div>
                                         {{-- Content --}}
                                         <div class="flex-1 min-w-0">
                                             <div class="flex items-center gap-2">
                                                 <span class="text-sm font-semibold" :class="attempt.uuid === jobView ? 'text-brand' : 'text-gray-900'" x-text="'#' + attempt.attempt"></span>
-                                                <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold" :class="statusClass(attempt.status.value)" x-text="attempt.status.label"></span>
+                                                <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold" :class="statusClass(attempt.status?.value)" x-text="attempt.status?.label"></span>
                                             </div>
                                             <div class="flex items-center gap-3 mt-0.5 text-[11px]">
                                                 <span x-show="attempt.started_at" class="text-gray-500 font-mono tabular-nums" x-text="formatDateTime(attempt.started_at)"></span>
@@ -2944,7 +2944,7 @@
                                                 <span x-show="!job.summary" class="text-sm text-gray-500 truncate block" x-text="job.job_class"></span>
                                             </div>
                                             <span x-show="job.attempt > 1" class="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 flex-shrink-0" x-text="'x' + job.attempt"></span>
-                                            <span class="text-[11px] font-mono text-gray-500 flex-shrink-0 tabular-nums" x-text="job.duration"></span>
+                                            <span class="text-[11px] font-mono text-gray-500 flex-shrink-0 tabular-nums" x-text="formatDuration(job.duration_ms)"></span>
                                             <span class="text-[11px] text-gray-400 flex-shrink-0" x-text="formatTime(job.queued_at)"></span>
                                         </div>
                                     </template>
@@ -2964,7 +2964,7 @@
                                         <div class="flex justify-between"><dt class="text-[11px] text-gray-500">p95</dt><dd class="text-[11px] font-medium text-gray-900 font-mono tabular-nums" x-text="formatDuration(drillDownData?.stats?.p95_duration_ms)"></dd></div>
                                         <div class="flex justify-between"><dt class="text-[11px] text-gray-500">p99</dt><dd class="text-[11px] font-medium text-gray-900 font-mono tabular-nums" x-text="formatDuration(drillDownData?.stats?.p99_duration_ms)"></dd></div>
                                         <div class="flex justify-between"><dt class="text-[11px] text-gray-500">Memory avg</dt><dd class="text-[11px] font-medium text-gray-900 font-mono tabular-nums" x-text="drillDownData?.stats?.avg_memory_mb != null ? drillDownData.stats.avg_memory_mb + ' MB' : '-'"></dd></div>
-                                        <div class="flex justify-between"><dt class="text-[11px] text-gray-500">Success rate</dt><dd class="text-[11px] font-medium font-mono tabular-nums" :class="(drillDownData?.stats?.success_rate ?? 0) >= 95 ? 'text-emerald-600' : (drillDownData?.stats?.success_rate ?? 0) >= 80 ? 'text-amber-600' : 'text-red-600'" x-text="formatNumber(drillDownData?.stats?.success_rate, 1) + '%'"></dd></div>
+                                        <div class="flex justify-between"><dt class="text-[11px] text-gray-500">Success rate</dt><dd class="text-[11px] font-medium font-mono tabular-nums" :class="(drillDownData?.stats?.success_rate ?? 0) >= 95 ? 'text-emerald-600' : (drillDownData?.stats?.success_rate ?? 0) >= 80 ? 'text-amber-600' : 'text-red-600'" x-text="formatPercent(drillDownData?.stats?.success_rate)"></dd></div>
                                     </dl>
                                 </div>
                             </div>
@@ -3008,6 +3008,10 @@
     {{-- ==================== JAVASCRIPT ==================== --}}
     <script>
         function dashboard() {
+            // Non-reactive memo so parsePayload runs once per payload object,
+            // not on every Alpine evaluation of the payload panel.
+            let payloadCache = { key: undefined, value: null };
+
             return {
                 activeTab: 'overview',
                 previousTab: 'overview',
@@ -3019,6 +3023,7 @@
 
                 // Data stores
                 overview: { stats: {}, queues: [], alerts: {}, recentJobs: [], charts: {} },
+                attention: [],
                 jobs: { data: [], meta: { total: 0, limit: 50, offset: 0 } },
                 analytics: {},
                 health: {},
@@ -3035,7 +3040,7 @@
                 availableQueues: [],
                 selectedJobs: [],
                 sorting: { field: 'queued_at', direction: 'desc' },
-                pagination: { offset: 0, limit: 50, total: 0 },
+                pagination: { offset: 0, limit: 50 },
 
                 // Auto-refresh
                 refreshInterval: null,
@@ -3248,13 +3253,11 @@
                 },
 
                 attentionJobs() {
-                    const jobs = this.overview.recentJobs || [];
-                    const weighted = [...jobs].sort((a, b) => {
-                        const aScore = (a.is_failed ? 100 : 0) + ((a.status?.value === 'timeout') ? 80 : 0) + ((a.attempt || 0) * 3);
-                        const bScore = (b.is_failed ? 100 : 0) + ((b.status?.value === 'timeout') ? 80 : 0) + ((b.attempt || 0) * 3);
-                        return bScore - aScore;
-                    });
-                    return weighted;
+                    return this.attention;
+                },
+
+                attentionScore(job) {
+                    return (job.is_failed ? 100 : 0) + ((job.status?.value === 'timeout') ? 80 : 0) + ((job.attempt || 0) * 3);
                 },
 
                 selectedOverviewJob() {
@@ -3276,7 +3279,7 @@
                     const total = Number(this.overview.stats.total || 0);
                     const failed = Number(this.overview.stats.failed || 0);
                     if (total <= 0) return '0%';
-                    return `${this.formatNumber((failed / total) * 100, 2)}%`;
+                    return this.formatPercent((failed / total) * 100, 2);
                 },
 
                 queueBacklogSeverity() {
@@ -3315,12 +3318,28 @@
                     return 'Healthy';
                 },
 
+                workerStatusTone() {
+                    const utilization = this.autoscale.live?.utilization_percent ?? this.infrastructure.scaling?.utilization?.percentage;
+                    if (utilization == null) return 'qm-info';
+                    if (utilization >= 90) return 'qm-bad';
+                    if (utilization >= 70) return 'qm-warn';
+                    return 'qm-good';
+                },
+
                 autoscaleStatusLabel() {
                     if (this.autoscale.cluster?.scaling_signal?.action) {
                         return this.autoscale.cluster.scaling_signal.action.replace('_', ' ');
                     }
                     if (this.autoscale.available === false) return 'Optional';
                     return this.autoscale.available ? 'Active' : 'Ready';
+                },
+
+                autoscaleStatusTone() {
+                    const action = this.autoscale.cluster?.scaling_signal?.action;
+                    if (action === 'scale_up') return 'qm-warn';
+                    if (action === 'scale_down') return 'qm-info';
+                    if (action) return 'qm-good';
+                    return this.autoscale.available ? 'qm-good' : 'qm-info';
                 },
 
                 throughputTotal() {
@@ -3503,6 +3522,7 @@
                         this.overview.queues = data.queues || [];
                         this.overview.alerts = data.alerts || {};
                         this.overview.recentJobs = data.recent_jobs || [];
+                        this.attention = [...this.overview.recentJobs].sort((a, b) => this.attentionScore(b) - this.attentionScore(a));
                         this.overview.charts = data.charts || {};
                         const queueNames = [...new Set((data.queues || []).map(q => q.queue).filter(Boolean))].sort();
                         if (this.availableQueues.length === 0 && queueNames.length > 0) this.availableQueues = queueNames;
@@ -3537,7 +3557,15 @@
                         // Drop selections that are no longer on the current page so
                         // batch actions only ever target visible rows.
                         this.selectedJobs = this.selectedJobs.filter(uuid => this.jobs.data.some(job => job.uuid === uuid));
-                        this.pagination.total = data.meta?.total || 0;
+                        const total = data.meta?.total ?? 0;
+                        if (total > 0 && this.pagination.offset >= total) {
+                            // The result set shrank below the current page: snap to the
+                            // last valid page and refetch once (offset strictly decreases,
+                            // so this cannot loop).
+                            this.pagination.offset = Math.floor((total - 1) / this.pagination.limit) * this.pagination.limit;
+                            this.syncFiltersToUrl();
+                            this.fetchJobs();
+                        }
                         const metaQueues = data.meta?.available_queues || [];
                         if (Array.isArray(metaQueues)) this.availableQueues = metaQueues;
                         else if (this.availableQueues.length === 0 && this.jobs.data.length > 0) this.availableQueues = [...new Set(this.jobs.data.map(j => j.queue).filter(Boolean))].sort();
@@ -3902,6 +3930,10 @@
                     return new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 }).format(num);
                 },
 
+                formatPercent(value, decimals = 1) {
+                    return this.formatNumber(value, decimals) + '%';
+                },
+
                 formatDuration(ms) {
                     if (!ms && ms !== 0) return '-';
                     if (ms < 1000) return Math.round(ms) + 'ms';
@@ -3919,7 +3951,7 @@
                         if (diffMs < 60000) return 'just now';
                         if (diffMs < 3600000) return Math.floor(diffMs / 60000) + 'm ago';
                         if (diffMs < 86400000) return Math.floor(diffMs / 3600000) + 'h ago';
-                        return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                        return d.toLocaleDateString('en-GB', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
                     } catch (e) { return iso; }
                 },
 
@@ -3944,7 +3976,7 @@
                 formatCpu(cpuTimeMs, durationMs) {
                     if (cpuTimeMs == null || durationMs == null || durationMs === 0) return '-';
                     const pct = (cpuTimeMs / durationMs) * 100;
-                    return pct < 1 ? '<1%' : Math.round(pct) + '%';
+                    return pct < 1 ? '<1%' : this.formatPercent(pct, 0);
                 },
 
                 cpuColor(cpuTimeMs, durationMs) {
@@ -3959,8 +3991,8 @@
                     if (peakMb == null) return '-';
                     const peak = parseFloat(peakMb).toFixed(0);
                     if (limitMb != null && limitMb > 0) {
-                        const pct = Math.round((peakMb / limitMb) * 100);
-                        return peak + ' / ' + parseFloat(limitMb).toFixed(0) + ' MB (' + pct + '%)';
+                        const pct = this.formatPercent((peakMb / limitMb) * 100, 0);
+                        return peak + ' / ' + parseFloat(limitMb).toFixed(0) + ' MB (' + pct + ')';
                     }
                     return peak + ' MB';
                 },
@@ -3977,7 +4009,7 @@
                     if (peakMb == null) return '-';
                     const peak = parseFloat(peakMb).toFixed(0);
                     if (limitMb != null && limitMb > 0) {
-                        return Math.round((peakMb / limitMb) * 100) + '%';
+                        return this.formatPercent((peakMb / limitMb) * 100, 0);
                     }
                     return peak + ' MB';
                 },
@@ -4021,6 +4053,14 @@
                     md += `**${exception.message}**\n\n`;
                     md += '```\n' + (exception.trace || '') + '\n```\n';
                     return md;
+                },
+
+                parsedPayload() {
+                    const payload = this.jobDetail?.payload ?? null;
+                    if (payloadCache.key !== payload) {
+                        payloadCache = { key: payload, value: this.parsePayload(payload) };
+                    }
+                    return payloadCache.value;
                 },
 
                 parsePayload(payload) {
