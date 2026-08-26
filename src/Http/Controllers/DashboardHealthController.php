@@ -35,10 +35,8 @@ class DashboardHealthController extends Controller
         $healthCheck = $this->healthService->check();
         $alerts = $this->alertingService->checkAlertConditions();
 
-        // Derive score from already-computed checks to avoid running health queries twice
-        $checks = $healthCheck['checks'];
-        $healthyCount = collect($checks)->filter(fn (array $c): bool => (bool) ($c['healthy'] ?? false))->count();
-        $score = (int) round(($healthyCount / max(count($checks), 1)) * 100);
+        // Score from the checks we already ran, rather than running them again.
+        $score = $this->healthService->scoreFromChecks($healthCheck['checks']);
 
         return response()->json([
             'score' => $score,

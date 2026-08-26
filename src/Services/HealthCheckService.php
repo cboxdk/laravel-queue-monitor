@@ -309,13 +309,21 @@ final class HealthCheckService implements HealthCheckServiceContract
      */
     public function getHealthScore(): int
     {
-        $check = $this->check();
-        $checks = $check['checks'];
+        return $this->scoreFromChecks($this->check()['checks']);
+    }
 
+    /**
+     * Compute the health score (0-100) from an already-run set of checks, so a
+     * caller that already holds the checks (the dashboard) does not run them
+     * again to score them.
+     *
+     * @param  array<string, array<string, mixed>>  $checks
+     */
+    public function scoreFromChecks(array $checks): int
+    {
         $healthyCount = collect($checks)->filter(fn (array $c): bool => (bool) ($c['healthy'] ?? false))->count();
-        $totalChecks = count($checks);
 
-        return (int) round(($healthyCount / $totalChecks) * 100);
+        return (int) round(($healthyCount / max(count($checks), 1)) * 100);
     }
 
     /**

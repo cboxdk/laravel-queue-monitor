@@ -64,6 +64,19 @@ test('health score calculation works', function () {
     expect($score)->toBeLessThanOrEqual(100);
 });
 
+test('the health score is single-sourced: getHealthScore and scoreFromChecks agree', function () {
+    JobMonitor::factory()->count(5)->create();
+
+    $service = app(HealthCheckService::class);
+    $checks = $service->check()['checks'];
+
+    expect($service->scoreFromChecks($checks))->toBe($service->getHealthScore());
+});
+
+test('scoreFromChecks guards against an empty check set', function () {
+    expect(app(HealthCheckService::class)->scoreFromChecks([]))->toBe(0);
+});
+
 test('isHealthy returns correct boolean', function () {
     JobMonitor::factory()->count(5)->create();
 
