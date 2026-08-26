@@ -136,8 +136,8 @@ return [
 
     // Data retention settings
     'retention' => [
-        'days' => 30,
-        'prune_statuses' => ['completed'],
+        'days' => 7,
+        'prune_statuses' => ['completed', 'failed', 'timeout'],
     ],
 
     // Batch operation limits

@@ -15,4 +15,6 @@ Detailed guides for using Queue Monitor for Laravel.
 - **[Facade Usage](facade-usage)** - Programmatic access to all monitoring functionality
 - **[Job Replay](job-replay)** - Re-dispatch failed jobs from stored payloads
 - **[Events](events)** - Event-driven architecture and custom integrations
+- **[Laravel Horizon Integration](horizon)** - Horizon compatibility and the responsibility split
+- **[Dashboard Assets](dashboard-assets)** - Publish, override, and rebuild dashboard CSS and JavaScript
 - **[Examples](examples)** - Real-world usage patterns and common recipes

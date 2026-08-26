@@ -30,7 +30,7 @@ Track CPU time, memory usage, and file descriptors per job via [laravel-queue-me
 - **Server Identification**: Track which server/worker processed each job
 - **Resource Metrics**: CPU, memory, duration per job
 - **Tag Organization**: Categorize jobs with custom tags
-- **REST API**: 14 endpoints for dashboards and integrations
+- **REST API**: 26 endpoints for dashboards and integrations
 - **Job Replay**: Re-dispatch jobs from stored payloads
 - **Failure Analytics**: Pattern detection and trend analysis
 - **Queue Health**: Real-time health scoring per queue

@@ -12,4 +12,4 @@ New to Queue Monitor for Laravel? This section will help you get up and running 
 
 1. **[Introduction](introduction)** - What the package does and how it differs from aggregate metrics
 2. **[Installation](installation)** - Install via Composer and run migrations
-3. **[Quick Start](quickstart)** - Monitor your first job in 5 minutes
+3. **[Quick Start](../quickstart)** - Monitor your first job in 5 minutes

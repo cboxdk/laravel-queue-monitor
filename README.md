@@ -3,15 +3,13 @@
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/cboxdk/laravel-queue-monitor.svg?style=flat-square)](https://packagist.org/packages/cboxdk/laravel-queue-monitor)
 [![Total Downloads](https://img.shields.io/packagist/dt/cboxdk/laravel-queue-monitor.svg?style=flat-square)](https://packagist.org/packages/cboxdk/laravel-queue-monitor)
 
-**Deep queue monitoring for any Laravel queue driver. Not just Horizon.**
+**Deep, per-job queue monitoring for any Laravel queue driver.**
 
-Track every queue job with per-job CPU, memory, payload, exceptions, and retry chains on `database`, `redis`, `sqs`, `beanstalkd`, or any driver that fires Laravel's queue events. No Redis required. No Horizon required.
+Track every queue job with per-job CPU, memory, payload, exceptions, and retry chains on `database`, `redis`, `sqs`, `beanstalkd`, or any driver that fires Laravel's queue events.
 
 ## Why?
 
-Laravel Horizon works if you run Redis. Most other monitoring tools stop there. If you run database queues, SQS, or anything else, you're flying blind.
-
-Queue Monitor gives you the same depth of insight on any driver:
+Queue Monitor gives you per-job depth of insight on any queue driver — `database`, `redis`, `sqs`, `beanstalkd`, or a custom driver — with no infrastructure beyond your existing database:
 
 - Per-job CPU time and memory usage (via [laravel-queue-metrics](https://github.com/cboxdk/laravel-queue-metrics))
 - Full exception traces with retry chain history
@@ -20,7 +18,7 @@ Queue Monitor gives you the same depth of insight on any driver:
 - SLA compliance tracking
 - Health checks and alerting
 
-Works with Horizon and enriches the experience with worker supervisor data, but doesn't need it.
+When [Laravel Horizon](https://laravel.com/docs/horizon) is installed, Queue Monitor auto-detects it and folds its worker supervisor data into the dashboard — an optional enrichment, never a requirement.
 
 ## Features
 
@@ -191,6 +189,18 @@ GET  /api/queue-monitor/statistics
 GET  /api/queue-monitor/statistics/queue-health
 ```
 
+## Documentation
+
+Full documentation lives in [`docs/`](docs/index.md):
+
+- [Quick Start](docs/quickstart.md) — monitor your first job in five minutes
+- [Requirements](docs/requirements.md) — supported PHP and Laravel versions
+- [Configuration](docs/guides/configuration.md) — retention, cache, dashboard, and API settings
+- [Authentication & Access Control](docs/guides/authentication.md) — securing the dashboard and REST API
+- [API Reference](docs/reference/api-reference.md) — every REST endpoint with parameters and responses
+- [Job Replay](docs/guides/job-replay.md) — re-dispatching failed jobs from stored payloads
+- [Laravel Horizon Integration](docs/guides/horizon.md) — auto-detected supervisor data
+
 ## Driver Compatibility
 
 | Driver | Job Tracking | Payload/Replay | CPU/Memory | Retry Chain | Health Checks |
@@ -234,8 +244,8 @@ return [
     ],
 
     'retention' => [
-        'days' => 30,
-        'prune_statuses' => ['completed'],
+        'days' => 7,
+        'prune_statuses' => ['completed', 'failed', 'timeout'],
     ],
 
     'batch' => [

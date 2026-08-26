@@ -47,7 +47,7 @@ Deep insights into queue performance:
 
 ### REST API
 Full-featured API for custom dashboards:
-- 14 endpoints covering all functionality
+- 26 endpoints covering all functionality
 - Advanced filtering (20+ parameters)
 - Pagination and sorting
 - Rate limiting
@@ -80,8 +80,9 @@ echo "Success Rate: {$stats['success_rate']}%\n";
 
 ### Getting Started
 - [Introduction](getting-started/introduction) - Package overview and key features
+- [Requirements](requirements) - Supported PHP and Laravel versions
 - [Installation](getting-started/installation) - Setup in 5 minutes
-- [Quick Start](getting-started/quickstart) - Common usage patterns
+- [Quick Start](quickstart) - Common usage patterns
 - [Authentication & Access Control](guides/authentication) - Secure the dashboard and REST API
 - [Configuration](guides/configuration) - Customize behavior
 - [Laravel Horizon Integration](guides/horizon) - Horizon compatibility and responsibility split
@@ -125,7 +126,7 @@ Built on solid patterns for maintainability:
 | **Retry Chains** | Complete retry attempt history |
 | **Resource Metrics** | Memory, CPU, duration per job |
 | **Tag System** | Categorize and filter by tags |
-| **REST API** | 14 endpoints for dashboards |
+| **REST API** | 26 endpoints for dashboards |
 | **Job Replay** | Re-dispatch from stored payloads |
 | **Analytics** | Global, server, queue, job-class stats |
 | **Queue Health** | Real-time health scoring |
