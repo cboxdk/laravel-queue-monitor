@@ -47,8 +47,17 @@ class StuckJobController extends Controller
             'action' => 'required|in:delete,retry',
         ]);
 
+        $stuckMinutes = config('queue-monitor.health.stuck_job_minutes', 30);
+        $stuckMinutes = is_numeric($stuckMinutes) ? (int) $stuckMinutes : 30;
+
+        $batchLimit = config('queue-monitor.batch.max_jobs', 1000);
+        $batchLimit = is_numeric($batchLimit) ? max(1, (int) $batchLimit) : 1000;
+
         /** @var list<string> $stuckJobs */
-        $stuckJobs = QueryBuilderHelper::stuck(30)->pluck('uuid')->toArray();
+        $stuckJobs = QueryBuilderHelper::stuck($stuckMinutes)
+            ->limit($batchLimit)
+            ->pluck('uuid')
+            ->toArray();
 
         if (empty($stuckJobs)) {
             return response()->json(['message' => 'No stuck jobs found', 'resolved' => 0, 'replayed' => 0, 'errors' => []]);

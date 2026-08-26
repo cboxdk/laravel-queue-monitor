@@ -206,8 +206,36 @@ final class InfrastructureService
             $driver
         );
 
+        // Resolve each queue's SLA target inside SQL so compliance is computed
+        // with a single grouped aggregate — hydrating every last-hour job row
+        // into PHP to filter it here would OOM on a busy install, and this runs
+        // every few seconds on the infrastructure and autoscale tabs.
+        $specificTargets = array_filter(
+            $slaTargets,
+            fn (string $queue): bool => $queue !== '*',
+            ARRAY_FILTER_USE_KEY
+        );
+
+        if ($specificTargets === []) {
+            $targetExpr = '?';
+            $bindings = [$defaultTarget];
+        } else {
+            $targetExpr = 'CASE queue';
+            $bindings = [];
+            foreach ($specificTargets as $queue => $target) {
+                $targetExpr .= ' WHEN ? THEN ?';
+                $bindings[] = $queue;
+                $bindings[] = (int) $target;
+            }
+            $targetExpr .= ' ELSE ? END';
+            $bindings[] = $defaultTarget;
+        }
+
         $rows = $this->jobTable()
-            ->selectRaw('queue, COUNT(*) as total')
+            ->selectRaw(
+                "queue, COUNT(*) as total, SUM(CASE WHEN {$pickupExpr} <= {$targetExpr} THEN 1 ELSE 0 END) as within_sla",
+                $bindings
+            )
             ->whereNotNull('started_at')
             ->where('created_at', '>=', now()->subHour())
             ->groupBy('queue')
@@ -217,21 +245,12 @@ final class InfrastructureService
             return ['available' => true, 'per_queue' => [], 'source' => empty($slaTargets) ? 'default' : 'autoscale'];
         }
 
-        // For per-queue SLA with different targets, we need pickup times per queue.
-        // Use a single query to get all pickup seconds, grouped by queue.
-        $allPickups = $this->jobTable()
-            ->selectRaw("queue, {$pickupExpr} as pickup_seconds")
-            ->whereNotNull('started_at')
-            ->where('created_at', '>=', now()->subHour())
-            ->get()
-            ->groupBy('queue');
-
         $perQueue = [];
-        foreach ($allPickups as $queueName => $queueRows) {
-            $queueStr = (string) $queueName;
+        foreach ($rows as $row) {
+            $queueStr = (string) $row->queue;
             $target = $slaTargets[$queueStr] ?? $defaultTarget;
-            $total = $queueRows->count();
-            $within = $queueRows->filter(fn ($row) => (float) $row->pickup_seconds <= $target)->count();
+            $total = (int) $row->total;
+            $within = (int) $row->within_sla;
 
             $perQueue[] = [
                 'queue' => $queueStr,

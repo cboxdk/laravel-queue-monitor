@@ -28,7 +28,9 @@ final readonly class RecordJobTimeoutAction
         }
 
         $jobId = $job->getJobId();
-        $jobMonitor = $this->repository->findByJobId($jobId);
+        // Use the latest attempt, matching completed/failed recording — a
+        // first-match lookup would mark an earlier attempt's row on a retry.
+        $jobMonitor = $this->repository->findLatestAttemptByJobId($jobId);
 
         if ($jobMonitor === null) {
             return;

@@ -21,10 +21,33 @@ final class DashboardCacheService
         }
 
         $cache = $this->cacheStore();
-        $versionKey = $this->versionKey();
 
+        // Throttle the version bump: a busy queue fires this on every job
+        // lifecycle write, and without a throttle the version increments
+        // faster than any cache entry can be reused — so the statistics cache
+        // is perpetually cold exactly when the table is largest. The leading
+        // edge still invalidates immediately, so new data shows up promptly;
+        // subsequent writes within the window are absorbed into that one bump.
+        $throttleSeconds = $this->bustThrottleSeconds();
+        if ($throttleSeconds > 0 && ! $cache->add($this->throttleKey(), 1, now()->addSeconds($throttleSeconds))) {
+            return;
+        }
+
+        $versionKey = $this->versionKey();
         $cache->add($versionKey, 1, now()->addYear());
         $cache->increment($versionKey);
+    }
+
+    private function bustThrottleSeconds(): int
+    {
+        $value = config('queue-monitor.cache.bust_throttle_seconds', 5);
+
+        return is_numeric($value) ? max(0, (int) $value) : 5;
+    }
+
+    private function throttleKey(): string
+    {
+        return $this->cachePrefix().'bust_throttle';
     }
 
     public function remember(string $key, \Closure $callback, ?int $ttl = null): mixed

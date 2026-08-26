@@ -44,9 +44,18 @@ final readonly class ResolveStuckJobAction
                 $this->repository->delete($uuid);
                 $resolved++;
             } elseif ($action === 'retry') {
+                // completed_at is the schema column; finished_at does not exist
+                // and was silently dropped, leaving resolved rows with no
+                // completion timestamp or duration.
+                $completedAt = now();
+                $durationMs = $job->started_at !== null
+                    ? max(0, (int) $job->started_at->diffInMilliseconds($completedAt))
+                    : null;
+
                 $this->repository->update($uuid, [
                     'status' => JobStatus::TIMEOUT,
-                    'finished_at' => now(),
+                    'completed_at' => $completedAt,
+                    'duration_ms' => $durationMs,
                 ]);
                 $resolved++;
 

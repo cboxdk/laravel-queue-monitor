@@ -74,3 +74,18 @@ test('health check command readiness supports json output', function () {
     expect($output)->toContain('"status"');
     expect($output)->toContain('"access_control"');
 });
+
+test('health check readiness --json exits non-zero when not ready', function () {
+    app()->detectEnvironment(fn (): string => 'production');
+    LaravelQueueMonitor::$authUsing = null;
+    config()->set('queue-monitor.api.enabled', true);
+    config()->set('queue-monitor.api.middleware', ['api']);
+    config()->set('queue-monitor.storage.store_payload', true);
+
+    // The JSON path is exactly what a CI/deploy gate scripts, so it must carry
+    // the failing exit code, not a blanket success.
+    $exitCode = Artisan::call('queue-monitor:health', ['--readiness' => true, '--json' => true]);
+
+    expect($exitCode)->toBe(1);
+    expect(Artisan::output())->toContain('"status"');
+});

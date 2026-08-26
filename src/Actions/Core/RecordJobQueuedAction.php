@@ -114,18 +114,22 @@ final readonly class RecordJobQueuedAction
 
         $payload = $jobInstance->payload();
         $command = $payload['data']['command'] ?? null;
+        $commandName = $payload['data']['commandName'] ?? null;
 
-        if (! is_string($command) || $command === '') {
+        if (! is_string($command) || $command === '' || ! is_string($commandName) || $commandName === '') {
             return null;
         }
 
         try {
-            $resolved = unserialize($command);
+            // Restrict deserialization to the declared command class — the
+            // serialized blob comes from the queue store, so an unrestricted
+            // unserialize() would be an object-injection entry point.
+            $resolved = unserialize($command, ['allowed_classes' => [$commandName]]);
         } catch (\Throwable) {
             return null;
         }
 
-        return is_object($resolved) ? $resolved : null;
+        return $resolved instanceof $commandName ? $resolved : null;
     }
 
     /**
