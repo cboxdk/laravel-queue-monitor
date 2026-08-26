@@ -25,7 +25,9 @@ _ide_helper.php
 _ide_helper_models.php
 composer.lock
 dashboard-*.png
+mockups
 npm-debug.log
+sbom.json
 phpstan.neon
 phpunit.xml
 testbench.yaml
