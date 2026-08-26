@@ -8,6 +8,7 @@ use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\LaravelQueueMonitor;
 use Cbox\LaravelQueueMonitor\Models\JobMonitor;
 use Cbox\LaravelQueueMonitor\Utilities\QueryBuilderHelper;
+use Illuminate\Database\Connection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
@@ -228,8 +229,6 @@ final class HealthCheckService
      */
     private function checkStorage(): array
     {
-        /** @var string $prefix */
-        $prefix = config('queue-monitor.database.table_prefix', 'queue_monitor_');
         /** @var string|null $connection */
         $connection = config('queue-monitor.database.connection');
         $maxMb = $this->floatConfig('queue-monitor.health.storage_max_mb', 1000.0);
@@ -255,7 +254,7 @@ final class HealthCheckService
                 FROM information_schema.TABLES
                 WHERE TABLE_NAME = ?
                 AND TABLE_SCHEMA = DATABASE()',
-                [$prefix.'jobs']
+                [$this->monitorJobsTable($database)]
             );
 
             if (empty($tableSize)) {
@@ -286,6 +285,22 @@ final class HealthCheckService
                 'message' => 'Storage check not available',
             ];
         }
+    }
+
+    /**
+     * Resolve the physical name of the monitor jobs table on a connection.
+     *
+     * Schema and query builders apply the connection's own table prefix
+     * (database.connections.*.prefix) automatically, but raw lookups against
+     * information_schema do not — so it must be prepended to the package's
+     * configured table prefix here.
+     */
+    public function monitorJobsTable(Connection $database): string
+    {
+        /** @var string $prefix */
+        $prefix = config('queue-monitor.database.table_prefix', 'queue_monitor_');
+
+        return $database->getTablePrefix().$prefix.'jobs';
     }
 
     /**

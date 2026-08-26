@@ -5,6 +5,7 @@ declare(strict_types=1);
 use Cbox\LaravelQueueMonitor\LaravelQueueMonitor;
 use Cbox\LaravelQueueMonitor\Models\JobMonitor;
 use Cbox\LaravelQueueMonitor\Services\HealthCheckService;
+use Illuminate\Support\Facades\DB;
 
 test('health check returns comprehensive status', function () {
     JobMonitor::factory()->count(10)->create();
@@ -69,6 +70,32 @@ test('isHealthy returns correct boolean', function () {
     $service = app(HealthCheckService::class);
 
     expect($service->isHealthy())->toBeTrue();
+});
+
+test('storage check table lookup includes the connection table prefix', function () {
+    config()->set('database.connections.prefixed', [
+        'driver' => 'sqlite',
+        'database' => ':memory:',
+        'prefix' => 'app_',
+    ]);
+
+    $service = app(HealthCheckService::class);
+
+    expect($service->monitorJobsTable(DB::connection('prefixed')))->toBe('app_queue_monitor_jobs');
+    expect($service->monitorJobsTable(DB::connection('testing')))->toBe('queue_monitor_jobs');
+});
+
+test('storage check table lookup combines connection and package prefixes', function () {
+    config()->set('database.connections.prefixed', [
+        'driver' => 'sqlite',
+        'database' => ':memory:',
+        'prefix' => 'app_',
+    ]);
+    config()->set('queue-monitor.database.table_prefix', 'qm_');
+
+    $service = app(HealthCheckService::class);
+
+    expect($service->monitorJobsTable(DB::connection('prefixed')))->toBe('app_qm_jobs');
 });
 
 test('readiness returns production readiness checks', function () {

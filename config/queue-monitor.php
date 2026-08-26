@@ -58,7 +58,7 @@ return [
     */
     'database' => [
         'connection' => env('QUEUE_MONITOR_DB_CONNECTION'),
-        'table_prefix' => 'queue_monitor_',
+        'table_prefix' => env('QUEUE_MONITOR_TABLE_PREFIX', 'queue_monitor_'),
     ],
 
     /*

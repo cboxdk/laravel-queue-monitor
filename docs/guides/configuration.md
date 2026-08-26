@@ -13,11 +13,13 @@ Configure which database connection to use for monitoring data:
 ```php
 'database' => [
     'connection' => env('QUEUE_MONITOR_DB_CONNECTION'),
-    'table_prefix' => 'queue_monitor_',
+    'table_prefix' => env('QUEUE_MONITOR_TABLE_PREFIX', 'queue_monitor_'),
 ],
 ```
 
 This allows you to store monitoring data separately from your application data if desired.
+
+`table_prefix` is prepended to every table the package creates (`queue_monitor_jobs`, `queue_monitor_tags`, `queue_monitor_scaling_events`, `queue_monitor_cluster_events`). Change it only when the default names collide with existing tables or your naming conventions require something else. Set it **before** running the package migrations — the prefix is baked into the physical table names at migration time. Changing it after installation requires manually renaming the existing tables to match; the package does not rename tables or migrate data for you.
 
 Dashboard analytics generate database-specific SQL for timestamp bucketing and queue pickup latency. The package supports MySQL/MariaDB, PostgreSQL, SQL Server, and SQLite for those expressions.
 
