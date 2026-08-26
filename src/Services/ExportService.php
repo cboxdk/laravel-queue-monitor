@@ -9,8 +9,9 @@ use Cbox\LaravelQueueMonitor\Actions\Analytics\CalculateQueueHealthAction;
 use Cbox\LaravelQueueMonitor\Actions\Analytics\CalculateServerStatisticsAction;
 use Cbox\LaravelQueueMonitor\DataTransferObjects\JobFilterData;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\JobMonitorRepositoryContract;
+use Cbox\LaravelQueueMonitor\Services\Contracts\ExportServiceContract;
 
-final readonly class ExportService
+final readonly class ExportService implements ExportServiceContract
 {
     public function __construct(
         private JobMonitorRepositoryContract $repository,

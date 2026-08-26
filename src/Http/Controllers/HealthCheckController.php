@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace Cbox\LaravelQueueMonitor\Http\Controllers;
 
-use Cbox\LaravelQueueMonitor\Services\AlertingService;
-use Cbox\LaravelQueueMonitor\Services\HealthCheckService;
+use Cbox\LaravelQueueMonitor\Services\Contracts\AlertingServiceContract;
+use Cbox\LaravelQueueMonitor\Services\Contracts\HealthCheckServiceContract;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller;
 
 class HealthCheckController extends Controller
 {
     public function __construct(
-        private readonly HealthCheckService $healthCheck,
-        private readonly AlertingService $alerting,
+        private readonly HealthCheckServiceContract $healthCheck,
+        private readonly AlertingServiceContract $alerting,
     ) {}
 
     /**

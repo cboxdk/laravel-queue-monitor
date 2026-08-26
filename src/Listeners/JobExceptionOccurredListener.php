@@ -6,7 +6,7 @@ namespace Cbox\LaravelQueueMonitor\Listeners;
 
 use Cbox\LaravelQueueMonitor\DataTransferObjects\ExceptionData;
 use Cbox\LaravelQueueMonitor\Models\JobMonitor;
-use Cbox\LaravelQueueMonitor\Services\DashboardCacheService;
+use Cbox\LaravelQueueMonitor\Services\Contracts\DashboardCacheServiceContract;
 use Illuminate\Queue\Events\JobExceptionOccurred;
 
 /**
@@ -19,7 +19,7 @@ use Illuminate\Queue\Events\JobExceptionOccurred;
 final class JobExceptionOccurredListener
 {
     public function __construct(
-        private readonly DashboardCacheService $dashboardCache,
+        private readonly DashboardCacheServiceContract $dashboardCache,
     ) {}
 
     public function handle(JobExceptionOccurred $event): void

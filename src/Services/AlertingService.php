@@ -6,9 +6,10 @@ namespace Cbox\LaravelQueueMonitor\Services;
 
 use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\Models\JobMonitor;
+use Cbox\LaravelQueueMonitor\Services\Contracts\AlertingServiceContract;
 use Cbox\LaravelQueueMonitor\Utilities\QueryBuilderHelper;
 
-final class AlertingService
+final class AlertingService implements AlertingServiceContract
 {
     /**
      * Check for alert conditions

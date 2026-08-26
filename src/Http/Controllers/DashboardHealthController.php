@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Cbox\LaravelQueueMonitor\Http\Controllers;
 
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\StatisticsRepositoryContract;
-use Cbox\LaravelQueueMonitor\Services\AlertingService;
-use Cbox\LaravelQueueMonitor\Services\HealthCheckService;
-use Cbox\LaravelQueueMonitor\Services\InfrastructureService;
+use Cbox\LaravelQueueMonitor\Services\Contracts\AlertingServiceContract;
+use Cbox\LaravelQueueMonitor\Services\Contracts\HealthCheckServiceContract;
+use Cbox\LaravelQueueMonitor\Services\Contracts\InfrastructureServiceContract;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -21,10 +21,10 @@ use Illuminate\Routing\Controller;
 class DashboardHealthController extends Controller
 {
     public function __construct(
-        private readonly InfrastructureService $infrastructureService,
+        private readonly InfrastructureServiceContract $infrastructureService,
         private readonly StatisticsRepositoryContract $statsRepository,
-        private readonly HealthCheckService $healthService,
-        private readonly AlertingService $alertingService,
+        private readonly HealthCheckServiceContract $healthService,
+        private readonly AlertingServiceContract $alertingService,
     ) {}
 
     /**

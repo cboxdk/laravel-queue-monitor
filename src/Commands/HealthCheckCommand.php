@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Cbox\LaravelQueueMonitor\Commands;
 
-use Cbox\LaravelQueueMonitor\Services\AlertingService;
-use Cbox\LaravelQueueMonitor\Services\HealthCheckService;
+use Cbox\LaravelQueueMonitor\Services\Contracts\AlertingServiceContract;
+use Cbox\LaravelQueueMonitor\Services\Contracts\HealthCheckServiceContract;
 use Illuminate\Console\Command;
 
 class HealthCheckCommand extends Command
@@ -17,7 +17,7 @@ class HealthCheckCommand extends Command
 
     public $description = 'Check queue monitor system health';
 
-    public function handle(HealthCheckService $healthCheck, AlertingService $alerting): int
+    public function handle(HealthCheckServiceContract $healthCheck, AlertingServiceContract $alerting): int
     {
         if ($this->option('alerts')) {
             return $this->showAlerts($alerting);
@@ -116,7 +116,7 @@ class HealthCheckCommand extends Command
     /**
      * Show active alerts
      */
-    private function showAlerts(AlertingService $alerting): int
+    private function showAlerts(AlertingServiceContract $alerting): int
     {
         $alerts = $alerting->checkAlertConditions();
 

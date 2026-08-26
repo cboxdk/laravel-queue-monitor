@@ -10,9 +10,9 @@ use Cbox\LaravelQueueMonitor\Models\JobMonitor;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\JobMonitorRepositoryContract;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\StatisticsRepositoryContract;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\TagRepositoryContract;
-use Cbox\LaravelQueueMonitor\Services\AlertingService;
-use Cbox\LaravelQueueMonitor\Services\HealthCheckService;
-use Cbox\LaravelQueueMonitor\Services\InfrastructureService;
+use Cbox\LaravelQueueMonitor\Services\Contracts\AlertingServiceContract;
+use Cbox\LaravelQueueMonitor\Services\Contracts\HealthCheckServiceContract;
+use Cbox\LaravelQueueMonitor\Services\Contracts\InfrastructureServiceContract;
 use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
 
@@ -513,7 +513,7 @@ class QueueMonitorDashboardCommand extends Command
             }
 
             try {
-                $alertingService = app(AlertingService::class);
+                $alertingService = app(AlertingServiceContract::class);
                 $this->alertsData = $alertingService->checkAlertConditions();
             } catch (\Throwable) {
                 $this->alertsData = [];
@@ -533,7 +533,7 @@ class QueueMonitorDashboardCommand extends Command
 
         if ($this->currentView === 4 && ($this->healthData === null || $now - $this->healthLastFetched > 10)) {
             try {
-                $healthService = app(HealthCheckService::class);
+                $healthService = app(HealthCheckServiceContract::class);
                 $this->healthData = $healthService->check();
                 $this->healthData['score'] = $healthService->getHealthScore();
                 $this->healthLastFetched = $now;
@@ -560,7 +560,7 @@ class QueueMonitorDashboardCommand extends Command
 
         if ($this->currentView === 6 && ($this->infrastructureData === null || $now - $this->infraLastFetched > 10)) {
             try {
-                $infraService = app(InfrastructureService::class);
+                $infraService = app(InfrastructureServiceContract::class);
                 $this->infrastructureData = [
                     'workers' => $infraService->getWorkerData(),
                     'worker_types' => $infraService->getWorkerTypeBreakdown(),

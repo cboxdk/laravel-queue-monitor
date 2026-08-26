@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace Cbox\LaravelQueueMonitor\Services;
 
+use Cbox\LaravelQueueMonitor\Services\Contracts\DashboardCacheServiceContract;
 use Illuminate\Contracts\Cache\Repository;
 use Illuminate\Support\Facades\Cache;
 
-final class DashboardCacheService
+final class DashboardCacheService implements DashboardCacheServiceContract
 {
     public function scopedKey(string $key): string
     {

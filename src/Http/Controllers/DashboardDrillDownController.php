@@ -6,7 +6,7 @@ namespace Cbox\LaravelQueueMonitor\Http\Controllers;
 
 use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\StatisticsRepositoryContract;
-use Cbox\LaravelQueueMonitor\Services\DashboardCacheService;
+use Cbox\LaravelQueueMonitor\Services\Contracts\DashboardCacheServiceContract;
 use Cbox\LaravelQueueMonitor\Utilities\PayloadRedactor;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Http\JsonResponse;
@@ -24,7 +24,7 @@ class DashboardDrillDownController extends Controller
 {
     public function __construct(
         private readonly StatisticsRepositoryContract $statsRepository,
-        private readonly DashboardCacheService $dashboardCache,
+        private readonly DashboardCacheServiceContract $dashboardCache,
     ) {}
 
     /**
