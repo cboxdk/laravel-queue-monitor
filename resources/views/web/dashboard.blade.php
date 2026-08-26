@@ -58,6 +58,9 @@
             display: grid;
             grid-template-columns: 248px minmax(0, 1fr);
             min-height: 100vh;
+            /* Keep the sidebar column dark for the full page height even when
+               the page is taller than the viewport. */
+            background: linear-gradient(to right, #101722 248px, transparent 248px);
         }
 
         .qm-sidebar {
@@ -70,6 +73,7 @@
             position: sticky;
             top: 0;
             height: 100vh;
+            overflow-y: auto;
             z-index: 50;
             transition: transform 0.22s ease;
         }
@@ -929,6 +933,7 @@
         @media (max-width: 900px) {
             .qm-app {
                 grid-template-columns: 1fr;
+                background: none;
             }
 
             .qm-menu-button {
