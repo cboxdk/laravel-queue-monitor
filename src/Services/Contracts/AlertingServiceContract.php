@@ -4,19 +4,21 @@ declare(strict_types=1);
 
 namespace Cbox\LaravelQueueMonitor\Services\Contracts;
 
+use Cbox\LaravelQueueMonitor\DataTransferObjects\AlertEntry;
+
 interface AlertingServiceContract
 {
     /**
      * Check for alert conditions
      *
-     * @return array<string, array{severity: string, message: string, count: int}>
+     * @return array<string, AlertEntry>
      */
     public function checkAlertConditions(): array;
 
     /**
      * Get critical alerts only
      *
-     * @return array<string, array{severity: string, message: string, count: int}>
+     * @return array<string, AlertEntry>
      */
     public function getCriticalAlerts(): array;
 

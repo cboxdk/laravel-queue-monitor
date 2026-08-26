@@ -4,6 +4,16 @@ declare(strict_types=1);
 
 namespace Cbox\LaravelQueueMonitor\Services;
 
+use Cbox\LaravelQueueMonitor\DataTransferObjects\CapacityData;
+use Cbox\LaravelQueueMonitor\DataTransferObjects\ClusterData;
+use Cbox\LaravelQueueMonitor\DataTransferObjects\LiveClusterState;
+use Cbox\LaravelQueueMonitor\DataTransferObjects\QueueInfraData;
+use Cbox\LaravelQueueMonitor\DataTransferObjects\ScalingData;
+use Cbox\LaravelQueueMonitor\DataTransferObjects\ScalingTimeline;
+use Cbox\LaravelQueueMonitor\DataTransferObjects\SlaData;
+use Cbox\LaravelQueueMonitor\DataTransferObjects\SlaQueueCompliance;
+use Cbox\LaravelQueueMonitor\DataTransferObjects\WorkerData;
+use Cbox\LaravelQueueMonitor\DataTransferObjects\WorkerTypeBreakdown;
 use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\Models\ClusterEvent;
 use Cbox\LaravelQueueMonitor\Models\ScalingEvent;
@@ -19,13 +29,10 @@ use Illuminate\Support\Facades\Schema;
  */
 final class InfrastructureService implements InfrastructureServiceContract
 {
-    /**
-     * @return array<string, mixed>
-     */
-    public function getWorkerData(): array
+    public function getWorkerData(): WorkerData
     {
         if (! class_exists('Laravel\Horizon\Horizon')) {
-            return ['available' => false];
+            return new WorkerData(false);
         }
 
         try {
@@ -56,32 +63,32 @@ final class InfrastructureService implements InfrastructureServiceContract
                 ];
             }
 
-            return [
-                'available' => true,
-                'total_processes' => $totalProcesses,
-                'supervisors' => $supervisorData,
-                'workload' => collect($workload)->map(fn (array $w) => [
-                    'queue' => $w['name'],
-                    'length' => $w['length'],
-                    'wait' => $w['wait'],
-                    'processes' => $w['processes'],
-                ])->values()->all(),
-                'jobs_per_minute' => $metricsRepo->jobsProcessedPerMinute(),
-            ];
+            $workloadData = collect($workload)->map(fn (array $w) => [
+                'queue' => $w['name'],
+                'length' => $w['length'],
+                'wait' => $w['wait'],
+                'processes' => $w['processes'],
+            ])->values()->all();
+
+            return new WorkerData(
+                available: true,
+                totalProcesses: $totalProcesses,
+                supervisors: $supervisorData,
+                workload: $workloadData,
+                jobsPerMinute: $metricsRepo->jobsProcessedPerMinute(),
+            );
         } catch (\Throwable $e) {
             report($e);
 
-            return ['available' => false];
+            return new WorkerData(false);
         }
     }
 
     /**
      * Breakdown of job processing by worker type (horizon, autoscale, queue_work) per queue.
      * Shows which manager handles which queue and relative workload distribution.
-     *
-     * @return array<string, mixed>
      */
-    public function getWorkerTypeBreakdown(): array
+    public function getWorkerTypeBreakdown(): WorkerTypeBreakdown
     {
         // Per worker_type + queue: job count, avg duration, failure rate
         /** @var array<int, array<string, mixed>> $breakdown */
@@ -135,19 +142,16 @@ final class InfrastructureService implements InfrastructureServiceContract
             ];
         })->values()->all();
 
-        return [
-            'by_type' => $byType,
-            'per_queue' => $breakdown,
-        ];
+        return new WorkerTypeBreakdown(
+            byType: $byType,
+            perQueue: $breakdown,
+        );
     }
 
-    /**
-     * @return array<string, mixed>
-     */
-    public function getQueueInfraData(): array
+    public function getQueueInfraData(): QueueInfraData
     {
         if (! class_exists('Cbox\LaravelQueueMetrics\Services\QueueMetricsQueryService')) {
-            return ['available' => false];
+            return new QueueInfraData(false);
         }
 
         try {
@@ -155,44 +159,44 @@ final class InfrastructureService implements InfrastructureServiceContract
             /** @var array<int, array<string, mixed>> $queues */
             $queues = $service->getAllQueuesWithMetrics();
 
-            return [
-                'available' => true,
-                'queues' => collect($queues)->map(function (array $q): array {
-                    /** @var array<string, mixed>|null $health */
-                    $health = $q['health'] ?? null;
+            $queueRows = collect($queues)->map(function (array $q): array {
+                /** @var array<string, mixed>|null $health */
+                $health = $q['health'] ?? null;
 
-                    return [
-                        'connection' => $q['connection'] ?? null,
-                        'queue' => $q['queue'] ?? $q['name'] ?? 'unknown',
-                        'depth' => is_array($q['depth'] ?? 0) ? ($q['depth']['total'] ?? 0) : ($q['depth'] ?? 0),
-                        'pending' => $q['pending'] ?? 0,
-                        'scheduled' => $q['scheduled'] ?? 0,
-                        'reserved' => $q['reserved'] ?? 0,
-                        'active_workers' => $q['active_workers'] ?? 0,
-                        'throughput_per_minute' => $q['throughput_per_minute'] ?? 0,
-                        'avg_duration_ms' => $q['avg_duration_ms'] ?? $q['avgDuration'] ?? null,
-                        'failure_rate' => $q['failure_rate'] ?? $q['failureRate'] ?? 0,
-                        'utilization_rate' => $q['utilization_rate'] ?? $q['utilizationRate'] ?? 0,
-                        'oldest_job_age' => $q['oldest_job_age'] ?? $q['oldestJobAge'] ?? 0,
-                        'health_status' => (is_array($health) ? ($health['status'] ?? null) : null) ?? $q['ageStatus'] ?? 'unknown',
-                        'health_score' => is_array($health) ? ($health['score'] ?? 0) : 0,
-                    ];
-                })->values()->all(),
-            ];
+                return [
+                    'connection' => $q['connection'] ?? null,
+                    'queue' => $q['queue'] ?? $q['name'] ?? 'unknown',
+                    'depth' => is_array($q['depth'] ?? 0) ? ($q['depth']['total'] ?? 0) : ($q['depth'] ?? 0),
+                    'pending' => $q['pending'] ?? 0,
+                    'scheduled' => $q['scheduled'] ?? 0,
+                    'reserved' => $q['reserved'] ?? 0,
+                    'active_workers' => $q['active_workers'] ?? 0,
+                    'throughput_per_minute' => $q['throughput_per_minute'] ?? 0,
+                    'avg_duration_ms' => $q['avg_duration_ms'] ?? $q['avgDuration'] ?? null,
+                    'failure_rate' => $q['failure_rate'] ?? $q['failureRate'] ?? 0,
+                    'utilization_rate' => $q['utilization_rate'] ?? $q['utilizationRate'] ?? 0,
+                    'oldest_job_age' => $q['oldest_job_age'] ?? $q['oldestJobAge'] ?? 0,
+                    'health_status' => (is_array($health) ? ($health['status'] ?? null) : null) ?? $q['ageStatus'] ?? 'unknown',
+                    'health_score' => is_array($health) ? ($health['score'] ?? 0) : 0,
+                ];
+            })->values()->all();
+
+            return new QueueInfraData(
+                available: true,
+                queues: $queueRows,
+            );
         } catch (\Throwable $e) {
             report($e);
 
-            return ['available' => false];
+            return new QueueInfraData(false);
         }
     }
 
     /**
      * SLA compliance per queue, using autoscale config targets when available.
      * Falls back to a default 30s target if autoscale is not configured.
-     *
-     * @return array<string, mixed>
      */
-    public function getSlaData(): array
+    public function getSlaData(): SlaData
     {
         $driver = $this->databaseDriver();
 
@@ -243,7 +247,11 @@ final class InfrastructureService implements InfrastructureServiceContract
             ->get();
 
         if ($rows->isEmpty()) {
-            return ['available' => true, 'per_queue' => [], 'source' => empty($slaTargets) ? 'default' : 'autoscale'];
+            return new SlaData(
+                available: true,
+                perQueue: [],
+                source: empty($slaTargets) ? 'default' : 'autoscale',
+            );
         }
 
         $perQueue = [];
@@ -266,11 +274,21 @@ final class InfrastructureService implements InfrastructureServiceContract
         // Sort by compliance ascending (worst first)
         usort($perQueue, fn ($a, $b) => $a['compliance'] <=> $b['compliance']);
 
-        return [
-            'available' => true,
-            'per_queue' => $perQueue,
-            'source' => empty($slaTargets) ? 'default' : 'autoscale',
-        ];
+        return new SlaData(
+            available: true,
+            perQueue: array_map(
+                static fn (array $row): SlaQueueCompliance => new SlaQueueCompliance(
+                    queue: (string) $row['queue'],
+                    targetSeconds: (int) $row['target_seconds'],
+                    compliance: (float) $row['compliance'],
+                    total: (int) $row['total'],
+                    within: (int) $row['within'],
+                    breached: (int) $row['breached'],
+                ),
+                $perQueue,
+            ),
+            source: empty($slaTargets) ? 'default' : 'autoscale',
+        );
     }
 
     /**
@@ -303,10 +321,7 @@ final class InfrastructureService implements InfrastructureServiceContract
         return $targets;
     }
 
-    /**
-     * @return array<string, mixed>
-     */
-    public function getScalingData(): array
+    public function getScalingData(): ScalingData
     {
         /** @var string $prefix */
         $prefix = config('queue-monitor.database.table_prefix', 'queue_monitor_');
@@ -407,8 +422,8 @@ final class InfrastructureService implements InfrastructureServiceContract
             }
         }
 
-        return [
-            'utilization' => [
+        return new ScalingData(
+            utilization: [
                 'percentage' => $utilization,
                 'total_processing_ms' => $totalProcessingMs,
                 'busy_workers' => $busyWorkers,
@@ -416,19 +431,16 @@ final class InfrastructureService implements InfrastructureServiceContract
                 'window_seconds' => 3600,
                 'status' => $utilization > 85 ? 'overloaded' : ($utilization > 60 ? 'optimal' : ($utilization > 30 ? 'underutilized' : 'idle')),
             ],
-            'history' => $scalingHistory,
-            'summary' => $scalingSummary,
-            'open_fuses' => $openFuses,
-            'has_autoscale' => $hasScalingTable && count($scalingHistory) > 0,
-            'autoscale_version' => $this->detectAutoscaleVersion(),
-            'breach_severity' => $breachSeverity ?? null,
-        ];
+            history: $scalingHistory,
+            summary: $scalingSummary,
+            openFuses: $openFuses,
+            hasAutoscale: $hasScalingTable && count($scalingHistory) > 0,
+            autoscaleVersion: $this->detectAutoscaleVersion(),
+            breachSeverity: $breachSeverity ?? null,
+        );
     }
 
-    /**
-     * @return array<string, mixed>
-     */
-    public function getCapacityData(): array
+    public function getCapacityData(): CapacityData
     {
         $dateFormat = DatabaseExpressionHelper::minuteBucket('queued_at', $this->databaseDriver());
 
@@ -479,15 +491,13 @@ final class InfrastructureService implements InfrastructureServiceContract
             ];
         }
 
-        return ['queues' => $capacity];
+        return new CapacityData(queues: $capacity);
     }
 
     /**
      * Cluster orchestration data for v3 autoscale. Returns null when not available.
-     *
-     * @return array<string, mixed>|null
      */
-    public function getClusterData(): ?array
+    public function getClusterData(): ?ClusterData
     {
         /** @var string|null $dbConnection */
         $dbConnection = config('queue-monitor.database.connection');
@@ -632,16 +642,16 @@ final class InfrastructureService implements InfrastructureServiceContract
                 ])
                 ->all();
 
-            return [
-                'has_cluster' => true,
-                'autoscale_version' => $this->detectAutoscaleVersion() ?? 3,
-                'topology' => [
+            return new ClusterData(
+                hasCluster: true,
+                autoscaleVersion: $this->detectAutoscaleVersion() ?? 3,
+                topology: [
                     'cluster_id' => $clusterId,
                     'leader_id' => $leaderId,
                     'active_managers' => $activeManagers,
                     'host_count' => count($activeManagers),
                 ],
-                'scaling_signal' => $latestSignal ? [
+                scalingSignal: $latestSignal ? [
                     'current_hosts' => $latestSignal->current_hosts,
                     'recommended_hosts' => $latestSignal->recommended_hosts,
                     'current_capacity' => $latestSignal->current_capacity,
@@ -650,17 +660,17 @@ final class InfrastructureService implements InfrastructureServiceContract
                     'reason' => $latestSignal->reason,
                     'updated_at' => $latestSignal->created_at?->toIso8601String(),
                 ] : null,
-                'leadership' => [
+                leadership: [
                     'unstable' => $leadershipFlag !== null,
                     'changes_in_window' => $changesInWindow,
                     'window_seconds' => $leadershipWindow,
                     'reason' => $leadershipFlag?->reason,
                     'flagged_at' => $leadershipFlag?->created_at?->toIso8601String(),
                 ],
-                'signal_history' => $signalHistory,
-                'leader_history' => $leaderHistory,
-                'manager_events' => $managerEvents,
-            ];
+                signalHistory: $signalHistory,
+                leaderHistory: $leaderHistory,
+                managerEvents: $managerEvents,
+            );
         } catch (\Throwable $e) {
             report($e);
 
@@ -671,10 +681,8 @@ final class InfrastructureService implements InfrastructureServiceContract
     /**
      * Live cluster state from autoscale v3 Redis heartbeats.
      * Returns real-time per-host resource data when available.
-     *
-     * @return array<string, mixed>|null
      */
-    public function getLiveClusterState(): ?array
+    public function getLiveClusterState(): ?LiveClusterState
     {
         if (! class_exists('Cbox\\LaravelQueueAutoscale\\Facades\\LaravelQueueAutoscale')) {
             return null;
@@ -694,54 +702,58 @@ final class InfrastructureService implements InfrastructureServiceContract
             /** @var array<int, array<string, mixed>> $workloads */
             $workloads = $summary['workloads'] ?? [];
 
-            return [
-                'cluster_id' => $summary['cluster_id'] ?? null,
-                'leader_id' => $summary['leader_id'] ?? null,
-                'manager_count' => $summary['manager_count'] ?? 0,
-                'total_workers' => $summary['total_workers'] ?? 0,
-                'required_workers' => $summary['required_workers'] ?? 0,
-                'total_worker_capacity' => $summary['total_worker_capacity'] ?? 0,
-                'utilization_percent' => $summary['utilization_percent'] ?? 0,
-                'scale_signal' => $summary['scale_signal'] ?? null,
-                'generated_at' => $summary['generated_at'] ?? null,
-                'hosts' => collect($managers)->map(fn (array $m) => [
-                    'manager_id' => $m['manager_id'] ?? null,
-                    'host' => $m['host'] ?? null,
-                    'is_leader' => $m['is_leader'] ?? false,
-                    'total_workers' => $m['total_workers'] ?? 0,
-                    'max_workers' => $m['max_workers'] ?? 0,
-                    'available_worker_capacity' => $m['available_worker_capacity'] ?? 0,
-                    'capacity_limiter' => $m['capacity_limiter'] ?? null,
-                    'cpu_percent' => $m['cpu_percent'] ?? null,
-                    'cpu_cores' => $m['cpu_cores'] ?? null,
-                    'memory_percent' => $m['memory_percent'] ?? null,
-                    'memory_total_mb' => $m['memory_total_mb'] ?? null,
-                    'memory_used_mb' => $m['memory_used_mb'] ?? null,
-                    'memory_free_mb' => $m['memory_free_mb'] ?? null,
-                    'queue_count' => $m['queue_count'] ?? 0,
-                    'group_count' => $m['group_count'] ?? 0,
-                    'queue_workers' => $m['queue_workers'] ?? [],
-                    'package_version' => $m['package_version'] ?? null,
-                    'last_seen_human' => $m['last_seen_human'] ?? null,
-                ])->values()->all(),
-                'workloads' => collect($workloads)->map(fn (array $w) => [
-                    'type' => $w['type'] ?? 'queue',
-                    'connection' => $w['connection'] ?? null,
-                    'name' => $w['name'] ?? null,
-                    'current_workers' => $w['current_workers'] ?? 0,
-                    'target_workers' => $w['target_workers'] ?? 0,
-                    'worker_min' => $w['worker_min'] ?? 0,
-                    'worker_max' => $w['worker_max'] ?? 0,
-                    'sla_target_seconds' => $w['sla_target_seconds'] ?? null,
-                    'pending' => $w['pending'] ?? 0,
-                    'oldest_job_age' => $w['oldest_job_age'] ?? 0,
-                    'oldest_job_age_status' => $w['oldest_job_age_status'] ?? 'normal',
-                    'throughput_per_minute' => $w['throughput_per_minute'] ?? 0,
-                    'active_workers' => $w['active_workers'] ?? 0,
-                    'utilization_percent' => $w['utilization_percent'] ?? 0,
-                    'action' => $w['action'] ?? 'hold',
-                ])->values()->all(),
-            ];
+            $hostRows = collect($managers)->map(fn (array $m) => [
+                'manager_id' => $m['manager_id'] ?? null,
+                'host' => $m['host'] ?? null,
+                'is_leader' => $m['is_leader'] ?? false,
+                'total_workers' => $m['total_workers'] ?? 0,
+                'max_workers' => $m['max_workers'] ?? 0,
+                'available_worker_capacity' => $m['available_worker_capacity'] ?? 0,
+                'capacity_limiter' => $m['capacity_limiter'] ?? null,
+                'cpu_percent' => $m['cpu_percent'] ?? null,
+                'cpu_cores' => $m['cpu_cores'] ?? null,
+                'memory_percent' => $m['memory_percent'] ?? null,
+                'memory_total_mb' => $m['memory_total_mb'] ?? null,
+                'memory_used_mb' => $m['memory_used_mb'] ?? null,
+                'memory_free_mb' => $m['memory_free_mb'] ?? null,
+                'queue_count' => $m['queue_count'] ?? 0,
+                'group_count' => $m['group_count'] ?? 0,
+                'queue_workers' => $m['queue_workers'] ?? [],
+                'package_version' => $m['package_version'] ?? null,
+                'last_seen_human' => $m['last_seen_human'] ?? null,
+            ])->values()->all();
+
+            $workloadRows = collect($workloads)->map(fn (array $w) => [
+                'type' => $w['type'] ?? 'queue',
+                'connection' => $w['connection'] ?? null,
+                'name' => $w['name'] ?? null,
+                'current_workers' => $w['current_workers'] ?? 0,
+                'target_workers' => $w['target_workers'] ?? 0,
+                'worker_min' => $w['worker_min'] ?? 0,
+                'worker_max' => $w['worker_max'] ?? 0,
+                'sla_target_seconds' => $w['sla_target_seconds'] ?? null,
+                'pending' => $w['pending'] ?? 0,
+                'oldest_job_age' => $w['oldest_job_age'] ?? 0,
+                'oldest_job_age_status' => $w['oldest_job_age_status'] ?? 'normal',
+                'throughput_per_minute' => $w['throughput_per_minute'] ?? 0,
+                'active_workers' => $w['active_workers'] ?? 0,
+                'utilization_percent' => $w['utilization_percent'] ?? 0,
+                'action' => $w['action'] ?? 'hold',
+            ])->values()->all();
+
+            return new LiveClusterState(
+                clusterId: $summary['cluster_id'] ?? null,
+                leaderId: $summary['leader_id'] ?? null,
+                managerCount: $summary['manager_count'] ?? 0,
+                totalWorkers: $summary['total_workers'] ?? 0,
+                requiredWorkers: $summary['required_workers'] ?? 0,
+                totalWorkerCapacity: $summary['total_worker_capacity'] ?? 0,
+                utilizationPercent: $summary['utilization_percent'] ?? 0,
+                scaleSignal: $summary['scale_signal'] ?? null,
+                generatedAt: $summary['generated_at'] ?? null,
+                hosts: $hostRows,
+                workloads: $workloadRows,
+            );
         } catch (\Throwable $e) {
             report($e);
 
@@ -807,13 +819,8 @@ final class InfrastructureService implements InfrastructureServiceContract
      * Scaling decisions for one queue in chronological order, for the
      * dashboard's scaling timeline chart, plus the worker range observed
      * in the window.
-     *
-     * @return array{
-     *     events: array<int, array{t: string, current_workers: int, target_workers: int, action: string, reason: string}>,
-     *     worker_range: array{min: int|null, max: int|null}
-     * }
      */
-    public function getScalingTimeline(string $queue, int $minutes = 60): array
+    public function getScalingTimeline(string $queue, int $minutes = 60): ScalingTimeline
     {
         /** @var string $prefix */
         $prefix = config('queue-monitor.database.table_prefix', 'queue_monitor_');
@@ -821,7 +828,7 @@ final class InfrastructureService implements InfrastructureServiceContract
         $dbConnection = config('queue-monitor.database.connection');
 
         if (! Schema::connection($dbConnection)->hasTable($prefix.'scaling_events')) {
-            return ['events' => [], 'worker_range' => ['min' => null, 'max' => null]];
+            return new ScalingTimeline(events: [], workerRange: ['min' => null, 'max' => null]);
         }
 
         $events = ScalingEvent::query()
@@ -849,10 +856,10 @@ final class InfrastructureService implements InfrastructureServiceContract
             ];
         })->all();
 
-        return [
-            'events' => $series,
-            'worker_range' => ['min' => $min, 'max' => $max],
-        ];
+        return new ScalingTimeline(
+            events: $series,
+            workerRange: ['min' => $min, 'max' => $max],
+        );
     }
 
     private function intConfig(string $key, int $default): int

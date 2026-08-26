@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Cbox\LaravelQueueMonitor\Commands;
 
+use Cbox\LaravelQueueMonitor\DataTransferObjects\HealthCheckResult;
+use Cbox\LaravelQueueMonitor\DataTransferObjects\ReadinessResult;
 use Cbox\LaravelQueueMonitor\Services\Contracts\AlertingServiceContract;
 use Cbox\LaravelQueueMonitor\Services\Contracts\HealthCheckServiceContract;
 use Illuminate\Console\Command;
@@ -27,7 +29,7 @@ class HealthCheckCommand extends Command
             $readiness = $healthCheck->readiness();
             // The exit code reflects the check outcome regardless of output
             // format — the --json path is exactly what CI/deploy gates script.
-            $exit = $readiness['status'] === 'ready' ? self::SUCCESS : self::FAILURE;
+            $exit = $readiness->status === 'ready' ? self::SUCCESS : self::FAILURE;
 
             if ($this->option('json')) {
                 $json = json_encode($readiness, JSON_PRETTY_PRINT);
@@ -42,7 +44,7 @@ class HealthCheckCommand extends Command
         }
 
         $health = $healthCheck->check();
-        $exit = $health['status'] === 'healthy' ? self::SUCCESS : self::FAILURE;
+        $exit = $health->status === 'healthy' ? self::SUCCESS : self::FAILURE;
 
         if ($this->option('json')) {
             $json = json_encode($health, JSON_PRETTY_PRINT);
@@ -58,19 +60,17 @@ class HealthCheckCommand extends Command
 
     /**
      * Display health status in table format
-     *
-     * @param  array{status: string, checks: array<string, array<string, mixed>>}  $health
      */
-    private function displayHealthStatus(array $health): void
+    private function displayHealthStatus(HealthCheckResult $health): void
     {
-        $statusIcon = $health['status'] === 'healthy' ? '✅' : '⚠️';
+        $statusIcon = $health->status === 'healthy' ? '✅' : '⚠️';
 
-        $this->info("{$statusIcon} System Status: ".strtoupper($health['status']));
+        $this->info("{$statusIcon} System Status: ".strtoupper($health->status));
         $this->newLine();
 
         $rows = [];
 
-        foreach ($health['checks'] as $name => $check) {
+        foreach ($health->checks as $name => $check) {
             /** @var bool $isHealthy */
             $isHealthy = $check['healthy'];
             $icon = $isHealthy ? '✅' : '❌';
@@ -88,17 +88,15 @@ class HealthCheckCommand extends Command
 
     /**
      * Display readiness status in table format
-     *
-     * @param  array{status: string, checks: array<string, array<string, mixed>>}  $readiness
      */
-    private function displayReadinessStatus(array $readiness): void
+    private function displayReadinessStatus(ReadinessResult $readiness): void
     {
-        $this->info('Production Readiness: '.strtoupper($readiness['status']));
+        $this->info('Production Readiness: '.strtoupper($readiness->status));
         $this->newLine();
 
         $rows = [];
 
-        foreach ($readiness['checks'] as $name => $check) {
+        foreach ($readiness->checks as $name => $check) {
             /** @var bool $isHealthy */
             $isHealthy = $check['healthy'];
             /** @var string $message */
@@ -131,7 +129,7 @@ class HealthCheckCommand extends Command
 
         $rows = [];
         foreach ($alerts as $name => $alert) {
-            $icon = match ($alert['severity']) {
+            $icon = match ($alert->severity) {
                 'critical' => '🔴',
                 'warning' => '🟡',
                 'info' => '🔵',
@@ -141,8 +139,8 @@ class HealthCheckCommand extends Command
             $rows[] = [
                 $icon,
                 ucwords(str_replace('_', ' ', $name)),
-                $alert['severity'],
-                $alert['message'],
+                $alert->severity,
+                $alert->message,
             ];
         }
 

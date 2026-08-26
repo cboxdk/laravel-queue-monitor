@@ -36,12 +36,12 @@ class DashboardHealthController extends Controller
         $alerts = $this->alertingService->checkAlertConditions();
 
         // Score from the checks we already ran, rather than running them again.
-        $score = $this->healthService->scoreFromChecks($healthCheck['checks']);
+        $score = $this->healthService->scoreFromChecks($healthCheck->checks);
 
         return response()->json([
             'score' => $score,
-            'status' => $healthCheck['status'],
-            'checks' => $healthCheck['checks'],
+            'status' => $healthCheck->status,
+            'checks' => $healthCheck->checks,
             'alerts' => $alerts,
         ]);
     }
@@ -57,7 +57,7 @@ class DashboardHealthController extends Controller
             'queues' => $this->infrastructureService->getQueueInfraData(),
             'sla' => $this->infrastructureService->getSlaData(),
             'scaling' => array_intersect_key(
-                $this->infrastructureService->getScalingData(),
+                $this->infrastructureService->getScalingData()->toArray(),
                 array_flip(['utilization', 'breach_severity']),
             ),
             'capacity' => $this->infrastructureService->getCapacityData(),
@@ -81,7 +81,7 @@ class DashboardHealthController extends Controller
             'cluster' => $cluster,
             'live' => $live,
             'sla' => $this->infrastructureService->getSlaData(),
-            'available' => ($scaling['has_autoscale'] ?? false) || (is_array($cluster) && ($cluster['has_cluster'] ?? false)) || $live !== null,
+            'available' => $scaling->hasAutoscale || ($cluster !== null && $cluster->hasCluster) || $live !== null,
         ]);
     }
 
@@ -114,8 +114,8 @@ class DashboardHealthController extends Controller
             'buckets' => $timeline->buckets,
             'live' => $timeline->live,
             'memory_limit_mb' => $timeline->memoryLimitMb,
-            'workers' => $scaling['events'],
-            'worker_range' => $scaling['worker_range'],
+            'workers' => $scaling->events,
+            'worker_range' => $scaling->workerRange,
         ]);
     }
 }

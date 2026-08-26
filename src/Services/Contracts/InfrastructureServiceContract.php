@@ -4,68 +4,53 @@ declare(strict_types=1);
 
 namespace Cbox\LaravelQueueMonitor\Services\Contracts;
 
+use Cbox\LaravelQueueMonitor\DataTransferObjects\CapacityData;
+use Cbox\LaravelQueueMonitor\DataTransferObjects\ClusterData;
+use Cbox\LaravelQueueMonitor\DataTransferObjects\LiveClusterState;
+use Cbox\LaravelQueueMonitor\DataTransferObjects\QueueInfraData;
+use Cbox\LaravelQueueMonitor\DataTransferObjects\ScalingData;
+use Cbox\LaravelQueueMonitor\DataTransferObjects\ScalingTimeline;
+use Cbox\LaravelQueueMonitor\DataTransferObjects\SlaData;
+use Cbox\LaravelQueueMonitor\DataTransferObjects\WorkerData;
+use Cbox\LaravelQueueMonitor\DataTransferObjects\WorkerTypeBreakdown;
+
 interface InfrastructureServiceContract
 {
-    /**
-     * @return array<string, mixed>
-     */
-    public function getWorkerData(): array;
+    public function getWorkerData(): WorkerData;
 
     /**
      * Breakdown of job processing by worker type (horizon, autoscale, queue_work) per queue.
      * Shows which manager handles which queue and relative workload distribution.
-     *
-     * @return array<string, mixed>
      */
-    public function getWorkerTypeBreakdown(): array;
+    public function getWorkerTypeBreakdown(): WorkerTypeBreakdown;
 
-    /**
-     * @return array<string, mixed>
-     */
-    public function getQueueInfraData(): array;
+    public function getQueueInfraData(): QueueInfraData;
 
     /**
      * SLA compliance per queue, using autoscale config targets when available.
      * Falls back to a default 30s target if autoscale is not configured.
-     *
-     * @return array<string, mixed>
      */
-    public function getSlaData(): array;
+    public function getSlaData(): SlaData;
 
-    /**
-     * @return array<string, mixed>
-     */
-    public function getScalingData(): array;
+    public function getScalingData(): ScalingData;
 
-    /**
-     * @return array<string, mixed>
-     */
-    public function getCapacityData(): array;
+    public function getCapacityData(): CapacityData;
 
     /**
      * Cluster orchestration data for v3 autoscale. Returns null when not available.
-     *
-     * @return array<string, mixed>|null
      */
-    public function getClusterData(): ?array;
+    public function getClusterData(): ?ClusterData;
 
     /**
      * Live cluster state from autoscale v3 Redis heartbeats.
      * Returns real-time per-host resource data when available.
-     *
-     * @return array<string, mixed>|null
      */
-    public function getLiveClusterState(): ?array;
+    public function getLiveClusterState(): ?LiveClusterState;
 
     /**
      * Scaling decisions for one queue in chronological order, for the
      * dashboard's scaling timeline chart, plus the worker range observed
      * in the window.
-     *
-     * @return array{
-     *     events: array<int, array{t: string, current_workers: int, target_workers: int, action: string, reason: string}>,
-     *     worker_range: array{min: int|null, max: int|null}
-     * }
      */
-    public function getScalingTimeline(string $queue, int $minutes = 60): array;
+    public function getScalingTimeline(string $queue, int $minutes = 60): ScalingTimeline;
 }

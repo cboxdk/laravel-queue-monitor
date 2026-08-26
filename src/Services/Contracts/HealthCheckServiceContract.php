@@ -4,23 +4,21 @@ declare(strict_types=1);
 
 namespace Cbox\LaravelQueueMonitor\Services\Contracts;
 
+use Cbox\LaravelQueueMonitor\DataTransferObjects\HealthCheckResult;
+use Cbox\LaravelQueueMonitor\DataTransferObjects\ReadinessResult;
 use Illuminate\Database\Connection;
 
 interface HealthCheckServiceContract
 {
     /**
      * Perform comprehensive health check
-     *
-     * @return array{status: string, checks: array<string, array<string, mixed>>}
      */
-    public function check(): array;
+    public function check(): HealthCheckResult;
 
     /**
      * Check production readiness configuration.
-     *
-     * @return array{status: string, checks: array<string, array<string, mixed>>, timestamp: string}
      */
-    public function readiness(): array;
+    public function readiness(): ReadinessResult;
 
     /**
      * Resolve the physical name of the monitor jobs table on a connection.

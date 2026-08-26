@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Cbox\LaravelQueueMonitor\Services;
 
+use Cbox\LaravelQueueMonitor\DataTransferObjects\AlertEntry;
 use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\Models\JobMonitor;
 use Cbox\LaravelQueueMonitor\Services\Contracts\AlertingServiceContract;
@@ -14,7 +15,7 @@ final class AlertingService implements AlertingServiceContract
     /**
      * Check for alert conditions
      *
-     * @return array<string, array{severity: string, message: string, count: int}>
+     * @return array<string, AlertEntry>
      */
     public function checkAlertConditions(): array
     {
@@ -31,11 +32,11 @@ final class AlertingService implements AlertingServiceContract
         // Check for stuck jobs
         $stuck = QueryBuilderHelper::stuck($stuckMinutes)->count();
         if ($stuck > 0) {
-            $alerts['stuck_jobs'] = [
-                'severity' => 'warning',
-                'message' => "{$stuck} jobs stuck in processing for > {$stuckMinutes} minutes",
-                'count' => $stuck,
-            ];
+            $alerts['stuck_jobs'] = new AlertEntry(
+                severity: 'warning',
+                message: "{$stuck} jobs stuck in processing for > {$stuckMinutes} minutes",
+                count: $stuck,
+            );
         }
 
         // Check error rate
@@ -44,27 +45,27 @@ final class AlertingService implements AlertingServiceContract
         $errorRate = $recentTotal > 0 ? ($recentFailed / $recentTotal) * 100 : 0;
 
         if ($errorRate > $errorCritical) {
-            $alerts['high_error_rate'] = [
-                'severity' => 'critical',
-                'message' => sprintf('Error rate %.2f%% exceeds threshold (%s%%)', $errorRate, rtrim(rtrim(sprintf('%.1f', $errorCritical), '0'), '.')),
-                'count' => $recentFailed,
-            ];
+            $alerts['high_error_rate'] = new AlertEntry(
+                severity: 'critical',
+                message: sprintf('Error rate %.2f%% exceeds threshold (%s%%)', $errorRate, rtrim(rtrim(sprintf('%.1f', $errorCritical), '0'), '.')),
+                count: $recentFailed,
+            );
         } elseif ($errorRate > $errorWarn) {
-            $alerts['elevated_error_rate'] = [
-                'severity' => 'warning',
-                'message' => sprintf('Error rate %.2f%% elevated (threshold: %s%%)', $errorRate, rtrim(rtrim(sprintf('%.1f', $errorWarn), '0'), '.')),
-                'count' => $recentFailed,
-            ];
+            $alerts['elevated_error_rate'] = new AlertEntry(
+                severity: 'warning',
+                message: sprintf('Error rate %.2f%% elevated (threshold: %s%%)', $errorRate, rtrim(rtrim(sprintf('%.1f', $errorWarn), '0'), '.')),
+                count: $recentFailed,
+            );
         }
 
         // Check for high backlog
         $queued = JobMonitor::where('status', JobStatus::QUEUED)->count();
         if ($queued > $backlogThreshold) {
-            $alerts['high_backlog'] = [
-                'severity' => 'warning',
-                'message' => "{$queued} jobs queued (threshold: {$backlogThreshold})",
-                'count' => $queued,
-            ];
+            $alerts['high_backlog'] = new AlertEntry(
+                severity: 'warning',
+                message: "{$queued} jobs queued (threshold: {$backlogThreshold})",
+                count: $queued,
+            );
         }
 
         // Check for slow jobs
@@ -73,11 +74,11 @@ final class AlertingService implements AlertingServiceContract
             ->count();
 
         if ($slowJobs > 10) {
-            $alerts['slow_jobs'] = [
-                'severity' => 'info',
-                'message' => "{$slowJobs} jobs took > 30 seconds today",
-                'count' => $slowJobs,
-            ];
+            $alerts['slow_jobs'] = new AlertEntry(
+                severity: 'info',
+                message: "{$slowJobs} jobs took > 30 seconds today",
+                count: $slowJobs,
+            );
         }
 
         return $alerts;
@@ -86,16 +87,13 @@ final class AlertingService implements AlertingServiceContract
     /**
      * Get critical alerts only
      *
-     * @return array<string, array{severity: string, message: string, count: int}>
+     * @return array<string, AlertEntry>
      */
     public function getCriticalAlerts(): array
     {
-        /** @var array<string, array{severity: string, message: string, count: int}> $alerts */
-        $alerts = collect($this->checkAlertConditions())
-            ->filter(fn ($alert) => $alert['severity'] === 'critical')
+        return collect($this->checkAlertConditions())
+            ->filter(fn (AlertEntry $alert): bool => $alert->severity === 'critical')
             ->all();
-
-        return $alerts;
     }
 
     /**

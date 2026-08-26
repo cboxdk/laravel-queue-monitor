@@ -517,7 +517,10 @@ class QueueMonitorDashboardCommand extends Command
 
             try {
                 $alertingService = app(AlertingServiceContract::class);
-                $this->alertsData = $alertingService->checkAlertConditions();
+                $this->alertsData = array_map(
+                    static fn ($alert): array => $alert->toArray(),
+                    $alertingService->checkAlertConditions(),
+                );
             } catch (\Throwable) {
                 $this->alertsData = [];
             }
@@ -537,7 +540,7 @@ class QueueMonitorDashboardCommand extends Command
         if ($this->currentView === 4 && ($this->healthData === null || $now - $this->healthLastFetched > 10)) {
             try {
                 $healthService = app(HealthCheckServiceContract::class);
-                $this->healthData = $healthService->check();
+                $this->healthData = $healthService->check()->toArray();
                 $this->healthData['score'] = $healthService->getHealthScore();
                 $this->healthLastFetched = $now;
             } catch (\Throwable) {
@@ -565,11 +568,11 @@ class QueueMonitorDashboardCommand extends Command
             try {
                 $infraService = app(InfrastructureServiceContract::class);
                 $this->infrastructureData = [
-                    'workers' => $infraService->getWorkerData(),
-                    'worker_types' => $infraService->getWorkerTypeBreakdown(),
-                    'sla' => $infraService->getSlaData(),
-                    'scaling' => $infraService->getScalingData(),
-                    'capacity' => $infraService->getCapacityData(),
+                    'workers' => $infraService->getWorkerData()->toArray(),
+                    'worker_types' => $infraService->getWorkerTypeBreakdown()->toArray(),
+                    'sla' => $infraService->getSlaData()->toArray(),
+                    'scaling' => $infraService->getScalingData()->toArray(),
+                    'capacity' => $infraService->getCapacityData()->toArray(),
                 ];
                 $this->infraLastFetched = $now;
             } catch (\Throwable) {
