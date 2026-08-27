@@ -32,3 +32,6 @@ phpstan.neon
 phpunit.xml
 testbench.yaml
 yarn-error.log
+
+# Local agent worktrees and session data
+.claude/
