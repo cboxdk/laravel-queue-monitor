@@ -90,6 +90,23 @@ test('job detail endpoint returns full job with payload and retry chain', functi
     expect($response->json('payload.password'))->toBe('*****');
 });
 
+test('job detail redacts secrets in the exception message and trace', function () {
+    config(['queue-monitor.api.sensitive_keys' => ['password', 'token']]);
+
+    $job = JobMonitor::factory()->failed()->create([
+        'exception_message' => 'SQLSTATE[HY000]: password=hunter2 rejected',
+        'exception_trace' => base_path().'/app/Jobs/Charge.php(9): auth(token=sk_live_secret)',
+    ]);
+
+    $response = getJson(route('queue-monitor.dashboard.job.detail', $job->uuid));
+
+    $response->assertOk();
+    expect($response->json('exception.message'))->not->toContain('hunter2');
+    expect($response->json('exception.message'))->toContain('password=*****');
+    expect($response->json('exception.trace'))->not->toContain('sk_live_secret');
+    expect($response->json('exception.trace'))->toContain('token=*****');
+});
+
 test('job detail returns 404 for unknown uuid', function () {
     $response = getJson(route('queue-monitor.dashboard.job.detail', 'nonexistent'));
 

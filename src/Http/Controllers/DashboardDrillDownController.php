@@ -109,13 +109,16 @@ class DashboardDrillDownController extends Controller
             // Throughput (per-minute for this entity)
             $throughput = $this->statsRepository->computeThroughputByMinute(60, [$column => $value]);
 
+            /** @var array<string> $sensitiveKeys */
+            $sensitiveKeys = config('queue-monitor.api.sensitive_keys', []);
+
             // Recent jobs (last 20) with identifiable summary from payload
             $recentJobs = $this->jobsTable()
                 ->where($column, $value)
                 ->orderByDesc('queued_at')
                 ->limit(20)
                 ->get()
-                ->map(function ($job) {
+                ->map(function ($job) use ($sensitiveKeys) {
                     $summary = $this->extractJobSummary($job->payload, $job->display_name);
 
                     return [
@@ -128,7 +131,7 @@ class DashboardDrillDownController extends Controller
                         'server' => $job->server_name,
                         'duration_ms' => $job->duration_ms !== null ? (int) $job->duration_ms : null,
                         'queued_at' => $job->queued_at,
-                        'error' => $job->exception_message,
+                        'error' => PayloadRedactor::redactString($job->exception_message, $sensitiveKeys),
                     ];
                 })
                 ->values()

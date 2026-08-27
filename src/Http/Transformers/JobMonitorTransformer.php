@@ -12,9 +12,10 @@ final class JobMonitorTransformer
     /**
      * Transform a job for list views (overview, jobs tab).
      *
+     * @param  array<string>  $sensitiveKeys
      * @return array<string, mixed>
      */
-    public static function toListArray(JobMonitor $job): array
+    public static function toListArray(JobMonitor $job, array $sensitiveKeys = []): array
     {
         return [
             'uuid' => $job->uuid,
@@ -43,7 +44,7 @@ final class JobMonitorTransformer
             'queued_at' => $job->queued_at->toIso8601String(),
             'started_at' => $job->started_at?->toIso8601String(),
             'completed_at' => $job->completed_at?->toIso8601String(),
-            'error' => $job->exception_message,
+            'error' => PayloadRedactor::redactString($job->exception_message, $sensitiveKeys),
             'is_failed' => $job->isFailed(),
         ];
     }
@@ -111,9 +112,10 @@ final class JobMonitorTransformer
     /**
      * Transform a job for the retry chain list.
      *
+     * @param  array<string>  $sensitiveKeys
      * @return array<string, mixed>
      */
-    public static function toRetryChainArray(JobMonitor $job, string $currentUuid): array
+    public static function toRetryChainArray(JobMonitor $job, string $currentUuid, array $sensitiveKeys = []): array
     {
         return [
             'uuid' => $job->uuid,
@@ -130,8 +132,8 @@ final class JobMonitorTransformer
             'started_at' => $job->started_at?->toIso8601String(),
             'completed_at' => $job->completed_at?->toIso8601String(),
             'exception_class' => $job->exception_class,
-            'exception_message' => $job->exception_message,
-            'exception_trace' => PayloadRedactor::redactTrace($job->exception_trace),
+            'exception_message' => PayloadRedactor::redactString($job->exception_message, $sensitiveKeys),
+            'exception_trace' => PayloadRedactor::redactTrace($job->exception_trace, $sensitiveKeys),
             'wait_time_ms' => $job->started_at !== null
                 ? (int) $job->queued_at->diffInMilliseconds($job->started_at)
                 : null,
