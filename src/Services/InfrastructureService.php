@@ -307,14 +307,16 @@ final class InfrastructureService implements InfrastructureServiceContract
         $targets = [];
 
         // Default SLA from autoscale defaults
-        if (isset($defaults['max_pickup_time_seconds'])) {
-            $targets['*'] = (int) $defaults['max_pickup_time_seconds'];
+        $defaultPickup = $defaults['max_pickup_time_seconds'] ?? null;
+        if (is_numeric($defaultPickup)) {
+            $targets['*'] = (int) $defaultPickup;
         }
 
         // Per-queue overrides
         foreach ($queues as $queueKey => $queueConfig) {
-            if (is_array($queueConfig) && isset($queueConfig['max_pickup_time_seconds'])) {
-                $targets[(string) $queueKey] = (int) $queueConfig['max_pickup_time_seconds'];
+            $queuePickup = is_array($queueConfig) ? ($queueConfig['max_pickup_time_seconds'] ?? null) : null;
+            if (is_numeric($queuePickup)) {
+                $targets[(string) $queueKey] = (int) $queuePickup;
             }
         }
 
@@ -518,10 +520,10 @@ final class InfrastructureService implements InfrastructureServiceContract
                 ->orderByDesc('created_at')
                 ->first();
 
-            /** @var string $clusterId */
+            $fallbackClusterId = ClusterEvent::orderByDesc('created_at')->value('cluster_id');
             $clusterId = $latestPresence !== null
-                ? $latestPresence->cluster_id
-                : (string) (ClusterEvent::orderByDesc('created_at')->value('cluster_id') ?? 'unknown');
+                ? (string) $latestPresence->cluster_id
+                : (is_string($fallbackClusterId) ? $fallbackClusterId : 'unknown');
 
             // Active managers: started but not yet stopped (last 24h window)
             // A manager is active if its latest start event is more recent than its latest stop event.
@@ -897,9 +899,12 @@ final class InfrastructureService implements InfrastructureServiceContract
             $supervisors = $supervisorRepo->all();
             $total = 0;
             foreach ($supervisors as $sup) {
-                /** @var array<string, int> $processes */
                 $processes = (array) (((array) $sup)['processes'] ?? []);
-                $total += (int) collect($processes)->sum();
+                foreach ($processes as $count) {
+                    if (is_numeric($count)) {
+                        $total += (int) $count;
+                    }
+                }
             }
 
             return $total;
