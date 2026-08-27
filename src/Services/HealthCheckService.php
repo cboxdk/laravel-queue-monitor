@@ -26,9 +26,11 @@ final class HealthCheckService implements HealthCheckServiceContract
         $cachePrefix = config('queue-monitor.cache.prefix', 'queue_monitor_');
 
         if (config('queue-monitor.cache.enabled', true)) {
-            /** @var HealthCheckResult|null $cached */
             $cached = Cache::get($cachePrefix.'health_check');
-            if ($cached !== null) {
+            // A HealthCheckResult serialized by a previous release comes back as
+            // an __PHP_Incomplete_Class after a deploy; treat it as a miss and
+            // recompute rather than returning it into the strict return type.
+            if ($cached instanceof HealthCheckResult) {
                 return $cached;
             }
         }
