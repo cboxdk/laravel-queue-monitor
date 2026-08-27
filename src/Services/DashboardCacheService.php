@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Cbox\LaravelQueueMonitor\Services;
 
 use Cbox\LaravelQueueMonitor\Services\Contracts\DashboardCacheServiceContract;
+use Composer\InstalledVersions;
 use Illuminate\Contracts\Cache\Repository;
 use Illuminate\Support\Facades\Cache;
 
@@ -64,7 +65,10 @@ final class DashboardCacheService implements DashboardCacheServiceContract
         $fullKey = $this->scopedKey($key);
         $cached = $cache->get($fullKey);
 
-        if ($cached !== null) {
+        // A value serialized by a previous release can come back as an
+        // __PHP_Incomplete_Class (or hold one) when its class no longer matches;
+        // treat that as a miss and recompute rather than returning a broken value.
+        if ($cached !== null && ! self::isStaleCache($cached)) {
             return $cached;
         }
 
@@ -72,6 +76,27 @@ final class DashboardCacheService implements DashboardCacheServiceContract
         $cache->put($fullKey, $value, $ttl ?? $cacheTtl);
 
         return $value;
+    }
+
+    /**
+     * Whether a cached value is (or shallowly contains) an incomplete class —
+     * the signature of a value serialized by an incompatible earlier release.
+     */
+    public static function isStaleCache(mixed $value): bool
+    {
+        if ($value instanceof \__PHP_Incomplete_Class) {
+            return true;
+        }
+
+        if (is_array($value)) {
+            foreach ($value as $item) {
+                if ($item instanceof \__PHP_Incomplete_Class) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     private function version(): int
@@ -96,7 +121,28 @@ final class DashboardCacheService implements DashboardCacheServiceContract
         /** @var string $prefix */
         $prefix = config('queue-monitor.cache.prefix', 'queue_monitor_');
 
-        return $prefix;
+        // Namespace the cache by the installed package release. Cached values
+        // now include typed value objects, which serialize as objects; a
+        // persistent cache (redis/database) outlives a deploy, and a value
+        // object serialized by a previous release unserializes to
+        // __PHP_Incomplete_Class and fails the new strict return types. Keying
+        // by the release orphans every pre-deploy entry so nothing stale is
+        // ever read back.
+        return $prefix.'r'.self::releaseFingerprint().':';
+    }
+
+    private static function releaseFingerprint(): string
+    {
+        if (class_exists(InstalledVersions::class)) {
+            $reference = InstalledVersions::getReference('cboxdk/laravel-queue-monitor')
+                ?? InstalledVersions::getVersion('cboxdk/laravel-queue-monitor');
+
+            if (is_string($reference) && $reference !== '') {
+                return substr(hash('xxh128', $reference), 0, 12);
+            }
+        }
+
+        return 'dev';
     }
 
     private function cacheStore(): Repository

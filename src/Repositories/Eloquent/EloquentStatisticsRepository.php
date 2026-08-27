@@ -17,6 +17,7 @@ use Cbox\LaravelQueueMonitor\DataTransferObjects\ThroughputBucket;
 use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\StatisticsRepositoryContract;
 use Cbox\LaravelQueueMonitor\Services\Contracts\DashboardCacheServiceContract;
+use Cbox\LaravelQueueMonitor\Services\DashboardCacheService;
 use Cbox\LaravelQueueMonitor\Utilities\DatabaseExpressionHelper;
 use Illuminate\Contracts\Cache\LockProvider;
 use Illuminate\Database\Query\Builder;
@@ -611,7 +612,7 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
 
         // Return cached value if available
         $cached = $cache->get($fullKey);
-        if ($cached !== null) {
+        if ($cached !== null && ! DashboardCacheService::isStaleCache($cached)) {
             return $cached;
         }
 
@@ -623,7 +624,7 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
             return $cache->lock($lockKey, 15)->block(30, function () use ($cache, $fullKey, $effectiveTtl, $callback) {
                 // Double-check after acquiring lock (another process may have filled it)
                 $cached = $cache->get($fullKey);
-                if ($cached !== null) {
+                if ($cached !== null && ! DashboardCacheService::isStaleCache($cached)) {
                     return $cached;
                 }
 
