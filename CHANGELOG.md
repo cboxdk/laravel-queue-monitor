@@ -2,6 +2,12 @@
 
 All notable changes to `laravel-queue-monitor` will be documented in this file.
 
+## v1.10.2 — Overview declutter - 2026-08-27
+
+### Fixes
+
+- **Declutter the overview.** Each metric tile stacked three decorations around one number — a colored status pill in the head (several, like `Avg` and `Info`, carrying no data), a delta word, and a caption — and the sidebar footer held a "Refresh contract" box written as internal engineering notes rather than operator copy. Every tile is now the label, the value, and a single supporting line that keeps the one status word that actually signals health (Watch / Stable / On target / Ready) with concise context; the redundant head pills and the sidebar box (and its now-dead CSS) are gone.
+
 ## v1.10.1 — Deploy-safe statistics cache - 2026-08-27
 
 ### Fixes
@@ -358,6 +364,7 @@ First stable release of Queue Monitor for Laravel - a comprehensive job monitori
 
 ```bash
 composer require cboxdk/laravel-queue-monitor
+
 
 
 
