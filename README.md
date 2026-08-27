@@ -259,7 +259,7 @@ return [
         'route_prefix' => 'queue-monitor',
         'middleware' => ['web'],
         'assets' => [
-            'mode' => env('QUEUE_MONITOR_ASSET_MODE', 'inline'),
+            'mode' => env('QUEUE_MONITOR_ASSET_MODE', 'served'),
         ],
     ],
 

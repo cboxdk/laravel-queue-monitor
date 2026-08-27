@@ -176,7 +176,7 @@ Control how the built-in dashboard loads CSS and JavaScript:
 'ui' => [
     'assets' => [
         // inline, public, or none
-        'mode' => env('QUEUE_MONITOR_ASSET_MODE', 'inline'),
+        'mode' => env('QUEUE_MONITOR_ASSET_MODE', 'served'),
         'url' => env('QUEUE_MONITOR_ASSET_URL'),
     ],
 ],

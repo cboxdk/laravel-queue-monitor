@@ -164,7 +164,7 @@ return [
     // Web dashboard assets
     'ui' => [
         'assets' => [
-            'mode' => env('QUEUE_MONITOR_ASSET_MODE', 'inline'),
+            'mode' => env('QUEUE_MONITOR_ASSET_MODE', 'served'),
         ],
     ],
 ];

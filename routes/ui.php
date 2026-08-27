@@ -20,6 +20,9 @@ Route::prefix(config('queue-monitor.ui.route_prefix'))
         // Dashboard (tabs use #hash fragments: #jobs, #analytics, #health, #infrastructure, #autoscale)
         Route::get('/', [DashboardController::class, 'index'])->name('queue-monitor.dashboard');
 
+        // Bundled CSS/JS, streamed with a long immutable cache (served asset mode)
+        Route::get('/assets/{file}', [DashboardController::class, 'asset'])->name('queue-monitor.asset');
+
         // Deep-link views (hard-refreshable)
         Route::get('/job/{uuid}', [DashboardController::class, 'show'])->name('queue-monitor.job.view');
         Route::get('/queue/{queue}', [DashboardController::class, 'drillDownView'])->name('queue-monitor.queue.view')->where('queue', '.*');

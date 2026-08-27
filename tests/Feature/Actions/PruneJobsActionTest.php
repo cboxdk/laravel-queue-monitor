@@ -60,8 +60,11 @@ test('prune action enforces max_rows limit', function () {
         'status' => JobStatus::COMPLETED,
     ]);
 
+    // A large day window so time-based pruning never touches these just-created
+    // rows — this test isolates the max_rows cap, so the count must not depend
+    // on how much wall-clock elapsed before the prune ran.
     $action = app(PruneJobsAction::class);
-    $deleted = $action->execute(days: 0, maxRows: 5);
+    $deleted = $action->execute(days: 365, maxRows: 5);
 
     expect($deleted)->toBe(5);
     expect(JobMonitor::count())->toBe(5);
