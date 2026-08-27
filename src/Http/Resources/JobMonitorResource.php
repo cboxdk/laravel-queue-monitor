@@ -60,7 +60,7 @@ class JobMonitorResource extends JsonResource
             'exception' => $this->exception_class ? [
                 'class' => $this->exception_class,
                 'short_class' => $this->getShortExceptionClass(),
-                'message' => $this->exception_message,
+                'message' => PayloadRedactor::redactString($this->exception_message, $sensitiveKeys),
             ] : null,
             'tags' => $this->tags ? PayloadRedactor::redact(
                 $this->tags,

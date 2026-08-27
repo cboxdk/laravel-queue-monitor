@@ -53,8 +53,11 @@ class DashboardMetricsController extends Controller
         /** @var int $perPage */
         $perPage = config('queue-monitor.ui.per_page', 35);
 
+        /** @var array<string> $sensitiveKeys */
+        $sensitiveKeys = config('queue-monitor.api.sensitive_keys', []);
+
         $recentJobs = $this->jobRepository->getRecentJobs($perPage)
-            ->map(fn ($job) => JobMonitorTransformer::toListArray($job));
+            ->map(fn ($job) => JobMonitorTransformer::toListArray($job, $sensitiveKeys));
 
         $chartData = $this->statsRepository->getJobClassStatistics();
 
@@ -83,7 +86,10 @@ class DashboardMetricsController extends Controller
         $jobs = $this->jobRepository->query($filters);
         $total = $this->jobRepository->count($filters);
 
-        $data = $jobs->map(fn ($job) => JobMonitorTransformer::toListArray($job));
+        /** @var array<string> $sensitiveKeys */
+        $sensitiveKeys = config('queue-monitor.api.sensitive_keys', []);
+
+        $data = $jobs->map(fn ($job) => JobMonitorTransformer::toListArray($job, $sensitiveKeys));
 
         // Provide distinct queue names for the filter dropdown (cached to avoid full table scan)
         $availableQueues = Cache::remember($this->dashboardCache->scopedKey('available_queues'), 60, fn () => JobMonitor::query()
@@ -125,7 +131,7 @@ class DashboardMetricsController extends Controller
             : null;
 
         $retryChain = $this->jobRepository->getRetryChain($uuid)
-            ->map(fn ($retryJob) => JobMonitorTransformer::toRetryChainArray($retryJob, $uuid));
+            ->map(fn ($retryJob) => JobMonitorTransformer::toRetryChainArray($retryJob, $uuid, $sensitiveKeys));
 
         return response()->json([
             'job' => JobMonitorTransformer::toDetailArray($job, $sensitiveKeys),
@@ -133,8 +139,8 @@ class DashboardMetricsController extends Controller
             'exception' => $job->isFailed() ? [
                 'class' => $job->exception_class,
                 'short_class' => $job->getShortExceptionClass(),
-                'message' => $job->exception_message,
-                'trace' => PayloadRedactor::redactTrace($job->exception_trace),
+                'message' => PayloadRedactor::redactString($job->exception_message, $sensitiveKeys),
+                'trace' => PayloadRedactor::redactTrace($job->exception_trace, $sensitiveKeys),
             ] : null,
             'retry_chain' => $retryChain,
         ]);
@@ -176,7 +182,7 @@ class DashboardMetricsController extends Controller
 
         return response()->json([
             'payload' => PayloadRedactor::redact($job->payload, $sensitiveKeys),
-            'exception' => PayloadRedactor::redactTrace($job->exception_trace),
+            'exception' => PayloadRedactor::redactTrace($job->exception_trace, $sensitiveKeys),
         ]);
     }
 }
