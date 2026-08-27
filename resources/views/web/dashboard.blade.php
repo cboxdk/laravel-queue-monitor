@@ -173,26 +173,6 @@
             flex: 0 0 auto;
         }
 
-        .qm-sidebar-footer {
-            margin-top: auto;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            padding: 12px;
-            background: rgba(255, 255, 255, 0.04);
-        }
-
-        .qm-sidebar-footer strong {
-            display: block;
-            font-size: 13px;
-            margin-bottom: 6px;
-        }
-
-        .qm-sidebar-footer span {
-            display: block;
-            color: #9aa6b6;
-            font-size: 12px;
-            line-height: 1.45;
-        }
 
         .qm-main {
             min-width: 0;
@@ -897,8 +877,7 @@
 
             .qm-brand div:last-child,
             .qm-nav-title,
-            .qm-nav-item span,
-            .qm-sidebar-footer {
+            .qm-nav-item span {
                 display: none;
             }
 
@@ -971,8 +950,7 @@
 
             .qm-sidebar .qm-brand div:last-child,
             .qm-sidebar .qm-nav-title,
-            .qm-sidebar .qm-nav-item span,
-            .qm-sidebar .qm-sidebar-footer {
+            .qm-sidebar .qm-nav-item span {
                 display: block;
             }
 
@@ -1256,11 +1234,6 @@
                     </button>
                 </template>
             </nav>
-
-            <div class="qm-sidebar-footer">
-                <strong>Refresh contract</strong>
-                <span>Live views update one active surface at a time. Paused mode freezes all panels consistently.</span>
-            </div>
         </aside>
 
         <div class="qm-main">
@@ -1311,29 +1284,29 @@
             <div x-show="activeTab === 'overview'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0">
                 <div class="qm-metrics">
                     <article class="qm-metric">
-                        <div class="qm-metric-head"><span>Failure rate</span><span class="qm-status qm-bad" x-text="formatNumber(overview.stats.failed || 0)">0</span></div>
+                        <div class="qm-metric-head"><span>Failure rate</span></div>
                         <div class="qm-metric-value" x-text="failureRateLabel()">0%</div>
-                        <div class="qm-metric-foot"><span class="qm-delta" :class="(overview.stats.failed || 0) > 0 ? 'qm-bad' : 'qm-good'" x-text="(overview.stats.failed || 0) > 0 ? 'Watch' : 'Clean'">Clean</span><span>last 24h failure share</span></div>
+                        <div class="qm-metric-foot"><span class="qm-delta" :class="(overview.stats.failed || 0) > 0 ? 'qm-bad' : 'qm-good'" x-text="(overview.stats.failed || 0) > 0 ? 'Watch' : 'Clean'">Clean</span><span x-text="formatNumber(overview.stats.failed || 0) + ' failed, last 24h'">0 failed, last 24h</span></div>
                     </article>
                     <article class="qm-metric">
-                        <div class="qm-metric-head"><span>Backlog</span><span class="qm-status" :class="queueBacklogSeverity()" x-text="queueBacklogLabel()">OK</span></div>
+                        <div class="qm-metric-head"><span>Backlog</span></div>
                         <div class="qm-metric-value" x-text="formatNumber(overview.stats.queue_backlog || 0)">0</div>
-                        <div class="qm-metric-foot"><span class="qm-delta" :class="queueBacklogSeverity()" x-text="queueBacklogTrendLabel()">Stable</span><span>queued across tracked queues</span></div>
+                        <div class="qm-metric-foot"><span class="qm-delta" :class="queueBacklogSeverity()" x-text="queueBacklogTrendLabel()">Stable</span><span>queued</span></div>
                     </article>
                     <article class="qm-metric">
-                        <div class="qm-metric-head"><span>Queue latency</span><span class="qm-status qm-info">Avg</span></div>
+                        <div class="qm-metric-head"><span>Queue latency</span></div>
                         <div class="qm-metric-value" x-text="formatDuration(overview.stats.avg_duration_ms)">0ms</div>
                         <div class="qm-metric-foot"><span class="qm-delta" :class="(overview.stats.avg_duration_ms || 0) > 8000 ? 'qm-warn' : 'qm-good'" x-text="(overview.stats.avg_duration_ms || 0) > 8000 ? 'Above target' : 'On target'">On target</span><span>average runtime</span></div>
                     </article>
                     <article class="qm-metric">
-                        <div class="qm-metric-head"><span>Workers</span><span class="qm-status" :class="workerStatusTone()" x-text="workerStatusLabel()">Healthy</span></div>
+                        <div class="qm-metric-head"><span>Workers</span></div>
                         <div class="qm-metric-value" x-text="workerCountLabel()">-</div>
-                        <div class="qm-metric-foot"><span class="qm-delta" :class="autoscaleStatusTone()" x-text="autoscaleStatusLabel()">Ready</span><span>autoscale signal</span></div>
+                        <div class="qm-metric-foot"><span class="qm-delta" :class="autoscaleStatusTone()" x-text="autoscaleStatusLabel()">Ready</span></div>
                     </article>
                     <article class="qm-metric">
-                        <div class="qm-metric-head"><span>Throughput</span><span class="qm-status" :class="throughputTotal() > 0 ? 'qm-good' : 'qm-info'" x-text="throughputTotal() > 0 ? 'Active' : 'Idle'">Idle</span></div>
+                        <div class="qm-metric-head"><span>Throughput</span></div>
                         <div class="qm-metric-value" x-text="formatCompact(throughputTotal())">0</div>
-                        <div class="qm-metric-foot"><span class="qm-delta qm-good" x-text="formatNumber(overview.stats.total || 0)">0</span><span>jobs in current window</span></div>
+                        <div class="qm-metric-foot"><span x-text="formatNumber(overview.stats.total || 0) + ' jobs, current window'">0 jobs, current window</span></div>
                     </article>
                 </div>
 
