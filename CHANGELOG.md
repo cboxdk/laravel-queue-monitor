@@ -2,6 +2,12 @@
 
 All notable changes to `laravel-queue-monitor` will be documented in this file.
 
+## v1.10.1 — Deploy-safe statistics cache - 2026-08-27
+
+### Fixes
+
+- **Survive a deploy: the dashboard no longer 500s on cached value objects from a previous release.** The typed read models introduced in v1.10.0 cache value objects, which serialize as objects. A persistent cache (redis or database) outlives a deploy, so a `GlobalStatistics` — or any cached value object — serialized by the previous release unserialized to `__PHP_Incomplete_Class` in the new one, failing its strict return type with a `TypeError` and returning 500 on every `metrics`/`health` poll. The cache key now includes the installed package release, so a deploy orphans every pre-deploy entry, and every cache read treats an incomplete class as a miss and recomputes — both deploy- and store-agnostic, so it self-heals even where `cache:clear` did not reach the store the dashboard uses.
+
 ## v1.10.0 — Contracts-first and typed read models - 2026-08-26
 
 An internal architecture pass with no change to any JSON response, dashboard, CLI, or configuration behaviour — every existing test passes unchanged, which is the guarantee that output is byte-for-key identical.
@@ -352,6 +358,7 @@ First stable release of Queue Monitor for Laravel - a comprehensive job monitori
 
 ```bash
 composer require cboxdk/laravel-queue-monitor
+
 
 
 
