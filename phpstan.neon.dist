@@ -3,5 +3,6 @@ parameters:
     paths:
         - src
         - database
+        - tests/Fixtures
     tmpDir: build/phpstan
     reportUnmatchedIgnoredErrors: true

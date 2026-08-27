@@ -104,6 +104,41 @@ $job = JobMonitor::factory()->create([
 ]);
 ```
 
+## Asserting monitoring in your own app
+
+Queue Monitor ships an `InteractsWithQueueMonitor` trait so your app's feature
+tests can assert what was recorded without querying the tables by hand. Use it
+in a test that migrates the package tables (for example with `RefreshDatabase`):
+
+```php
+use Cbox\LaravelQueueMonitor\Testing\InteractsWithQueueMonitor;
+
+uses(InteractsWithQueueMonitor::class);
+
+it('records the invoice job', function () {
+    dispatch(new SendInvoice($order));
+
+    $this->assertJobRecorded(SendInvoice::class);
+    $this->assertJobRecorded(SendInvoice::class, times: 1);
+    $this->assertJobRecordedWithStatus(SendInvoice::class, 'completed');
+});
+```
+
+Available assertions:
+
+| Method | Asserts |
+| --- | --- |
+| `assertJobRecorded($class, $times = null)` | the job class was recorded (optionally an exact count) |
+| `assertJobNotRecorded($class)` | the job class was never recorded |
+| `assertNothingRecorded()` | nothing was recorded at all |
+| `assertJobRecordedWithStatus($class, $status)` | a record exists with that `JobStatus` (enum or string) |
+| `assertJobCompleted($class)` | a record exists with the completed status |
+| `assertJobFailed($class)` | a record exists that failed or timed out |
+| `recordedJobs($class = null)` | the recorded `JobMonitor` models as a collection |
+
+The assertions read the real recorded state, so they work end-to-end through the
+package's own listeners and actions — no fake or stub to keep in sync.
+
 ## Writing Tests
 
 ### Unit Tests
