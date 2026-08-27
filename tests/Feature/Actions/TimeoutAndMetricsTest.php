@@ -3,7 +3,6 @@
 declare(strict_types=1);
 
 use Cbox\LaravelQueueMonitor\Actions\Core\RecordJobTimeoutAction;
-use Cbox\LaravelQueueMonitor\Actions\Core\UpdateJobMetricsAction;
 use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\Models\JobMonitor;
 use Illuminate\Contracts\Queue\Job;
@@ -98,20 +97,4 @@ test('timeout action handles job without started_at', function () {
     $monitor->refresh();
     expect($monitor->status)->toBe(JobStatus::TIMEOUT);
     expect($monitor->duration_ms)->toBeNull();
-});
-
-test('update metrics action returns early when disabled', function () {
-    config()->set('queue-monitor.enabled', false);
-
-    $action = app(UpdateJobMetricsAction::class);
-    $action->execute(['cpu_time_ms' => 100], 'some-job');
-
-    expect(true)->toBeTrue();
-});
-
-test('update metrics action returns early when job not found', function () {
-    $action = app(UpdateJobMetricsAction::class);
-    $action->execute(['cpu_time_ms' => 100], 'nonexistent');
-
-    expect(true)->toBeTrue();
 });

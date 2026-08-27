@@ -73,23 +73,26 @@ Fired when a job exceeds its timeout limit.
 
 ## Queue-Metrics Events (Subscriber)
 
-### MetricsRecorded
+### JobMetricsCompleted / JobMetricsFailed
 
-Fired by laravel-queue-metrics when job metrics are recorded.
+Fired by laravel-queue-metrics per job when metrics are recorded.
 
-**Subscriber**: `QueueMetricsSubscriber`
-**Action**: `UpdateJobMetricsAction`
+**Subscriber**: `QueueMetricsSubscriber` (`handleJobMetricsCompleted` /
+`handleJobMetricsFailed`)
 **Data Enriched**:
 - CPU time (milliseconds)
 - Memory peak (megabytes)
-- File descriptors (if available)
+- Worker memory limit (megabytes, if available)
 
 **Event Structure**:
 ```php
-use Cbox\LaravelQueueMetrics\Events\MetricsRecorded;
+use Cbox\LaravelQueueMetrics\Events\JobMetricsCompleted;
 
-// Event contains:
-$event->metricsData; // JobMetricsData DTO
+// Event carries:
+$event->jobId;
+$event->cpuTimeMs;
+$event->memoryMb;
+$event->workerMemoryLimitMb;
 ```
 
 ## Package Events

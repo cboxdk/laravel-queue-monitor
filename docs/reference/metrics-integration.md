@@ -13,15 +13,13 @@ Queue Monitor is built on top of [laravel-queue-metrics](https://github.com/cbox
 The integration happens through event subscription:
 
 ```
-laravel-queue-metrics fires MetricsRecorded event
+laravel-queue-metrics fires JobMetricsCompleted / JobMetricsFailed
               ↓
 QueueMetricsSubscriber listens
               ↓
-UpdateJobMetricsAction extracts data
-              ↓
 JobMonitorRepository updates job record
               ↓
-CPU, memory, FD metrics stored
+CPU, memory metrics stored
 ```
 
 ## Metrics Captured
@@ -76,26 +74,24 @@ ProcessMetrics::start("job_{$jobId}");
 ```php
 // Job finishes executing
 
-// queue-metrics stops tracking and fires MetricsRecorded
-ProcessMetrics::stop("job_{$jobId}");
-event(new MetricsRecorded($metricsData));
+// queue-metrics fires a per-job metrics event
+event(new JobMetricsCompleted($jobId, $cpuTimeMs, $memoryMb, $workerMemoryLimitMb));
 
-// queue-monitor receives event
-QueueMetricsSubscriber::handleMetricsRecorded($event);
-
-// Metrics extracted and stored
-UpdateJobMetricsAction::execute($metricsData, $jobId);
+// queue-monitor's subscriber handles it
+QueueMetricsSubscriber::handleJobMetricsCompleted($event);
 ```
 
 ### 3. Data Storage
 
-The `UpdateJobMetricsAction` extracts relevant metrics from the `JobMetricsData` DTO and updates the job record:
+`QueueMetricsSubscriber` subscribes to `JobMetricsCompleted` and
+`JobMetricsFailed` (from `cboxdk/laravel-queue-metrics`) and updates the job
+record with the metrics carried on the event:
 
 ```php
 $this->repository->update($jobMonitor->uuid, [
-    'cpu_time_ms' => $metricsData->execution->cpuTimeMs,
-    'memory_peak_mb' => $metricsData->memory->peakMb,
-    'file_descriptors' => $metricsData->fileDescriptors ?? null,
+    'cpu_time_ms' => $cpuTimeMs,
+    'memory_peak_mb' => $memoryMb,
+    'worker_memory_limit_mb' => $workerMemoryLimitMb,
 ]);
 ```
 
@@ -259,8 +255,8 @@ Queue-monitor automatically subscribes to metrics events:
 
 3. **Verify events are firing**:
    ```php
-   Event::listen(MetricsRecorded::class, function($event) {
-       Log::info('Metrics recorded', ['data' => $event->metricsData]);
+   Event::listen(JobMetricsCompleted::class, function ($event) {
+       Log::info('Metrics recorded', ['job' => $event->jobId, 'cpu_ms' => $event->cpuTimeMs]);
    });
    ```
 

@@ -27,7 +27,6 @@ src/
 │   │   ├── RecordJobCompletedAction
 │   │   ├── RecordJobFailedAction
 │   │   ├── RecordJobTimeoutAction
-│   │   ├── UpdateJobMetricsAction
 │   │   ├── CancelJobAction
 │   │   └── PruneJobsAction
 │   ├── Analytics/                # Analytics calculations
@@ -119,11 +118,10 @@ src/
                └→ TagRepository::storeTags()
 
 4. Metrics Enrichment (async)
-   └→ MetricsRecorded Event (from laravel-queue-metrics)
-      └→ QueueMetricsSubscriber
-         └→ UpdateJobMetricsAction
-            └→ JobMonitorRepository::update()
-               └→ DB: UPDATE cpu_time_ms, memory_peak_mb
+   └→ JobMetricsCompleted / JobMetricsFailed (from laravel-queue-metrics)
+      └→ QueueMetricsSubscriber::handleJobMetricsCompleted()
+         └→ JobMonitorRepository::update()
+            └→ DB: UPDATE cpu_time_ms, memory_peak_mb
 ```
 
 ### Job Replay Flow
@@ -229,8 +227,8 @@ Event::listen(JobReplayRequested::class, function($event) {
 - **JobTimedOut** - When job exceeds timeout
 
 ### Queue-Metrics Events
-- **MetricsRecorded** - When queue-metrics records job metrics
-  - Provides CPU time, memory usage, file descriptors
+- **JobMetricsCompleted / JobMetricsFailed** - When queue-metrics records per-job metrics
+  - Provides CPU time, memory usage, worker memory limit
   - Automatically enriches job monitor records
 
 ### Package Events

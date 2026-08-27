@@ -14,7 +14,6 @@ use Cbox\LaravelQueueMonitor\Actions\Core\RecordJobFailedAction;
 use Cbox\LaravelQueueMonitor\Actions\Core\RecordJobQueuedAction;
 use Cbox\LaravelQueueMonitor\Actions\Core\RecordJobStartedAction;
 use Cbox\LaravelQueueMonitor\Actions\Core\RecordJobTimeoutAction;
-use Cbox\LaravelQueueMonitor\Actions\Core\UpdateJobMetricsAction;
 use Cbox\LaravelQueueMonitor\Actions\Replay\ReplayJobAction;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\JobMonitorRepositoryContract;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\StatisticsRepositoryContract;
@@ -353,7 +352,6 @@ return [
         'record_job_completed' => RecordJobCompletedAction::class,
         'record_job_failed' => RecordJobFailedAction::class,
         'record_job_timeout' => RecordJobTimeoutAction::class,
-        'update_job_metrics' => UpdateJobMetricsAction::class,
         'cancel_job' => CancelJobAction::class,
         'prune_jobs' => PruneJobsAction::class,
 
