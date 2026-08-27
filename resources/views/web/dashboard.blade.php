@@ -354,6 +354,21 @@
             outline-offset: 2px;
         }
 
+        /*
+         * Shared visible focus outline for the Tailwind-styled interactive
+         * controls that would otherwise fall back to the UA default (or none):
+         * sortable table-header sort buttons, pagination buttons, dropdown /
+         * menu triggers, focusable drill cells and rows (role="button" +
+         * tabindex="0"), and the confirm-dialog action buttons.
+         */
+        .qm-content button:focus-visible,
+        .qm-content [role="button"]:focus-visible,
+        .qm-content [tabindex="0"]:focus-visible,
+        [role="dialog"] button:focus-visible {
+            outline: 2px solid var(--qm-blue, #2563eb);
+            outline-offset: 2px;
+        }
+
         .qm-content {
             padding: 24px 28px 34px;
             display: grid;
@@ -1002,6 +1017,11 @@
 
         @media (max-width: 760px) {
             .qm-topbar {
+                /* The stacked topbar grows to ~220px on narrow screens; keeping
+                   it sticky would occlude a quarter of the viewport while
+                   scrolling, so let it scroll away with the content instead. */
+                position: static;
+                top: auto;
                 flex-wrap: wrap;
                 padding: 16px;
             }
@@ -1218,7 +1238,7 @@
     <div class="qm-app">
         <div class="qm-mobile-overlay" :class="{ 'open': mobileMenuOpen }" @click="mobileMenuOpen = false" aria-hidden="true"></div>
 
-        <aside class="qm-sidebar" :class="{ 'open': mobileMenuOpen }" :aria-hidden="isMobile && !mobileMenuOpen ? 'true' : null" :inert="isMobile && !mobileMenuOpen">
+        <aside id="qm-sidebar" x-ref="sidebar" class="qm-sidebar" :class="{ 'open': mobileMenuOpen }" :aria-hidden="isMobile && !mobileMenuOpen ? 'true' : null" :inert="isMobile && !mobileMenuOpen">
             <a :href="dashboardUrl" class="qm-brand">
                 <div class="qm-brand-mark">Q</div>
                 <div>
@@ -1245,7 +1265,7 @@
 
         <div class="qm-main">
             <header class="qm-topbar">
-                <button type="button" class="qm-menu-button" aria-label="Open navigation" :aria-expanded="mobileMenuOpen" @click="mobileMenuOpen = true">
+                <button type="button" class="qm-menu-button" x-ref="menuButton" aria-label="Open navigation" aria-controls="qm-sidebar" aria-haspopup="menu" :aria-expanded="mobileMenuOpen" @click="mobileMenuOpen = true">
                     <svg viewBox="0 0 24 24"><path d="M4 7h16"></path><path d="M4 12h16"></path><path d="M4 17h16"></path></svg>
                 </button>
 
@@ -1271,7 +1291,7 @@
                         <svg x-show="isLive" viewBox="0 0 24 24"><path d="M8 5v14"></path><path d="M16 5v14"></path></svg>
                         <svg x-show="!isLive" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"></path></svg>
                     </button>
-                    <button type="button" class="qm-icon-button" title="Refresh now" aria-label="Refresh now" @click="refreshCurrentView(true)">
+                    <button type="button" class="qm-icon-button" title="Refresh now" aria-label="Refresh now" :aria-busy="anyLoading() || anyRefreshing()" @click="refreshCurrentView(true)">
                         <svg viewBox="0 0 24 24" :class="{ 'animate-spin': anyLoading() || anyRefreshing() }"><path d="M21 12a9 9 0 0 1-15.5 6.2"></path><path d="M3 12A9 9 0 0 1 18.5 5.8"></path><path d="M18 2v4h4"></path><path d="M6 22v-4H2"></path></svg>
                     </button>
                 </div>
@@ -1325,7 +1345,7 @@
                                     <strong>Queue latency and backlog</strong>
                                     <span x-text="'Processing trend over the last ' + chartRangeLabel()">Processing trend over the last hour</span>
                                 </div>
-                                <div class="qm-segmented" aria-label="Time range">
+                                <div class="qm-segmented" role="group" aria-label="Time range">
                                     <button type="button" class="qm-segment" :class="{ active: chartRange === 15 }" @click="setChartRange(15)">15m</button>
                                     <button type="button" class="qm-segment" :class="{ active: chartRange === 60 }" @click="setChartRange(60)">1h</button>
                                     <button type="button" class="qm-segment" :class="{ active: chartRange === 360 }" @click="setChartRange(360)">6h</button>
@@ -1508,7 +1528,7 @@
                             <input type="text" x-model="filters.search" @input.debounce.300ms="resetPaginationAndFetch()" placeholder="Search jobs..." class="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition">
                         </div>
                         <div class="relative" x-data="{ open: false }">
-                            <button @click="open = !open" class="flex items-center gap-2 px-3 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 transition">
+                            <button type="button" @click="open = !open" aria-haspopup="true" :aria-expanded="open" class="flex items-center gap-2 px-3 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 transition">
                                 <span class="text-gray-700">Status</span>
                                 <span x-show="filters.statuses.length" class="inline-flex items-center justify-center h-5 min-w-[20px] px-1 text-[10px] font-bold bg-brand text-white rounded-full" x-text="filters.statuses.length"></span>
                                 <svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
@@ -1523,7 +1543,7 @@
                             </div>
                         </div>
                         <div class="relative" x-data="{ open: false }">
-                            <button @click="open = !open" class="flex items-center gap-2 px-3 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 transition">
+                            <button type="button" @click="open = !open" aria-haspopup="menu" :aria-expanded="open" class="flex items-center gap-2 px-3 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 transition">
                                 <span class="text-gray-700" x-text="filters.queue || 'All Queues'"></span>
                                 <svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
                             </button>
@@ -1547,7 +1567,7 @@
                             More
                         </button>
                         <button x-show="hasActiveFilters()" @click="clearFilters()" class="text-[11px] font-semibold text-red-600 hover:text-red-800 transition">Clear all</button>
-                        <button @click="fetchJobs()" class="inline-flex items-center gap-1.5 px-3 py-2 text-[11px] font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition">
+                        <button type="button" @click="fetchJobs()" :aria-busy="loading.jobs || refreshing.jobs" class="inline-flex items-center gap-1.5 px-3 py-2 text-[11px] font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition">
                             <svg class="h-3.5 w-3.5" :class="(loading.jobs || refreshing.jobs) && 'animate-spin'" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" /></svg>
                             Refresh
                         </button>
@@ -1631,21 +1651,21 @@
                                 </template>
                                 <template x-if="!loading.jobs">
                                     <template x-for="job in jobs.data" :key="job.uuid">
-                                        <tr class="hover:bg-brand-faint/40 cursor-pointer transition-colors" tabindex="0" role="button" @click="openJobView(job.uuid)" @keydown.enter="openJobView(job.uuid)" @keydown.space.prevent="openJobView(job.uuid)">
+                                        <tr class="hover:bg-brand-faint/40 cursor-pointer transition-colors" @click="openJobView(job.uuid)">
                                             <td class="px-4 py-2.5" @click.stop><input type="checkbox" :value="job.uuid" x-model="selectedJobs" class="rounded border-gray-300 text-brand focus:ring-brand"></td>
-                                            <td class="px-4 py-2.5 whitespace-nowrap"><span class="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold" :class="statusClass(job.status?.value)" x-text="job.status?.label"></span></td>
+                                            <td class="px-4 py-2.5 whitespace-nowrap" tabindex="0" role="button" :aria-label="(job.status?.label || 'Job') + ' — inspect ' + (job.job_class || job.uuid)" @click.stop="openJobView(job.uuid)" @keydown.enter.stop="openJobView(job.uuid)" @keydown.space.prevent.stop="openJobView(job.uuid)"><span class="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold" :class="statusClass(job.status?.value)" x-text="job.status?.label"></span></td>
                                             <td class="px-4 py-2.5 whitespace-nowrap">
                                                 <div class="flex items-center gap-1.5">
-                                                    <span class="text-sm font-mono text-brand hover:underline drill-arrow" x-text="job.job_class" @click.stop="openDrillDown('job_class', job.full_job_class || job.job_class)"></span>
+                                                    <span class="text-sm font-mono text-brand hover:underline drill-arrow" role="button" tabindex="0" :aria-label="'Filter by job class ' + (job.full_job_class || job.job_class)" x-text="job.job_class" @click.stop="openDrillDown('job_class', job.full_job_class || job.job_class)" @keydown.enter.stop="openDrillDown('job_class', job.full_job_class || job.job_class)" @keydown.space.prevent.stop="openDrillDown('job_class', job.full_job_class || job.job_class)"></span>
                                                     <span x-show="job.attempt > 1" class="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-semibold rounded-full" :class="job.is_failed ? 'bg-red-100 text-red-800 border border-red-200' : 'bg-amber-100 text-amber-800 border border-amber-200'" x-text="'x' + job.attempt" :title="'Attempt ' + job.attempt + ' of ' + (job.max_attempts || '?')"></span>
                                                 </div>
                                                 <div x-show="job.is_failed && job.error" class="text-[11px] text-red-500 truncate max-w-xs mt-0.5" x-text="job.error"></div>
                                             </td>
-                                            <td class="px-4 py-2.5 whitespace-nowrap text-sm text-brand hover:underline drill-arrow" x-text="job.queue" @click.stop="openDrillDown('queue', job.queue)"></td>
+                                            <td class="px-4 py-2.5 whitespace-nowrap text-sm text-brand hover:underline drill-arrow" role="button" tabindex="0" :aria-label="'Filter by queue ' + job.queue" x-text="job.queue" @click.stop="openDrillDown('queue', job.queue)" @keydown.enter.stop="openDrillDown('queue', job.queue)" @keydown.space.prevent.stop="openDrillDown('queue', job.queue)"></td>
                                             <td class="px-4 py-2.5 whitespace-nowrap text-sm text-gray-500 text-right font-mono tabular-nums" x-text="formatDuration(job.duration_ms)"></td>
                                             <td class="px-4 py-2.5 whitespace-nowrap text-sm text-right font-mono tabular-nums" :class="cpuColor(job.cpu_time_ms, job.duration_ms)" x-text="formatCpu(job.cpu_time_ms, job.duration_ms)"></td>
                                             <td class="px-4 py-2.5 whitespace-nowrap text-sm text-right font-mono tabular-nums" :class="memoryColor(job.memory_peak_mb, job.worker_memory_limit_mb)" x-text="formatMemoryShort(job.memory_peak_mb, job.worker_memory_limit_mb)"></td>
-                                            <td class="px-4 py-2.5 whitespace-nowrap text-[11px] text-brand hover:underline drill-arrow font-mono truncate max-w-[120px]" x-text="job.server" @click.stop="openDrillDown('server', job.server)"></td>
+                                            <td class="px-4 py-2.5 whitespace-nowrap text-[11px] text-brand hover:underline drill-arrow font-mono truncate max-w-[120px]" role="button" tabindex="0" :aria-label="'Filter by server ' + job.server" x-text="job.server" @click.stop="openDrillDown('server', job.server)" @keydown.enter.stop="openDrillDown('server', job.server)" @keydown.space.prevent.stop="openDrillDown('server', job.server)"></td>
                                             <td class="px-4 py-2.5 whitespace-nowrap text-center">
                                                 <span x-show="job.attempt <= 1" class="text-sm text-gray-400">1</span>
                                                 <span x-show="job.attempt > 1" class="inline-flex items-center px-1.5 py-0.5 text-[10px] font-semibold rounded-full" :class="job.is_failed ? 'bg-red-100 text-red-800' : 'bg-amber-100 text-amber-800'" x-text="job.attempt + '/' + (job.max_attempts || '?')"></span>
@@ -1678,7 +1698,7 @@
             <div x-show="activeTab === 'analytics'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0">
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="text-sm font-semibold text-gray-900">Analytics</h3>
-                    <button @click="fetchAnalytics()" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition">
+                    <button type="button" @click="fetchAnalytics()" :aria-busy="loading.analytics || refreshing.analytics" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition">
                         <svg class="h-3.5 w-3.5" :class="(loading.analytics || refreshing.analytics) && 'animate-spin'" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" /></svg>
                         Refresh
                     </button>
@@ -1700,7 +1720,7 @@
                                 <tbody class="divide-y divide-gray-50">
                                     <template x-for="q in (analytics.queues || [])" :key="q.queue">
                                         <tr class="hover:bg-gray-50/60">
-                                            <td class="px-4 py-2.5 text-sm font-medium text-brand hover:underline cursor-pointer drill-arrow" x-text="q.queue" @click="openDrillDown('queue', q.queue)"></td>
+                                            <td class="px-4 py-2.5 text-sm font-medium text-brand hover:underline cursor-pointer drill-arrow" role="button" tabindex="0" :aria-label="'Drill into queue ' + q.queue" x-text="q.queue" @click="openDrillDown('queue', q.queue)" @keydown.enter="openDrillDown('queue', q.queue)" @keydown.space.prevent="openDrillDown('queue', q.queue)"></td>
                                             <td class="px-4 py-2.5 text-sm text-gray-500 text-right tabular-nums" x-text="formatNumber(q.total_jobs)"></td>
                                             <td class="px-4 py-2.5 text-sm text-emerald-600 text-right tabular-nums" x-text="formatNumber(q.completed)"></td>
                                             <td class="px-4 py-2.5 text-sm text-red-600 text-right tabular-nums" x-text="formatNumber(q.failed)"></td>
@@ -1723,7 +1743,7 @@
                                 <tbody class="divide-y divide-gray-50">
                                     <template x-for="s in (analytics.servers || [])" :key="s.server_name">
                                         <tr class="hover:bg-gray-50/60">
-                                            <td class="px-4 py-2.5 text-sm font-mono text-brand hover:underline cursor-pointer drill-arrow" x-text="s.server_name" @click="openDrillDown('server', s.server_name)"></td>
+                                            <td class="px-4 py-2.5 text-sm font-mono text-brand hover:underline cursor-pointer drill-arrow" role="button" tabindex="0" :aria-label="'Drill into server ' + s.server_name" x-text="s.server_name" @click="openDrillDown('server', s.server_name)" @keydown.enter="openDrillDown('server', s.server_name)" @keydown.space.prevent="openDrillDown('server', s.server_name)"></td>
                                             <td class="px-4 py-2.5 text-sm text-gray-500 text-right tabular-nums" x-text="formatNumber(s.total_jobs)"></td>
                                             <td class="px-4 py-2.5 text-sm text-gray-500 text-right tabular-nums" x-text="formatDuration(s.avg_duration_ms)"></td>
                                             <td class="px-4 py-2.5 text-sm text-gray-500 text-right tabular-nums" x-text="formatPercent(s.success_rate)"></td>
@@ -1742,7 +1762,7 @@
                                 <tbody class="divide-y divide-gray-50">
                                     <template x-for="fp in (analytics.failure_patterns?.top_exceptions || [])" :key="fp.exception_class">
                                         <tr class="hover:bg-gray-50/60">
-                                            <td class="px-4 py-2.5 text-sm font-mono text-red-700 cursor-pointer hover:underline truncate max-w-[200px]" x-text="shortClass(fp.exception_class)" @click="filterJobsByException(fp.exception_class)"></td>
+                                            <td class="px-4 py-2.5 text-sm font-mono text-red-700 cursor-pointer hover:underline truncate max-w-[200px]" role="button" tabindex="0" :aria-label="'Filter jobs by exception ' + shortClass(fp.exception_class)" x-text="shortClass(fp.exception_class)" @click="filterJobsByException(fp.exception_class)" @keydown.enter="filterJobsByException(fp.exception_class)" @keydown.space.prevent="filterJobsByException(fp.exception_class)"></td>
                                             <td class="px-4 py-2.5 text-sm text-gray-500 text-right tabular-nums" x-text="formatNumber(fp.count)"></td>
                                             <td class="px-4 py-2.5 text-sm text-gray-500 text-right tabular-nums" x-text="formatNumber(fp.affected_job_classes)"></td>
                                         </tr>
@@ -1759,7 +1779,7 @@
             <div x-show="activeTab === 'health'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0">
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="text-sm font-semibold text-gray-900">System Health</h3>
-                    <button @click="fetchHealth()" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition">
+                    <button type="button" @click="fetchHealth()" :aria-busy="loading.health || refreshing.health" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition">
                         <svg class="h-3.5 w-3.5" :class="(loading.health || refreshing.health) && 'animate-spin'" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" /></svg>
                         Refresh
                     </button>
@@ -1803,7 +1823,7 @@
                                                 </div>
                                                 <template x-for="sj in health.checks[name].details.stuck_jobs" :key="sj.uuid">
                                                     <div class="flex items-center gap-2 text-[11px] bg-red-50 border border-red-100 rounded-lg px-3 py-1.5">
-                                                        <span class="font-mono font-medium text-red-800 cursor-pointer hover:underline" x-text="shortClass(sj.job_class)" @click="openJobView(sj.uuid)"></span>
+                                                        <span class="font-mono font-medium text-red-800 cursor-pointer hover:underline" role="button" tabindex="0" :aria-label="'Inspect stuck job ' + shortClass(sj.job_class)" x-text="shortClass(sj.job_class)" @click="openJobView(sj.uuid)" @keydown.enter="openJobView(sj.uuid)" @keydown.space.prevent="openJobView(sj.uuid)"></span>
                                                         <span class="text-red-600" x-text="'-> ' + sj.queue"></span>
                                                         <span class="text-red-400" x-text="'on ' + sj.server"></span>
                                                         <span class="text-red-400 ml-auto" x-text="'since ' + formatTime(sj.stuck_since)"></span>
@@ -1848,7 +1868,7 @@
             <div x-show="activeTab === 'infrastructure'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0">
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="text-sm font-semibold text-gray-900">Horizon</h3>
-                    <button @click="fetchInfrastructure()" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition">
+                    <button type="button" @click="fetchInfrastructure()" :aria-busy="loading.infrastructure || refreshing.infrastructure" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition">
                         <svg class="h-3.5 w-3.5" :class="(loading.infrastructure || refreshing.infrastructure) && 'animate-spin'" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" /></svg>
                         Refresh
                     </button>
@@ -2046,7 +2066,7 @@
                                         </div>
                                         <div class="flex flex-wrap gap-1.5">
                                             <template x-for="item in mgr.breakdown" :key="item.queue">
-                                                <button @click="openDrillDown('queue', item.queue)" class="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] rounded-md border transition-colors cursor-pointer" :class="item.failed > 0 ? 'bg-red-50 border-red-200 text-red-700 hover:bg-red-100' : 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100'">
+                                                <button type="button" @click="openDrillDown('queue', item.queue)" class="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] rounded-md border transition-colors cursor-pointer" :class="item.failed > 0 ? 'bg-red-50 border-red-200 text-red-700 hover:bg-red-100' : 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100'">
                                                     <span class="font-medium" x-text="item.queue"></span>
                                                     <span class="text-[10px] opacity-60" x-text="item.total + ' jobs'"></span>
                                                     <span x-show="item.unique_workers > 0" class="text-[10px] opacity-60" x-text="'· ' + item.unique_workers + 'w'"></span>
@@ -2068,7 +2088,7 @@
                                         <p class="text-[11px] text-amber-700 mt-1">Jobs are being dispatched to queues with no active workers.</p>
                                         <div class="flex flex-wrap gap-1.5 mt-2">
                                             <template x-for="q in getUnhandledQueues()" :key="q.queue">
-                                                <button @click="drillDownToJobs('queue', q.queue)" class="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] rounded-md bg-amber-100 border border-amber-300 text-amber-800 hover:bg-amber-200 cursor-pointer font-medium"><span x-text="q.queue"></span><span class="text-[10px] opacity-70" x-text="q.pending + ' pending'"></span></button>
+                                                <button type="button" @click="drillDownToJobs('queue', q.queue)" class="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] rounded-md bg-amber-100 border border-amber-300 text-amber-800 hover:bg-amber-200 cursor-pointer font-medium"><span x-text="q.queue"></span><span class="text-[10px] opacity-70" x-text="q.pending + ' pending'"></span></button>
                                             </template>
                                         </div>
                                     </div>
@@ -2110,7 +2130,7 @@
                                 <template x-for="sla in (infrastructure.sla?.per_queue || [])" :key="sla.queue">
                                     <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm p-4" :class="sla.compliance < 95 ? 'pulse-alert border-red-200' : ''">
                                         <div class="flex items-center justify-between mb-2">
-                                            <span class="text-sm font-semibold text-brand hover:underline cursor-pointer" x-text="sla.queue" @click="openDrillDown('queue', sla.queue)"></span>
+                                            <span class="text-sm font-semibold text-brand hover:underline cursor-pointer" role="button" tabindex="0" :aria-label="'Drill into queue ' + sla.queue" x-text="sla.queue" @click="openDrillDown('queue', sla.queue)" @keydown.enter="openDrillDown('queue', sla.queue)" @keydown.space.prevent="openDrillDown('queue', sla.queue)"></span>
                                             <span class="text-[10px] font-medium text-gray-400" x-text="'<' + sla.target_seconds + 's target'"></span>
                                         </div>
                                         <div class="flex items-baseline gap-2 mb-2">
@@ -2154,7 +2174,7 @@
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="text-sm font-semibold text-gray-900">Autoscale</h3>
                     <div class="flex items-center gap-2">
-                        <button @click="fetchAutoscale()" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition">
+                        <button type="button" @click="fetchAutoscale()" :aria-busy="loading.autoscale || refreshing.autoscale" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition">
                             <svg class="h-3.5 w-3.5" :class="(loading.autoscale || refreshing.autoscale) && 'animate-spin'" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" /></svg>
                             Refresh
                         </button>
@@ -2180,7 +2200,7 @@
                                                 <button type="button" class="px-2.5 py-1 text-[11px] font-medium border rounded-lg transition" :class="timeline.queue === q ? 'text-blue-700 bg-blue-50 border-blue-200' : 'text-gray-600 bg-white border-gray-200 hover:bg-gray-50'" :aria-pressed="timeline.queue === q" @click="setTimelineQueue(q)" x-text="q"></button>
                                             </template>
                                         </div>
-                                        <div class="qm-segmented" aria-label="Timeline range">
+                                        <div class="qm-segmented" role="group" aria-label="Timeline range">
                                             <button type="button" class="qm-segment" :class="{ active: timeline.range === 15 }" @click="setTimelineRange(15)">15m</button>
                                             <button type="button" class="qm-segment" :class="{ active: timeline.range === 60 }" @click="setTimelineRange(60)">1h</button>
                                             <button type="button" class="qm-segment" :class="{ active: timeline.range === 360 }" @click="setTimelineRange(360)">6h</button>
@@ -2829,10 +2849,10 @@
                             <div class="px-5 py-4 border-b border-gray-100"><h3 class="text-sm font-semibold text-gray-900">Details</h3></div>
                             <div class="p-5 space-y-4">
                                 <dl class="space-y-3">
-                                    <div class="flex justify-between"><dt class="text-[11px] text-gray-500">Full Class</dt><dd class="text-[11px] font-mono text-brand hover:underline cursor-pointer truncate max-w-[180px]" x-text="jobDetail?.job?.job_class" @click="openDrillDown('job_class', jobDetail?.job?.job_class)"></dd></div>
-                                    <div class="flex justify-between"><dt class="text-[11px] text-gray-500">Queue</dt><dd class="text-[11px] text-brand hover:underline cursor-pointer" x-text="jobDetail?.job?.queue" @click="openDrillDown('queue', jobDetail?.job?.queue)"></dd></div>
+                                    <div class="flex justify-between"><dt class="text-[11px] text-gray-500">Full Class</dt><dd class="text-[11px] font-mono text-brand hover:underline cursor-pointer truncate max-w-[180px]" role="button" tabindex="0" :aria-label="'Drill into job class ' + jobDetail?.job?.job_class" x-text="jobDetail?.job?.job_class" @click="openDrillDown('job_class', jobDetail?.job?.job_class)" @keydown.enter="openDrillDown('job_class', jobDetail?.job?.job_class)" @keydown.space.prevent="openDrillDown('job_class', jobDetail?.job?.job_class)"></dd></div>
+                                    <div class="flex justify-between"><dt class="text-[11px] text-gray-500">Queue</dt><dd class="text-[11px] text-brand hover:underline cursor-pointer" role="button" tabindex="0" :aria-label="'Drill into queue ' + jobDetail?.job?.queue" x-text="jobDetail?.job?.queue" @click="openDrillDown('queue', jobDetail?.job?.queue)" @keydown.enter="openDrillDown('queue', jobDetail?.job?.queue)" @keydown.space.prevent="openDrillDown('queue', jobDetail?.job?.queue)"></dd></div>
                                     <div class="flex justify-between"><dt class="text-[11px] text-gray-500">Connection</dt><dd class="text-[11px] text-gray-900" x-text="jobDetail?.job?.connection"></dd></div>
-                                    <div class="flex justify-between"><dt class="text-[11px] text-gray-500">Server</dt><dd class="text-[11px] font-mono text-brand hover:underline cursor-pointer truncate max-w-[180px]" x-text="jobDetail?.job?.server" @click="openDrillDown('server', jobDetail?.job?.server)"></dd></div>
+                                    <div class="flex justify-between"><dt class="text-[11px] text-gray-500">Server</dt><dd class="text-[11px] font-mono text-brand hover:underline cursor-pointer truncate max-w-[180px]" role="button" tabindex="0" :aria-label="'Drill into server ' + jobDetail?.job?.server" x-text="jobDetail?.job?.server" @click="openDrillDown('server', jobDetail?.job?.server)" @keydown.enter="openDrillDown('server', jobDetail?.job?.server)" @keydown.space.prevent="openDrillDown('server', jobDetail?.job?.server)"></dd></div>
                                     <div class="flex justify-between"><dt class="text-[11px] text-gray-500">Worker</dt><dd class="text-[11px] text-gray-900" x-text="jobDetail?.job?.worker_type?.label"></dd></div>
                                     <div class="flex justify-between"><dt class="text-[11px] text-gray-500">File Descriptors</dt><dd class="text-[11px] text-gray-900" x-text="jobDetail?.job?.metrics?.file_descriptors || '-'"></dd></div>
                                 </dl>
@@ -2869,6 +2889,12 @@
                             <div class="divide-y divide-gray-50">
                                 <template x-for="(attempt, idx) in (jobDetail?.retry_chain || [])" :key="attempt.uuid">
                                     <div @click="attempt.uuid !== jobView ? openJobView(attempt.uuid) : null"
+                                         @keydown.enter="attempt.uuid !== jobView ? openJobView(attempt.uuid) : null"
+                                         @keydown.space.prevent="attempt.uuid !== jobView ? openJobView(attempt.uuid) : null"
+                                         :role="attempt.uuid === jobView ? null : 'button'"
+                                         :tabindex="attempt.uuid === jobView ? null : '0'"
+                                         :aria-current="attempt.uuid === jobView ? 'true' : null"
+                                         :aria-label="'View attempt #' + attempt.attempt"
                                          class="px-5 py-3 flex items-start gap-3 transition-colors"
                                          :class="attempt.uuid === jobView ? 'bg-brand-faint border-l-2 border-l-brand' : 'hover:bg-gray-50 cursor-pointer border-l-2 border-l-transparent'">
                                         {{-- Status dot --}}
@@ -2913,7 +2939,7 @@
                             <svg class="h-4 w-4 transition-transform group-hover:-translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" /></svg>
                             Back
                         </button>
-                        <button @click="refreshDrillDown()" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition">
+                        <button type="button" @click="refreshDrillDown()" :aria-busy="drillDownLoading || refreshing.drillDown" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition">
                             <svg class="h-3.5 w-3.5" :class="(drillDownLoading || refreshing.drillDown) && 'animate-spin'" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" /></svg>
                             Refresh
                         </button>
@@ -2978,7 +3004,7 @@
                                 </div>
                                 <div class="divide-y divide-gray-50">
                                     <template x-for="job in (drillDownData?.recent_jobs || [])" :key="job.uuid">
-                                        <div class="flex items-center gap-3 px-5 py-2.5 hover:bg-brand-faint/40 cursor-pointer transition-colors" @click="openJobView(job.uuid)">
+                                        <div class="flex items-center gap-3 px-5 py-2.5 hover:bg-brand-faint/40 cursor-pointer transition-colors" role="button" tabindex="0" :aria-label="'Inspect job ' + (job.summary || job.job_class)" @click="openJobView(job.uuid)" @keydown.enter="openJobView(job.uuid)" @keydown.space.prevent="openJobView(job.uuid)">
                                             <span class="flex-shrink-0 h-2 w-2 rounded-full" :class="drillDownStatusClass(job.status)"></span>
                                             <div class="flex-1 min-w-0">
                                                 <span x-show="job.summary" class="text-sm text-gray-700 truncate block" x-text="job.summary"></span>
@@ -3015,7 +3041,7 @@
                                 <div class="px-5 py-4 border-b border-gray-100"><h3 class="text-sm font-semibold text-gray-900">Failure Patterns</h3></div>
                                 <div class="divide-y divide-gray-50">
                                     <template x-for="fp in (drillDownData?.failure_patterns || [])" :key="fp.exception_class">
-                                        <div class="flex items-center justify-between px-5 py-2.5 hover:bg-red-50/50 cursor-pointer transition-colors" @click="filterJobsByException(fp.exception_class)">
+                                        <div class="flex items-center justify-between px-5 py-2.5 hover:bg-red-50/50 cursor-pointer transition-colors" role="button" tabindex="0" :aria-label="'Filter jobs by exception ' + shortClass(fp.exception_class)" @click="filterJobsByException(fp.exception_class)" @keydown.enter="filterJobsByException(fp.exception_class)" @keydown.space.prevent="filterJobsByException(fp.exception_class)">
                                             <span class="text-sm font-mono text-red-700 truncate" x-text="shortClass(fp.exception_class)"></span>
                                             <span class="text-[11px] text-gray-500 flex-shrink-0 ml-3" x-text="fp.count + 'x'"></span>
                                         </div>
@@ -3233,16 +3259,44 @@
                     });
 
                     window.addEventListener('keydown', (e) => {
-                        if (e.key === 'Escape') {
-                            if (this.confirmDelete) this.confirmDelete = null;
-                            else if (this.mobileMenuOpen) this.mobileMenuOpen = false;
-                            else if (this.drillDown) this.closeDrillDown();
-                            else if (this.jobView) this.closeJobView();
-                        }
+                        if (e.key !== 'Escape') return;
+
+                        // The confirm dialog and the mobile drawer always respond
+                        // to Escape, even while a field is focused.
+                        if (this.confirmDelete) { this.confirmDelete = null; return; }
+                        if (this.mobileMenuOpen) { this.mobileMenuOpen = false; return; }
+
+                        // Otherwise, don't let Escape tear down the current view
+                        // when the user is only trying to clear/blur a text field
+                        // (e.g. the search input).
+                        const tag = (e.target && e.target.tagName || '').toLowerCase();
+                        if (tag === 'input' || tag === 'textarea') return;
+
+                        if (this.drillDown) this.closeDrillDown();
+                        else if (this.jobView) this.closeJobView();
                     });
 
                     this.$watch('confirmDelete', (value) => {
                         if (value) this.$nextTick(() => this.$refs.confirmCancel?.focus());
+                    });
+
+                    // Move focus into the drawer when it opens and restore it to
+                    // the hamburger when it closes. Only on mobile widths, where
+                    // the drawer is an overlay; on desktop the sidebar is always
+                    // on-screen and in the normal flow, so focus should not move.
+                    this.$watch('mobileMenuOpen', (value) => {
+                        if (!this.isMobile) return;
+                        if (value) {
+                            this.$nextTick(() => {
+                                const drawer = this.$refs.sidebar;
+                                const target = drawer?.querySelector(
+                                    'a, button, [tabindex]:not([tabindex="-1"])'
+                                );
+                                (target || drawer)?.focus();
+                            });
+                        } else {
+                            this.$nextTick(() => this.$refs.menuButton?.focus());
+                        }
                     });
 
                     // Reflect the initial view in the tab title, so a freshly
