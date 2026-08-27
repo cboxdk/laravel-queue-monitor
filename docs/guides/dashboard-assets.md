@@ -8,19 +8,33 @@ weight: 17
 
 Queue Monitor ships with precompiled dashboard CSS and JavaScript. No Node, Vite, Livewire, or Inertia setup is required in the host application.
 
-## Default: Inline Package Assets
+## Default: Served Package Assets
 
-By default, the dashboard reads precompiled files from the installed package and inlines them into the Blade view:
+By default, the dashboard streams the precompiled files from a package route with
+a long, immutable cache, so the ~1 MB chart library is fetched once and reused
+across page loads instead of being re-sent inside every dashboard response:
+
+```env
+QUEUE_MONITOR_ASSET_MODE=served
+```
+
+This is the zero-setup mode — no publishing required — and the URLs carry a
+content-hash version, so an upgraded bundle busts the browser cache automatically.
+
+## Inline Package Assets
+
+If your Content Security Policy forbids external scripts and styles, embed the
+assets directly in the dashboard HTML instead:
 
 ```env
 QUEUE_MONITOR_ASSET_MODE=inline
 ```
 
-This is the zero-setup mode and works without publishing assets.
+This adds no extra requests, but the chart library is re-sent on every load.
 
 ## Public Static Assets
 
-If your Content Security Policy disallows inline CSS or JavaScript, publish the compiled assets:
+To serve the assets from your app's public directory (e.g. behind a CDN), publish the compiled assets:
 
 ```bash
 php artisan vendor:publish --tag="queue-monitor-assets"

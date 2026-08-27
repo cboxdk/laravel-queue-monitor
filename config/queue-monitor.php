@@ -277,11 +277,15 @@ return [
         'refresh_interval' => 3000, // ms
 
         // Dashboard asset loading strategy:
-        // - inline: load precompiled package assets directly from vendor resources/dist (default, zero setup)
+        // - served: stream the bundled assets from a package route with a long
+        //   immutable cache (default, zero setup, browser-cached across loads)
+        // - inline: embed the precompiled assets in the dashboard HTML (no extra
+        //   requests, but the ~1 MB chart library is re-sent on every load; use
+        //   for a strict CSP that forbids external scripts)
         // - public: load files from public/vendor/queue-monitor after publishing queue-monitor-assets
         // - none: emit no package assets; use a published/custom view and your own app build
         'assets' => [
-            'mode' => env('QUEUE_MONITOR_ASSET_MODE', 'inline'),
+            'mode' => env('QUEUE_MONITOR_ASSET_MODE', 'served'),
             'url' => env('QUEUE_MONITOR_ASSET_URL'), // null defaults to asset('vendor/queue-monitor')
             'paths' => [
                 'css' => 'queue-monitor.css',

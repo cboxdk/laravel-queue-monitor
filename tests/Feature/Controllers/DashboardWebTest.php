@@ -32,6 +32,35 @@ test('dashboard renders package-local assets without external CDN dependencies',
         ->toContain('echarts');
 });
 
+test('dashboard serves bundled assets from the package route by default', function () {
+    View::addNamespace('queue-monitor-source', dirname(__DIR__, 3).'/resources/views');
+
+    $html = view('queue-monitor-source::web.dashboard')->render();
+
+    // Default 'served' mode: external tags at the package asset route with a
+    // content-hash version, not the ~1 MB chart library inlined per response.
+    expect($html)
+        ->toContain('/queue-monitor/assets/echarts.min.js?v=')
+        ->toContain('/queue-monitor/assets/alpine.min.js?v=')
+        ->toContain('/queue-monitor/assets/queue-monitor.css?v=')
+        ->not->toContain('<style>@charset');
+});
+
+test('the asset route streams a bundled file with an immutable cache and 404s unknown files', function () {
+    $response = get('/queue-monitor/assets/alpine.min.js');
+
+    $response->assertOk();
+    $cacheControl = (string) $response->headers->get('Cache-Control');
+    expect($cacheControl)->toContain('max-age=31536000')
+        ->and($cacheControl)->toContain('public')
+        ->and($cacheControl)->toContain('immutable');
+    expect($response->headers->get('Content-Type'))->toContain('javascript');
+    expect($response->headers->get('ETag'))->not->toBeNull();
+
+    get('/queue-monitor/assets/secrets.env')->assertNotFound();
+    get('/queue-monitor/assets/queue-monitor.css')->assertOk();
+});
+
 test('dashboard can render published public asset tags', function () {
     config()->set('queue-monitor.ui.assets.mode', 'public');
     config()->set('queue-monitor.ui.assets.url', '/assets/queue-monitor');
