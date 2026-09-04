@@ -2,6 +2,12 @@
 
 All notable changes to `laravel-queue-monitor` will be documented in this file.
 
+## Unreleased
+
+### Fixes
+
+- **`update()` no longer throws a `TypeError` when the row is deleted mid-update.** `EloquentJobMonitorRepository::update()` ended with `return $job->fresh();` behind a non-nullable `JobMonitor` return type. `Model::fresh()` re-reads the row and returns `null` when it no longer exists, so on a busy queue where a row is pruned (scheduled prune or the `max_rows` retention sweep) in the window between the `UPDATE` and the re-read, the method returned `null` through its non-nullable signature and threw `TypeError: ...update(): Return value must be of type ...\JobMonitor, null returned`. Every writer that records job state (started / completed / failed / timeout, cancel, resolve-stuck) was exposed. `update()` now falls back to the already-updated in-memory model (`$job->fresh() ?? $job`); the persisted change is unchanged and callers always receive a valid `JobMonitor`.
+
 ## v1.10.2 — Overview declutter - 2026-08-27
 
 ### Fixes

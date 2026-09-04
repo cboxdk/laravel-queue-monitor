@@ -6,6 +6,7 @@ use Cbox\LaravelQueueMonitor\DataTransferObjects\JobFilterData;
 use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\Models\JobMonitor;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\JobMonitorRepositoryContract;
+use Illuminate\Support\Facades\DB;
 
 beforeEach(function () {
     $this->repository = app(JobMonitorRepositoryContract::class);
@@ -81,3 +82,40 @@ test('prune removes old jobs', function () {
     expect($deleted)->toBe(1);
     expect(JobMonitor::count())->toBe(1);
 });
+
+test('update persists changes and returns the refreshed record', function () {
+    $job = JobMonitor::factory()->create(['status' => JobStatus::PROCESSING]);
+
+    $updated = $this->repository->update($job->uuid, [
+        'status' => JobStatus::COMPLETED,
+    ]);
+
+    expect($updated)->toBeInstanceOf(JobMonitor::class);
+    expect($updated->uuid)->toBe($job->uuid);
+    expect($updated->status)->toBe(JobStatus::COMPLETED);
+    expect(JobMonitor::firstWhere('uuid', $job->uuid)->status)->toBe(JobStatus::COMPLETED);
+});
+
+test('update returns the in-memory record when the row is deleted mid-update', function () {
+    $job = JobMonitor::factory()->create(['status' => JobStatus::PROCESSING]);
+
+    // Simulate a concurrent prune deleting the row in the window between the
+    // UPDATE and the fresh() re-read, which makes fresh() return null.
+    JobMonitor::updated(function (JobMonitor $updated) use ($job): void {
+        if ($updated->getKey() === $job->getKey()) {
+            DB::table($job->getTable())->where('id', $job->getKey())->delete();
+        }
+    });
+
+    $updated = $this->repository->update($job->uuid, [
+        'status' => JobStatus::COMPLETED,
+    ]);
+
+    expect($updated)->toBeInstanceOf(JobMonitor::class);
+    expect($updated->status)->toBe(JobStatus::COMPLETED);
+    expect(JobMonitor::firstWhere('uuid', $job->uuid))->toBeNull();
+});
+
+test('update throws when the uuid does not exist', function () {
+    $this->repository->update('missing-uuid', ['status' => JobStatus::COMPLETED]);
+})->throws(RuntimeException::class);
