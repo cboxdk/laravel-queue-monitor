@@ -57,7 +57,30 @@ final readonly class RecordJobStartedAction
             $workerContext = $this->workerContext->capture();
 
             if ($attempt > 1) {
-                // Mark the previous attempt as FAILED (Laravel doesn't fire JobFailed for intermediate retries)
+                $priorAttemptFailed = $jobMonitor->status->isFinished()
+                    || $jobMonitor->exception_class !== null;
+
+                if (! $priorAttemptFailed) {
+                    // The previous attempt is still `processing` with no recorded
+                    // exception: the job was released back onto the queue (rate
+                    // limiting, middleware, a manual release), not retried after a
+                    // failure. Update the same row in place so a release does not
+                    // leave a phantom `failed` row or a duplicate row per delivery.
+                    $this->repository->update($jobMonitor->uuid, [
+                        'status' => JobStatus::PROCESSING,
+                        'attempt' => $attempt,
+                        'started_at' => now(),
+                        'server_name' => $workerContext->serverName,
+                        'worker_id' => $workerContext->workerId,
+                        'worker_type' => $workerContext->workerType->value,
+                    ]);
+
+                    return;
+                }
+
+                // Genuine retry after a failure. Mark the prior attempt FAILED if it
+                // isn't already terminal (Laravel doesn't fire JobFailed for
+                // intermediate retries), then preserve the attempts trail below.
                 if (! $jobMonitor->status->isFinished()) {
                     $this->repository->update($jobMonitor->uuid, [
                         'status' => JobStatus::FAILED,

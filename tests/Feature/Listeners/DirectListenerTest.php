@@ -49,6 +49,7 @@ test('JobProcessedListener marks job completed', function () {
 
     $mockJob = Mockery::mock(Job::class);
     $mockJob->shouldReceive('getJobId')->andReturn('done-1');
+    $mockJob->shouldReceive('isReleased')->andReturn(false);
 
     $listener = new JobProcessedListener;
     $listener->handle(new JobProcessed('redis', $mockJob));

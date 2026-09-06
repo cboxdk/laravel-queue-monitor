@@ -49,6 +49,7 @@ test('database driver integer job id records completion without error', function
 
     $mockJob = Mockery::mock(Job::class);
     $mockJob->shouldReceive('getJobId')->andReturn(12345);
+    $mockJob->shouldReceive('isReleased')->andReturn(false);
 
     app(RecordJobCompletedAction::class)->execute(new JobProcessed('database', $mockJob));
 
