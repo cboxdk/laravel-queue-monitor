@@ -103,6 +103,7 @@ test('job processed event marks completion', function () {
 
     $mockJob = Mockery::mock(Job::class);
     $mockJob->shouldReceive('getJobId')->andReturn('12345');
+    $mockJob->shouldReceive('isReleased')->andReturn(false);
 
     // Directly invoke the action to avoid silent failures in listener try/catch
     $event = new JobProcessed('redis', $mockJob);
@@ -113,6 +114,23 @@ test('job processed event marks completion', function () {
     expect($monitor->status)->toBe(JobStatus::COMPLETED);
     expect($monitor->completed_at)->not->toBeNull();
     expect($monitor->duration_ms)->toBeGreaterThan(0);
+});
+
+test('job processed event does not complete a released job', function () {
+    $monitor = JobMonitor::factory()->processing()->create([
+        'job_id' => 'released-1',
+        'started_at' => now()->subSeconds(5),
+    ]);
+
+    $mockJob = Mockery::mock(Job::class);
+    $mockJob->shouldReceive('getJobId')->andReturn('released-1');
+    $mockJob->shouldReceive('isReleased')->andReturn(true);
+
+    app(RecordJobCompletedAction::class)->execute(new JobProcessed('redis', $mockJob));
+
+    $monitor->refresh();
+    expect($monitor->status)->toBe(JobStatus::PROCESSING);
+    expect($monitor->completed_at)->toBeNull();
 });
 
 test('job failed event captures exception', function () {
@@ -150,6 +168,7 @@ test('complete job lifecycle is tracked', function () {
     $mockJob->shouldReceive('getJobId')->andReturn('12345');
     $mockJob->shouldReceive('attempts')->andReturn(1);
     $mockJob->shouldReceive('payload')->andReturn([]);
+    $mockJob->shouldReceive('isReleased')->andReturn(false);
 
     // Directly invoke actions to avoid silent failures in listener try/catch
     $processingEvent = new JobProcessing('redis', $mockJob);

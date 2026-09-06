@@ -30,6 +30,15 @@ final readonly class RecordJobCompletedAction
             return;
         }
 
+        // A released job (rate limiting, middleware, or a manual release) still
+        // fires JobProcessed, but the attempt did not complete — it will run
+        // again. Recording it as `completed` inflates completion counts and, with
+        // the redelivery, leaves a row per release. Leave the attempt row for the
+        // redelivery to update in place.
+        if ($job->isReleased()) {
+            return;
+        }
+
         $jobId = $job->getJobId();
         $jobMonitor = $this->repository->findLatestAttemptByJobId($jobId);
 

@@ -2,7 +2,11 @@
 
 All notable changes to `laravel-queue-monitor` will be documented in this file.
 
-## v1.10.2 — Overview declutter - 2026-08-27
+## Unreleased
+
+### Fixes
+
+- **A released job is no longer recorded as `completed`.** Laravel fires `JobProcessed` after a job's `fire()` regardless of whether the job released itself back onto the queue (rate limiting, middleware, a manual `release()`), so `RecordJobCompletedAction` marked the still-in-flight attempt `completed`. On the next delivery `RecordJobStartedAction` (seeing `attempts() > 1` on a non-finished prior row) then created a fresh attempt row, so a job released N times produced N+1 rows with the first N wrongly counted as completions. `RecordJobCompletedAction` now returns early when `$event->job->isReleased()`, and `RecordJobStartedAction` distinguishes a genuine retry (the prior attempt recorded an exception, or is already finished) from a plain release (still `processing`, no exception): a real retry keeps the per-attempt trail, while a release updates the same row in place — no phantom completion, no spurious failure, and no row-per-release growth.
 
 ### Fixes
 
