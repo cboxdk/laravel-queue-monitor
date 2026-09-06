@@ -2,6 +2,12 @@
 
 All notable changes to `laravel-queue-monitor` will be documented in this file.
 
+## Unreleased
+
+### Fixes
+
+- **Batched jobs are recorded under the queue they were actually pushed to, not `default`.** `RecordJobQueuedAction` read the queue from the job *instance*. For jobs dispatched inside a `Bus::batch(...)->onQueue(...)`, Laravel applies the queue at the bulk-push level, so the instance's `$queue` stays `null` and every batched job was recorded/displayed under the literal `default`. The `JobQueued` event already carries the real destination in `$event->queue`; it is now preferred, falling back to the instance and then to the connection's configured default queue name. (Mirrors the fix `cboxdk/laravel-queue-metrics` shipped for its `JobQueuedListener` in v3.3.0.)
+
 ## v1.10.2 — Overview declutter - 2026-08-27
 
 ### Fixes
