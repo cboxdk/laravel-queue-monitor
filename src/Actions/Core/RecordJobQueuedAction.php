@@ -61,7 +61,7 @@ final readonly class RecordJobQueuedAction
             jobClass: $this->getJobClass($jobInstance),
             displayName: $this->getDisplayName($jobInstance),
             connection: $connectionName,
-            queue: $this->getQueue($jobInstance),
+            queue: $this->getQueue($event, $jobInstance, $connectionName),
             payload: $payload,
             status: JobStatus::QUEUED,
             attempt: 1,
@@ -162,19 +162,33 @@ final readonly class RecordJobQueuedAction
     }
 
     /**
-     * Get queue name from job
+     * Get queue name for the job.
+     *
+     * Prefer the queue carried by the JobQueued event: for jobs dispatched inside
+     * a Bus::batch(...)->onQueue(...), the queue is applied at the bulk-push level
+     * and the job instance's $queue property stays null, so reading it alone
+     * mis-records every batched job as `default`. Fall back to the instance, then
+     * to the connection's configured default queue name.
      */
-    private function getQueue(object $jobInstance): string
+    private function getQueue(object $event, object $jobInstance, string $connectionName): string
     {
+        $eventQueue = $event->queue ?? null;
+
+        if (is_string($eventQueue) && $eventQueue !== '') {
+            return $eventQueue;
+        }
+
         if ($jobInstance instanceof QueueJob) {
             return $jobInstance->getQueue();
         }
 
-        if (property_exists($jobInstance, 'queue')) {
-            return $jobInstance->queue ?? 'default';
+        if (property_exists($jobInstance, 'queue') && $jobInstance->queue !== null) {
+            return $jobInstance->queue;
         }
 
-        return 'default';
+        $configuredDefault = config("queue.connections.{$connectionName}.queue", 'default');
+
+        return is_string($configuredDefault) ? $configuredDefault : 'default';
     }
 
     /**
