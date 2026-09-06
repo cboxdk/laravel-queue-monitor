@@ -116,6 +116,13 @@ return [
         // Failed and timeout jobs are included to prevent unbounded growth
         'prune_statuses' => ['completed', 'failed', 'timeout'],
 
+        // Minutes after which a job still in `processing` is treated as stuck and
+        // marked `timeout` by the queue-monitor:resolve-stuck command. Null disables
+        // automatic resolution (the default). Detection is start-age based with no
+        // heartbeat, so set this comfortably above your longest legitimate job so a
+        // slow-but-live job is never timed out.
+        'resolve_stuck_after_minutes' => env('QUEUE_MONITOR_RESOLVE_STUCK_AFTER_MINUTES'),
+
         // Days to retain full JSON payloads in cluster_events.meta.
         // After this period, meta is nulled but typed columns preserved for trends.
         // Set to null to disable payload pruning (keep payloads for full retention period).

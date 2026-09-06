@@ -2,6 +2,16 @@
 
 All notable changes to `laravel-queue-monitor` will be documented in this file.
 
+## Unreleased
+
+### Added
+
+- **`queue-monitor:resolve-stuck` command to clear stuck `processing` rows.** A worker killed mid-job (scale-in, OOM, SIGKILL) leaves its row in `processing` forever — no `JobProcessed`/`JobFailed` fires — and the default terminal prune statuses never reclaim it, so those rows accumulate and consume the `max_rows` budget. The package already detected stuck jobs (`QueryBuilderHelper::stuck()`, the health/alert checks) and could resolve them, but only through the REST API. This adds a schedulable command that marks jobs stuck in `processing` past a threshold as `timeout` (terminal, no replay), so the normal terminal-scoped prune reclaims them and the stuck-jobs health check clears. It is **opt-in**: the new `retention.resolve_stuck_after_minutes` config (env `QUEUE_MONITOR_RESOLVE_STUCK_AFTER_MINUTES`) defaults to `null` (disabled), and the command no-ops until configured or given `--minutes`. Supports `--dry-run`. Detection is start-age based with no heartbeat, so the threshold should sit above the longest legitimate job. `ResolveStuckJobAction` gains a `timeout` action (mark terminal without replay) backing the command.
+
+### Fixes
+
+- **`update()` no longer throws a `TypeError` when the row is deleted mid-update.** `EloquentJobMonitorRepository::update()` ended with `return $job->fresh();` behind a non-nullable `JobMonitor` return type. `Model::fresh()` re-reads the row and returns `null` when it no longer exists, so on a busy queue where a row is pruned (scheduled prune or the `max_rows` retention sweep) in the window between the `UPDATE` and the re-read, the method returned `null` through its non-nullable signature and threw `TypeError: ...update(): Return value must be of type ...\JobMonitor, null returned`. Every writer that records job state (started / completed / failed / timeout, cancel, resolve-stuck) was exposed. `update()` now falls back to the already-updated in-memory model (`$job->fresh() ?? $job`); the persisted change is unchanged and callers always receive a valid `JobMonitor`.
+
 ## v1.10.2 — Overview declutter - 2026-08-27
 
 ### Fixes
