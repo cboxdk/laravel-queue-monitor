@@ -9,10 +9,14 @@ use Illuminate\Contracts\Queue\Job;
 use Illuminate\Queue\Events\JobProcessing;
 
 test('retry creates new record linked to previous attempt', function () {
+    // A genuine retry is a redelivery whose prior attempt actually failed; the
+    // exception listener records exception_class on that attempt, which is how
+    // the started action tells a real retry from a plain release.
     $original = JobMonitor::factory()->processing()->create([
         'job_id' => 'retry-job-1',
         'attempt' => 1,
         'started_at' => now()->subSeconds(5),
+        'exception_class' => 'RuntimeException',
     ]);
 
     $mockJob = Mockery::mock(Job::class);
@@ -34,6 +38,32 @@ test('retry creates new record linked to previous attempt', function () {
     expect($retry->status)->toBe(JobStatus::PROCESSING);
     expect($retry->retried_from_id)->toBe($original->id);
     expect($retry->job_id)->toBe('retry-job-1');
+});
+
+test('released job redelivery reuses the row without a failed duplicate', function () {
+    // Prior attempt still processing with no recorded exception = a release
+    // (rate limit / middleware / manual), not a failure.
+    $original = JobMonitor::factory()->processing()->create([
+        'job_id' => 'released-job-1',
+        'attempt' => 1,
+        'started_at' => now()->subSeconds(5),
+        'exception_class' => null,
+    ]);
+
+    $mockJob = Mockery::mock(Job::class);
+    $mockJob->shouldReceive('getJobId')->andReturn('released-job-1');
+    $mockJob->shouldReceive('attempts')->andReturn(2);
+    $mockJob->shouldReceive('payload')->andReturn([]);
+
+    app(RecordJobStartedAction::class)->execute(new JobProcessing('redis', $mockJob));
+
+    // No failed flip and no duplicate row — the same attempt row is reused.
+    expect(JobMonitor::count())->toBe(1);
+
+    $original->refresh();
+    expect($original->status)->toBe(JobStatus::PROCESSING);
+    expect($original->attempt)->toBe(2);
+    expect($original->completed_at)->toBeNull();
 });
 
 test('createFromProcessing when no existing record for job', function () {
