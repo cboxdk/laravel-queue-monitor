@@ -65,6 +65,21 @@ final readonly class ResolveStuckJobAction
                 } catch (\RuntimeException $e) {
                     $errors[] = "Job {$uuid} marked as timeout but replay failed: {$e->getMessage()}";
                 }
+            } elseif ($action === 'timeout') {
+                // Mark the stuck attempt terminal without replaying it, so a
+                // count/age prune can reclaim the row and the stuck-jobs health
+                // check clears. Used by the queue-monitor:resolve-stuck command.
+                $completedAt = now();
+                $durationMs = $job->started_at !== null
+                    ? max(0, (int) $job->started_at->diffInMilliseconds($completedAt))
+                    : null;
+
+                $this->repository->update($uuid, [
+                    'status' => JobStatus::TIMEOUT,
+                    'completed_at' => $completedAt,
+                    'duration_ms' => $durationMs,
+                ]);
+                $resolved++;
             }
         }
 
