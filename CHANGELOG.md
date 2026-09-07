@@ -2,6 +2,23 @@
 
 All notable changes to `laravel-queue-monitor` will be documented in this file.
 
+## v1.11.0 — Stuck-job resolution & recording fixes - 2026-09-07
+
+### Added
+
+- **`queue-monitor:resolve-stuck` command to clear stuck `processing` rows.** A worker killed mid-job (scale-in, OOM, SIGKILL) leaves its row in `processing` forever — no `JobProcessed`/`JobFailed` fires — and the default terminal prune statuses never reclaim it, so those rows accumulate and consume the `max_rows` budget. The package already detected stuck jobs (`QueryBuilderHelper::stuck()`, the health/alert checks) but could only resolve them through the REST API. This adds a schedulable command that marks jobs stuck past a threshold as `timeout` (terminal, no replay), so the normal terminal-scoped prune reclaims them and the stuck-jobs health check clears. It is **opt-in**: the new `retention.resolve_stuck_after_minutes` config (env `QUEUE_MONITOR_RESOLVE_STUCK_AFTER_MINUTES`) defaults to `null` (disabled), and the command no-ops until configured or given `--minutes`. Supports `--dry-run`. Detection is start-age based with no heartbeat, so set the threshold comfortably above your longest legitimate job.
+
+### Fixes
+
+- **A released job is no longer recorded as `completed`, and its redelivery no longer leaves a duplicate row.** Laravel fires `JobProcessed` after a job's `fire()` regardless of whether the job released itself back onto the queue (rate limiting, middleware, a manual `release()`), so `RecordJobCompletedAction` marked the still-in-flight attempt `completed`; on the next delivery `RecordJobStartedAction` then created a fresh attempt row, so a job released N times produced N+1 rows with the first N wrongly counted as completions. `RecordJobCompletedAction` now returns early when `$event->job->isReleased()`, and `RecordJobStartedAction` distinguishes a genuine retry (the prior attempt recorded an exception, or is already finished) from a plain release (still `processing`, no exception): a real retry keeps the per-attempt trail, a release updates the same row in place — no phantom completion, no spurious failure, no row-per-release growth. No new status and no migration.
+  
+- **Batched jobs are recorded under the queue they were actually pushed to, not `default`.** `RecordJobQueuedAction` read the queue from the job *instance*. For jobs dispatched inside a `Bus::batch(...)->onQueue(...)`, Laravel applies the queue at the bulk-push level, so the instance's `$queue` stays `null` and every batched job was recorded and displayed under the literal `default`. The `JobQueued` event already carries the real destination in `$event->queue`; it is now preferred, falling back to the instance and then to the connection's configured default queue name.
+  
+- **`update()` no longer throws a `TypeError` when the row is deleted mid-update.** `EloquentJobMonitorRepository::update()` ended with `return $job->fresh();` behind a non-nullable `JobMonitor` return type. `Model::fresh()` returns `null` when the row no longer exists, so on a busy queue where a row is pruned (scheduled prune or the `max_rows` sweep) in the window between the `UPDATE` and the re-read, every state writer (started / completed / failed / timeout, cancel, resolve-stuck) could throw. It now falls back to the already-updated in-memory model (`$job->fresh() ?? $job`); the persisted change is unchanged.
+  
+
+Thanks to [@Orrison](https://github.com/Orrison) for all three contributions.
+
 ## v1.10.2 — Overview declutter - 2026-08-27
 
 ### Fixes
@@ -364,6 +381,7 @@ First stable release of Queue Monitor for Laravel - a comprehensive job monitori
 
 ```bash
 composer require cboxdk/laravel-queue-monitor
+
 
 
 
