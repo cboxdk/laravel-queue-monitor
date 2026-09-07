@@ -9,6 +9,7 @@ use Cbox\LaravelQueueMonitor\Commands\LaravelQueueMonitorCommand;
 use Cbox\LaravelQueueMonitor\Commands\PruneJobsCommand;
 use Cbox\LaravelQueueMonitor\Commands\QueueMonitorDashboardCommand;
 use Cbox\LaravelQueueMonitor\Commands\ReplayJobCommand;
+use Cbox\LaravelQueueMonitor\Commands\ResolveStuckJobsCommand;
 use Cbox\LaravelQueueMonitor\Listeners\JobDebouncedListener;
 use Cbox\LaravelQueueMonitor\Listeners\JobExceptionOccurredListener;
 use Cbox\LaravelQueueMonitor\Listeners\JobFailedListener;
@@ -43,6 +44,7 @@ class LaravelQueueMonitorServiceProvider extends PackageServiceProvider
                 LaravelQueueMonitorCommand::class,
                 PruneJobsCommand::class,
                 ReplayJobCommand::class,
+                ResolveStuckJobsCommand::class,
                 HealthCheckCommand::class,
                 QueueMonitorDashboardCommand::class,
             ]);

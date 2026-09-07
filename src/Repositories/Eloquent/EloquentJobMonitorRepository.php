@@ -68,8 +68,11 @@ final class EloquentJobMonitorRepository implements JobMonitorRepositoryContract
         $job->update($data);
         $this->invalidateDashboardCaches();
 
-        /** @var JobMonitor */
-        return $job->fresh();
+        // fresh() re-reads the row and returns null when it has been deleted
+        // (e.g. pruned concurrently) between the update and the re-read. The
+        // in-memory model already reflects $data, so fall back to it rather than
+        // returning null through the non-nullable signature.
+        return $job->fresh() ?? $job;
     }
 
     public function findByUuid(string $uuid): ?JobMonitor
