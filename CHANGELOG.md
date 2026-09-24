@@ -2,6 +2,12 @@
 
 All notable changes to `laravel-queue-monitor` will be documented in this file.
 
+## v1.11.1 — CarbonImmutable support - 2026-09-24
+
+### Fixes
+
+- **Job recording no longer crashes when the host app uses immutable dates.** Apps that call `Date::use(CarbonImmutable::class)` get a `CarbonImmutable` from `now()` and from every Eloquent date cast, but the recording DTOs and actions were typed as mutable `Carbon\Carbon`. The first dispatch threw `TypeError: JobMonitorData::__construct(): Argument #22 ($queuedAt) must be of type Carbon\Carbon, Carbon\CarbonImmutable given`, and the retry path, the completed/failed/timeout duration calculation and `JobFilterData` had the same problem. Timestamps are now typed `CarbonInterface` throughout, so both mutable and immutable dates are accepted. Passing a `Carbon` still works everywhere. If you run PHPStan against the package's DTOs, their public timestamp properties now read as `CarbonInterface`, and a `JobMonitor` subclass that overrides `scopeQueuedBetween()` with `Carbon` parameters has to widen them.
+
 ## v1.11.0 — Stuck-job resolution & recording fixes - 2026-09-07
 
 ### Added
@@ -381,6 +387,7 @@ First stable release of Queue Monitor for Laravel - a comprehensive job monitori
 
 ```bash
 composer require cboxdk/laravel-queue-monitor
+
 
 
 
