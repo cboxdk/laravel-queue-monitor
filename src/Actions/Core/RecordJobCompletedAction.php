@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Cbox\LaravelQueueMonitor\Actions\Core;
 
-use Carbon\Carbon;
+use Carbon\CarbonInterface;
 use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\Jobs\StoreJobTagsJob;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\JobMonitorRepositoryContract;
@@ -84,7 +84,7 @@ final readonly class RecordJobCompletedAction
     /**
      * Calculate duration in milliseconds
      */
-    private function calculateDuration(?Carbon $startedAt, Carbon $completedAt): ?int
+    private function calculateDuration(?CarbonInterface $startedAt, CarbonInterface $completedAt): ?int
     {
         if ($startedAt === null) {
             return null;

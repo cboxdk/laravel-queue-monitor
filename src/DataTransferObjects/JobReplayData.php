@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Cbox\LaravelQueueMonitor\DataTransferObjects;
 
 use Carbon\Carbon;
+use Carbon\CarbonInterface;
 
 final readonly class JobReplayData
 {
@@ -14,7 +15,7 @@ final readonly class JobReplayData
         public ?string $newJobId,
         public string $queue,
         public string $connection,
-        public Carbon $replayedAt,
+        public CarbonInterface $replayedAt,
     ) {}
 
     /**

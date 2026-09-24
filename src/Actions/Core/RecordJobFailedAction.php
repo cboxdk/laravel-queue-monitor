@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Cbox\LaravelQueueMonitor\Actions\Core;
 
-use Carbon\Carbon;
+use Carbon\CarbonInterface;
 use Cbox\LaravelQueueMonitor\DataTransferObjects\ExceptionData;
 use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\Jobs\StoreJobTagsJob;
@@ -78,7 +78,7 @@ final readonly class RecordJobFailedAction
     /**
      * Calculate duration in milliseconds
      */
-    private function calculateDuration(?Carbon $startedAt, Carbon $completedAt): ?int
+    private function calculateDuration(?CarbonInterface $startedAt, CarbonInterface $completedAt): ?int
     {
         if ($startedAt === null) {
             return null;

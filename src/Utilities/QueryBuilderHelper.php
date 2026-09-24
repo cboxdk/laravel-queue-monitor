@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Cbox\LaravelQueueMonitor\Utilities;
 
-use Carbon\Carbon;
+use Carbon\CarbonInterface;
 use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\Enums\WorkerType;
 use Cbox\LaravelQueueMonitor\Models\JobMonitor;
@@ -130,7 +130,7 @@ final class QueryBuilderHelper
      *
      * @return Builder<JobMonitor>
      */
-    public static function between(Carbon $start, Carbon $end): Builder
+    public static function between(CarbonInterface $start, CarbonInterface $end): Builder
     {
         return JobMonitor::query()
             ->whereBetween('queued_at', [$start, $end]);

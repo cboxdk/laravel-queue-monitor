@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Cbox\LaravelQueueMonitor\Models;
 
-use Carbon\Carbon;
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -24,8 +24,8 @@ use Illuminate\Database\Eloquent\Model;
  * @property string|null $margin_percentage
  * @property int|null $pending
  * @property int|null $active_workers
- * @property Carbon $created_at
- * @property Carbon $updated_at
+ * @property CarbonInterface $created_at
+ * @property CarbonInterface $updated_at
  */
 class ScalingEvent extends Model
 {
