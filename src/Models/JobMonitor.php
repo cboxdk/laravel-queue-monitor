@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Cbox\LaravelQueueMonitor\Models;
 
-use Carbon\Carbon;
+use Carbon\CarbonInterface;
 use Cbox\LaravelQueueMonitor\Database\Factories\JobMonitorFactory;
 use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\Enums\WorkerType;
@@ -39,12 +39,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string|null $exception_message
  * @property string|null $exception_trace
  * @property array<string>|null $tags
- * @property Carbon $queued_at
- * @property Carbon|null $available_at
- * @property Carbon|null $started_at
- * @property Carbon|null $completed_at
- * @property Carbon $created_at
- * @property Carbon $updated_at
+ * @property CarbonInterface $queued_at
+ * @property CarbonInterface|null $available_at
+ * @property CarbonInterface|null $started_at
+ * @property CarbonInterface|null $completed_at
+ * @property CarbonInterface $created_at
+ * @property CarbonInterface $updated_at
  *
  * @use HasFactory<JobMonitorFactory>
  */
@@ -321,7 +321,7 @@ class JobMonitor extends Model
      * @param  Builder<self>  $query
      * @return Builder<self>
      */
-    public function scopeQueuedBetween(Builder $query, Carbon $start, Carbon $end): Builder
+    public function scopeQueuedBetween(Builder $query, CarbonInterface $start, CarbonInterface $end): Builder
     {
         return $query->whereBetween('queued_at', [$start, $end]);
     }

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Cbox\LaravelQueueMonitor\Models;
 
-use Carbon\Carbon;
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
@@ -23,7 +23,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property string|null $action
  * @property string|null $reason
  * @property array<string, mixed>|null $meta
- * @property Carbon|null $created_at
+ * @property CarbonInterface|null $created_at
  */
 class ClusterEvent extends Model
 {

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Cbox\LaravelQueueMonitor\Actions\Core;
 
 use Carbon\Carbon;
+use Carbon\CarbonInterface;
 use Cbox\LaravelQueueMonitor\DataTransferObjects\JobMonitorData;
 use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\Models\JobMonitor;
@@ -284,7 +285,7 @@ final readonly class RecordJobQueuedAction
     /**
      * Calculate when a delayed job becomes available for processing
      */
-    private function calculateAvailableAt(mixed $delay): ?Carbon
+    private function calculateAvailableAt(mixed $delay): ?CarbonInterface
     {
         if ($delay === null || $delay === 0) {
             return null; // Not delayed — available immediately

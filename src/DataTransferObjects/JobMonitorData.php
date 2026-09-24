@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Cbox\LaravelQueueMonitor\DataTransferObjects;
 
 use Carbon\Carbon;
+use Carbon\CarbonInterface;
 use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 
 final readonly class JobMonitorData
@@ -35,12 +36,12 @@ final readonly class JobMonitorData
         public ?int $durationMs,
         public ?ExceptionData $exception,
         public ?array $tags,
-        public Carbon $queuedAt,
-        public ?Carbon $availableAt,
-        public ?Carbon $startedAt,
-        public ?Carbon $completedAt,
-        public Carbon $createdAt,
-        public Carbon $updatedAt,
+        public CarbonInterface $queuedAt,
+        public ?CarbonInterface $availableAt,
+        public ?CarbonInterface $startedAt,
+        public ?CarbonInterface $completedAt,
+        public CarbonInterface $createdAt,
+        public CarbonInterface $updatedAt,
     ) {}
 
     /**

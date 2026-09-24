@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Cbox\LaravelQueueMonitor\DataTransferObjects;
 
 use Carbon\Carbon;
+use Carbon\CarbonInterface;
 use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 
 final readonly class JobFilterData
@@ -48,12 +49,12 @@ final readonly class JobFilterData
         public ?string $workerId = null,
         public ?string $workerType = null,
         public ?array $tags = null,
-        public ?Carbon $queuedAfter = null,
-        public ?Carbon $queuedBefore = null,
-        public ?Carbon $startedAfter = null,
-        public ?Carbon $startedBefore = null,
-        public ?Carbon $completedAfter = null,
-        public ?Carbon $completedBefore = null,
+        public ?CarbonInterface $queuedAfter = null,
+        public ?CarbonInterface $queuedBefore = null,
+        public ?CarbonInterface $startedAfter = null,
+        public ?CarbonInterface $startedBefore = null,
+        public ?CarbonInterface $completedAfter = null,
+        public ?CarbonInterface $completedBefore = null,
         public ?int $minDurationMs = null,
         public ?int $maxDurationMs = null,
         public ?int $minAttempts = null,
@@ -237,7 +238,7 @@ final readonly class JobFilterData
         return $parsed !== [] ? $parsed : null;
     }
 
-    private static function parseDate(mixed $value): ?Carbon
+    private static function parseDate(mixed $value): ?CarbonInterface
     {
         if (! is_string($value) && ! is_numeric($value)) {
             return null;

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Cbox\LaravelQueueMonitor\Repositories\Eloquent;
 
-use Carbon\Carbon;
+use Carbon\CarbonInterface;
 use Carbon\CarbonPeriod;
 use Cbox\LaravelQueueMonitor\DataTransferObjects\FailurePatterns;
 use Cbox\LaravelQueueMonitor\DataTransferObjects\GlobalStatistics;
@@ -443,7 +443,7 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
         );
 
         foreach ($period as $date) {
-            /** @var Carbon $date */
+            /** @var CarbonInterface $date */
             $key = $date->format('Y-m-d H:i');
             $row = $rows->get($key);
             $buckets[] = [
@@ -534,7 +534,7 @@ final readonly class EloquentStatisticsRepository implements StatisticsRepositor
         );
 
         foreach ($period as $date) {
-            /** @var Carbon $date */
+            /** @var CarbonInterface $date */
             $key = $date->format('Y-m-d H:i');
             $row = $rows->get($key);
             $result[] = ThroughputBucket::fromArray([
