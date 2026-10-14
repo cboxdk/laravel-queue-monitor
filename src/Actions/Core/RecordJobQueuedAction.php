@@ -258,24 +258,27 @@ final readonly class RecordJobQueuedAction
 
     /**
      * Get job class name
+     *
+     * For a queue Job (sync jobs, and any job first seen when it starts
+     * processing) the class is the payload's `data.commandName`: the command's
+     * FQCN, written by Queue::createPayload() for every dispatched object and
+     * readable without unserializing the command. resolveName() is NOT the
+     * class — it returns the payload `displayName`, which is whatever the job's
+     * displayName() method says (e.g. "Send invoice reminder"), and recording
+     * that as job_class split one class into several in every per-class view.
+     * resolveName() is only the fallback for payloads without a command, such
+     * as a raw `Queue::push('Handler@method')` string job.
      */
     private function getJobClass(object $jobInstance): string
     {
         if ($jobInstance instanceof QueueJob) {
-            $name = $jobInstance->resolveName();
+            $commandName = $jobInstance->payload()['data']['commandName'] ?? null;
 
-            // resolveName() returns the handler class (CallQueuedHandler@call)
-            // when displayName is null — fall back to data.commandName from payload
-            if (str_contains($name, 'CallQueuedHandler')) {
-                $payload = $jobInstance->payload();
-                $commandName = $payload['data']['commandName'] ?? null;
-
-                if (is_string($commandName) && $commandName !== '') {
-                    return $commandName;
-                }
+            if (is_string($commandName) && $commandName !== '') {
+                return $commandName;
             }
 
-            return $name;
+            return $jobInstance->resolveName();
         }
 
         return $jobInstance::class;
