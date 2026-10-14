@@ -162,6 +162,10 @@ final class InfrastructureService implements InfrastructureServiceContract
             /** @var array<int, array<string, mixed>> $queues */
             $queues = $service->getAllQueuesWithMetrics();
 
+            // laravel-queue-metrics v3 nests the per-queue figures (depth.*,
+            // performance_60s.*, lifetime.*, workers.*); the flat keys are the
+            // pre-v3 shape and stay as fallbacks. Reading only the flat keys
+            // left every figure but the depth total at zero.
             $queueRows = collect($queues)->map(function (array $q): array {
                 /** @var array<string, mixed>|null $health */
                 $health = $q['health'] ?? null;
@@ -170,15 +174,15 @@ final class InfrastructureService implements InfrastructureServiceContract
                     'connection' => $q['connection'] ?? null,
                     'queue' => $q['queue'] ?? $q['name'] ?? 'unknown',
                     'depth' => is_array($q['depth'] ?? 0) ? ($q['depth']['total'] ?? 0) : ($q['depth'] ?? 0),
-                    'pending' => $q['pending'] ?? 0,
-                    'scheduled' => $q['scheduled'] ?? 0,
-                    'reserved' => $q['reserved'] ?? 0,
-                    'active_workers' => $q['active_workers'] ?? 0,
-                    'throughput_per_minute' => $q['throughput_per_minute'] ?? 0,
-                    'avg_duration_ms' => $q['avg_duration_ms'] ?? $q['avgDuration'] ?? null,
-                    'failure_rate' => $q['failure_rate'] ?? $q['failureRate'] ?? 0,
-                    'utilization_rate' => $q['utilization_rate'] ?? $q['utilizationRate'] ?? 0,
-                    'oldest_job_age' => $q['oldest_job_age'] ?? $q['oldestJobAge'] ?? 0,
+                    'pending' => $this->queueMetric($q, 'depth.pending', 'pending') ?? 0,
+                    'scheduled' => $this->queueMetric($q, 'depth.scheduled', 'scheduled') ?? 0,
+                    'reserved' => $this->queueMetric($q, 'depth.reserved', 'reserved') ?? 0,
+                    'active_workers' => $this->queueMetric($q, 'workers.active_count', 'active_workers') ?? 0,
+                    'throughput_per_minute' => $this->queueMetric($q, 'performance_60s.throughput_per_minute', 'throughput_per_minute') ?? 0,
+                    'avg_duration_ms' => $this->queueMetric($q, 'performance_60s.avg_duration_ms', 'avg_duration_ms', 'avgDuration'),
+                    'failure_rate' => $this->queueMetric($q, 'lifetime.failure_rate_percent', 'failure_rate', 'failureRate') ?? 0,
+                    'utilization_rate' => $this->queueMetric($q, 'workers.current_busy_percent', 'utilization_rate', 'utilizationRate') ?? 0,
+                    'oldest_job_age' => $this->queueMetric($q, 'depth.oldest_job_age_seconds', 'oldest_job_age', 'oldestJobAge') ?? 0,
                     'health_status' => (is_array($health) ? ($health['status'] ?? null) : null) ?? $q['ageStatus'] ?? 'unknown',
                     'health_score' => is_array($health) ? ($health['score'] ?? 0) : 0,
                 ];
@@ -851,6 +855,25 @@ final class InfrastructureService implements InfrastructureServiceContract
             events: $series,
             workerRange: ['min' => $min, 'max' => $max],
         );
+    }
+
+    /**
+     * The first non-null value among a queue-metrics row's keys, where a key
+     * may be a dotted path into a nested section.
+     *
+     * @param  array<mixed>  $row
+     */
+    private function queueMetric(array $row, string ...$keys): mixed
+    {
+        foreach ($keys as $key) {
+            $value = data_get($row, $key);
+
+            if ($value !== null) {
+                return $value;
+            }
+        }
+
+        return null;
     }
 
     private function intConfig(string $key, int $default): int
