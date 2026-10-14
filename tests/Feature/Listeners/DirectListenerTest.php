@@ -35,7 +35,7 @@ test('JobProcessingListener updates status to processing', function () {
     $mockJob->shouldReceive('attempts')->andReturn(1);
     $mockJob->shouldReceive('payload')->andReturn([]);
 
-    $listener = new JobProcessingListener;
+    $listener = app(JobProcessingListener::class);
     $listener->handle(new JobProcessing('redis', $mockJob));
 
     expect(JobMonitor::first()->status)->toBe(JobStatus::PROCESSING);

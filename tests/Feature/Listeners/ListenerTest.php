@@ -23,7 +23,7 @@ test('listeners skip when monitoring is disabled', function () {
     $listeners = [
         new JobFailedListener,
         new JobProcessedListener,
-        new JobProcessingListener,
+        app(JobProcessingListener::class),
         new JobQueuedListener,
         new JobTimedOutListener,
     ];

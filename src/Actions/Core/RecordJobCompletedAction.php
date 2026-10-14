@@ -9,7 +9,7 @@ use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\Jobs\StoreJobTagsJob;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\JobMonitorRepositoryContract;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\TagRepositoryContract;
-use Cbox\LaravelQueueMonitor\Support\JobKey;
+use Cbox\LaravelQueueMonitor\Support\JobAttemptResolver;
 use Illuminate\Contracts\Queue\Job;
 
 final readonly class RecordJobCompletedAction
@@ -17,10 +17,17 @@ final readonly class RecordJobCompletedAction
     public function __construct(
         private JobMonitorRepositoryContract $repository,
         private TagRepositoryContract $tagRepository,
+        private JobAttemptResolver $attempts,
     ) {}
 
     /**
      * Record when a job completes successfully
+     *
+     * The outcome is written to the row of the attempt this worker ran (see
+     * JobAttemptResolver). That row may already be closed: a slow attempt the
+     * broker redelivered was closed as TIMEOUT when the redelivery started, on
+     * the assumption that its worker had been killed. The worker was in fact
+     * still running, and its real outcome replaces that inference.
      *
      * Note: Caller (listener) is responsible for checking if monitoring is enabled.
      */
@@ -32,8 +39,7 @@ final readonly class RecordJobCompletedAction
             return;
         }
 
-        $jobId = JobKey::of($job);
-        $jobMonitor = $this->repository->findLatestAttemptByJobId($jobId);
+        $jobMonitor = $this->attempts->rowFor($job);
 
         if ($jobMonitor === null) {
             return;
@@ -45,7 +51,15 @@ final readonly class RecordJobCompletedAction
         // row as `queued` instead: it is back on the queue, and it lets the
         // redelivery tell a release (reuse this row) from a worker that was
         // killed mid-attempt (still `processing`, close it and start a new row).
+        //
+        // An attempt that a redelivery has already superseded is left as it
+        // is: the next delivery continues on the newer attempt's row, so
+        // parking this one as `queued` would leave it queued forever.
         if ($job->isReleased()) {
+            if ($this->attempts->isSuperseded($jobMonitor)) {
+                return;
+            }
+
             $this->repository->update($jobMonitor->uuid, [
                 'status' => JobStatus::QUEUED,
             ]);

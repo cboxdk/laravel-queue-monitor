@@ -19,6 +19,7 @@ use Cbox\LaravelQueueMonitor\Listeners\JobQueuedListener;
 use Cbox\LaravelQueueMonitor\Listeners\JobTimedOutListener;
 use Cbox\LaravelQueueMonitor\Listeners\QueueMetricsSubscriber;
 use Cbox\LaravelQueueMonitor\Listeners\ScalingEventListener;
+use Cbox\LaravelQueueMonitor\Support\InFlightAttempts;
 use Illuminate\Queue\Events\JobExceptionOccurred;
 use Illuminate\Queue\Events\JobFailed;
 use Illuminate\Queue\Events\JobProcessed;
@@ -60,6 +61,9 @@ class LaravelQueueMonitorServiceProvider extends PackageServiceProvider
     public function packageRegistered(): void
     {
         $this->app->singleton(LaravelQueueMonitor::class);
+
+        // One per process: it remembers the attempts this worker started.
+        $this->app->singleton(InFlightAttempts::class);
     }
 
     public function packageBooted(): void

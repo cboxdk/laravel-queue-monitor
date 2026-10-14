@@ -5,6 +5,7 @@ declare(strict_types=1);
 use Cbox\LaravelQueueMonitor\DataTransferObjects\JobFilterData;
 use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\Models\JobMonitor;
+use Cbox\LaravelQueueMonitor\Repositories\Contracts\JobAttemptRepositoryContract;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\JobMonitorRepositoryContract;
 use Illuminate\Support\Facades\DB;
 
@@ -119,3 +120,31 @@ test('update returns the in-memory record when the row is deleted mid-update', f
 test('update throws when the uuid does not exist', function () {
     $this->repository->update('missing-uuid', ['status' => JobStatus::COMPLETED]);
 })->throws(RuntimeException::class);
+
+test('it implements the attempt lookup contract', function () {
+    expect($this->repository)->toBeInstanceOf(JobAttemptRepositoryContract::class);
+});
+
+test('can find one attempt of a job', function () {
+    JobMonitor::factory()->create(['job_id' => 'attempted', 'attempt' => 1]);
+    $second = JobMonitor::factory()->create(['job_id' => 'attempted', 'attempt' => 2]);
+    JobMonitor::factory()->create(['job_id' => 'attempted', 'attempt' => 3]);
+    JobMonitor::factory()->create(['job_id' => 'other', 'attempt' => 2]);
+
+    expect($this->repository->findAttemptByJobId('attempted', 2)?->uuid)->toBe($second->uuid)
+        ->and($this->repository->findAttemptByJobId('attempted', 4))->toBeNull()
+        ->and($this->repository->findAttemptByJobId('missing', 1))->toBeNull();
+});
+
+test('finding an attempt accepts the integer id of the database driver', function () {
+    $row = JobMonitor::factory()->create(['job_id' => '98765', 'attempt' => 2]);
+
+    expect($this->repository->findAttemptByJobId(98765, 2)?->uuid)->toBe($row->uuid);
+});
+
+test('finding an attempt with duplicate rows returns the most recent', function () {
+    JobMonitor::factory()->create(['job_id' => 'duplicated', 'attempt' => 2, 'created_at' => now()->subMinute()]);
+    $newer = JobMonitor::factory()->create(['job_id' => 'duplicated', 'attempt' => 2, 'created_at' => now()]);
+
+    expect($this->repository->findAttemptByJobId('duplicated', 2)?->uuid)->toBe($newer->uuid);
+});

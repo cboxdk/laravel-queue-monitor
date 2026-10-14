@@ -180,10 +180,14 @@ final readonly class RecordJobStartedAction
             return;
         }
 
-        // Immediately update to processing
+        // Immediately update to processing. The queued action records every
+        // new row as attempt 1; a job first seen on a later delivery (monitoring
+        // enabled mid-flight, a message pushed by another app) is on the attempt
+        // the broker reports, and completion is matched to the row by it.
         $this->repository->update($jobMonitor->uuid, [
             'status' => JobStatus::PROCESSING,
             'job_id' => JobKey::of($job),
+            'attempt' => max(1, $job->attempts()),
             'started_at' => now(),
         ]);
     }

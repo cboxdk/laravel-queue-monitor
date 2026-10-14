@@ -9,13 +9,14 @@ use Cbox\LaravelQueueMonitor\DataTransferObjects\JobFilterData;
 use Cbox\LaravelQueueMonitor\DataTransferObjects\JobMonitorData;
 use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\Models\JobMonitor;
+use Cbox\LaravelQueueMonitor\Repositories\Contracts\JobAttemptRepositoryContract;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\JobMonitorRepositoryContract;
 use Cbox\LaravelQueueMonitor\Services\Contracts\DashboardCacheServiceContract;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
-final class EloquentJobMonitorRepository implements JobMonitorRepositoryContract
+final class EloquentJobMonitorRepository implements JobAttemptRepositoryContract, JobMonitorRepositoryContract
 {
     public function __construct(
         private readonly DashboardCacheServiceContract $dashboardCache,
@@ -90,6 +91,15 @@ final class EloquentJobMonitorRepository implements JobMonitorRepositoryContract
         return JobMonitor::where('job_id', (string) $jobId)
             ->orderByDesc('attempt')
             ->orderByDesc('created_at')
+            ->first();
+    }
+
+    public function findAttemptByJobId(int|string $jobId, int $attempt): ?JobMonitor
+    {
+        return JobMonitor::where('job_id', (string) $jobId)
+            ->where('attempt', $attempt)
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
             ->first();
     }
 

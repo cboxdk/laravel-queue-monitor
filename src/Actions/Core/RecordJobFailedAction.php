@@ -10,7 +10,7 @@ use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\Jobs\StoreJobTagsJob;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\JobMonitorRepositoryContract;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\TagRepositoryContract;
-use Cbox\LaravelQueueMonitor\Support\JobKey;
+use Cbox\LaravelQueueMonitor\Support\JobAttemptResolver;
 use Illuminate\Contracts\Queue\Job;
 use Throwable;
 
@@ -19,10 +19,15 @@ final readonly class RecordJobFailedAction
     public function __construct(
         private JobMonitorRepositoryContract $repository,
         private TagRepositoryContract $tagRepository,
+        private JobAttemptResolver $attempts,
     ) {}
 
     /**
      * Record when a job fails
+     *
+     * The failure is written to the row of the attempt this worker ran (see
+     * JobAttemptResolver), replacing a TIMEOUT that a redelivery inferred for
+     * that attempt while its worker was in fact still running.
      *
      * Note: Caller (listener) is responsible for checking if monitoring is enabled.
      */
@@ -35,8 +40,7 @@ final readonly class RecordJobFailedAction
             return;
         }
 
-        $jobId = JobKey::of($job);
-        $jobMonitor = $this->repository->findLatestAttemptByJobId($jobId);
+        $jobMonitor = $this->attempts->rowFor($job);
 
         if ($jobMonitor === null) {
             return;
