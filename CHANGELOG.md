@@ -2,6 +2,14 @@
 
 All notable changes to `laravel-queue-monitor` will be documented in this file.
 
+## v1.11.2 — SQS queue names and FIFO replay - 2026-10-14
+
+### Fixes
+
+- **SQS jobs are recorded under the queue name, not the queue URL.** Laravel's SQS driver gives workers the full queue URL as the job's queue. A job that reached a worker without a matching `JobQueued` row (a replay, `queue:retry`, a job dispatched by another app or while monitoring was off) was recorded under `https://sqs.<region>.amazonaws.com/<account>/<queue>`, so the same queue showed up twice and the URL rows fell back to the default SLA target. Queue URLs, including a connection's default queue given as a URL, are now reduced to the queue name, with the connection's `suffix` removed the way the SQS driver adds it.
+- **Replaying a job to an SQS FIFO queue works.** A raw push skips Laravel's FIFO options, and SQS rejects a FIFO send without `MessageGroupId` and `MessageDeduplicationId`. Replay now supplies Laravel's own defaults: the queue name as the group and a fresh ordered UUID as the deduplication id. Batch replay goes through the same path.
+- **Delayed jobs on SQS FIFO queues no longer get a future `available_at`.** SQS FIFO queues don't support per-message delay and Laravel drops it, so the job can run at once. Recording the delay anyway produced negative pickup latency and counted the job as delayed rather than waiting.
+
 ## v1.11.1 — CarbonImmutable support - 2026-09-24
 
 ### Fixes
@@ -387,6 +395,7 @@ First stable release of Queue Monitor for Laravel - a comprehensive job monitori
 
 ```bash
 composer require cboxdk/laravel-queue-monitor
+
 
 
 
