@@ -35,11 +35,13 @@ final readonly class RecordJobQueuedAction
         $jobInstance = $event->job ?? null;
         $connectionName = $event->connectionName ?? 'default';
         $jobId = isset($event->id) ? (string) $event->id : null;
-        $availableAt = $this->calculateAvailableAt($event->delay ?? null);
 
         if ($jobInstance === null) {
             throw new \RuntimeException('Job instance not found in event');
         }
+
+        $queue = $this->getQueue($event, $jobInstance, $connectionName);
+        $availableAt = $this->calculateAvailableAt($event->delay ?? null, $connectionName, $queue);
 
         $resolvedJob = $this->resolveMonitorableJob($jobInstance) ?? $jobInstance;
 
@@ -63,7 +65,7 @@ final readonly class RecordJobQueuedAction
             jobClass: $this->getJobClass($jobInstance),
             displayName: $this->getDisplayName($jobInstance),
             connection: $connectionName,
-            queue: $this->getQueue($event, $jobInstance, $connectionName),
+            queue: $queue,
             payload: $payload,
             status: JobStatus::QUEUED,
             attempt: 1,
@@ -293,11 +295,18 @@ final readonly class RecordJobQueuedAction
 
     /**
      * Calculate when a delayed job becomes available for processing
+     *
+     * SqsQueue::getQueueableOptions() drops DelaySeconds for FIFO queues, which
+     * reject it, so a delayed job pushed to one is available immediately.
      */
-    private function calculateAvailableAt(mixed $delay): ?CarbonInterface
+    private function calculateAvailableAt(mixed $delay, string $connectionName, string $queue): ?CarbonInterface
     {
         if ($delay === null || $delay === 0) {
             return null; // Not delayed — available immediately
+        }
+
+        if (QueueName::isSqsFifo($connectionName, $queue)) {
+            return null;
         }
 
         if ($delay instanceof \DateTimeInterface) {
