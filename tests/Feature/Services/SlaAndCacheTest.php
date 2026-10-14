@@ -5,6 +5,8 @@ declare(strict_types=1);
 use Cbox\LaravelQueueMonitor\Models\JobMonitor;
 use Cbox\LaravelQueueMonitor\Services\DashboardCacheService;
 use Cbox\LaravelQueueMonitor\Services\InfrastructureService;
+use Cbox\LaravelQueueMonitor\Tests\Support\BalancedSlaProfile;
+use Cbox\LaravelQueueMonitor\Tests\Support\FastSlaProfile;
 
 test('SLA compliance is computed per queue with distinct targets in SQL', function () {
     config()->set('queue-autoscale.queues', [
@@ -64,4 +66,30 @@ test('cache bust throttles repeated version bumps within the window', function (
         return $service->scopedKey('probe');
     })();
     expect($keyAfterAgain)->toBe($keyAfter);
+});
+
+test('SLA targets come from autoscale profiles, globs and groups, not just the v1 key', function () {
+    config()->set('queue-autoscale.sla_defaults', BalancedSlaProfile::class);
+    config()->set('queue-autoscale.queues', [
+        'orders*.fifo' => FastSlaProfile::class,
+    ]);
+    config()->set('queue-autoscale.groups', [
+        'notify' => ['queues' => ['email'], 'overrides' => ['sla' => ['target_seconds' => 3]]],
+    ]);
+
+    // 10s pickup on each queue: breaches the 5s FIFO and 3s group targets, meets the 20s default.
+    foreach (['orders-eu.fifo', 'email', 'reports'] as $queue) {
+        JobMonitor::factory()->create(['queue' => $queue, 'queued_at' => now()->subSeconds(20), 'started_at' => now()->subSeconds(10)]);
+    }
+
+    $sla = app(InfrastructureService::class)->getSlaData();
+    $byQueue = collect($sla['per_queue'])->keyBy('queue');
+
+    expect($sla['source'])->toBe('autoscale')
+        ->and($byQueue['orders-eu.fifo']['target_seconds'])->toBe(5)
+        ->and($byQueue['orders-eu.fifo']['compliance'])->toBe(0.0)
+        ->and($byQueue['email']['target_seconds'])->toBe(3)
+        ->and($byQueue['email']['compliance'])->toBe(0.0)
+        ->and($byQueue['reports']['target_seconds'])->toBe(20)
+        ->and($byQueue['reports']['compliance'])->toBe(100.0);
 });

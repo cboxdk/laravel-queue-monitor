@@ -18,6 +18,7 @@ use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\Models\ClusterEvent;
 use Cbox\LaravelQueueMonitor\Models\ScalingEvent;
 use Cbox\LaravelQueueMonitor\Services\Contracts\InfrastructureServiceContract;
+use Cbox\LaravelQueueMonitor\Support\AutoscaleSlaTargets;
 use Cbox\LaravelQueueMonitor\Utilities\DatabaseExpressionHelper;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
@@ -29,6 +30,8 @@ use Illuminate\Support\Facades\Schema;
  */
 final class InfrastructureService implements InfrastructureServiceContract
 {
+    private const DEFAULT_SLA_TARGET_SECONDS = 30;
+
     public function getWorkerData(): WorkerData
     {
         if (! class_exists('Laravel\Horizon\Horizon')) {
@@ -200,9 +203,12 @@ final class InfrastructureService implements InfrastructureServiceContract
     {
         $driver = $this->databaseDriver();
 
-        // Get SLA targets from autoscale config (per queue)
-        $slaTargets = $this->getAutoscaleSlaTargets();
-        $defaultTarget = $slaTargets['*'] ?? 30;
+        // SLA targets from autoscale config, resolved per queue the way
+        // autoscale resolves them (profiles, globs, groups).
+        $slaTargets = AutoscaleSlaTargets::fromConfig();
+        $source = $slaTargets->isConfigured() ? 'autoscale' : 'default';
+        $defaultTarget = $slaTargets->defaultTarget ?? self::DEFAULT_SLA_TARGET_SECONDS;
+        $since = now()->subHour();
 
         // Single aggregation query: count total and within-SLA per queue
         $pickupExpr = DatabaseExpressionHelper::secondsBetween(
@@ -214,12 +220,27 @@ final class InfrastructureService implements InfrastructureServiceContract
         // Resolve each queue's SLA target inside SQL so compliance is computed
         // with a single grouped aggregate — hydrating every last-hour job row
         // into PHP to filter it here would OOM on a busy install, and this runs
-        // every few seconds on the infrastructure and autoscale tabs.
-        $specificTargets = array_filter(
-            $slaTargets,
-            fn (string $queue): bool => $queue !== '*',
-            ARRAY_FILTER_USE_KEY
-        );
+        // every few seconds on the infrastructure and autoscale tabs. Targets can
+        // come from globs and groups, so they are resolved for the queues that
+        // actually ran in the window rather than for the literal config keys.
+        $specificTargets = [];
+        $windowQueues = $this->jobTable()
+            ->whereNotNull('started_at')
+            ->where('created_at', '>=', $since)
+            ->distinct()
+            ->pluck('queue');
+
+        foreach ($windowQueues as $queueName) {
+            if (! is_string($queueName)) {
+                continue;
+            }
+
+            $target = $slaTargets->targetFor($queueName) ?? $defaultTarget;
+
+            if ($target !== $defaultTarget) {
+                $specificTargets[$queueName] = $target;
+            }
+        }
 
         if ($specificTargets === []) {
             $targetExpr = '?';
@@ -230,7 +251,7 @@ final class InfrastructureService implements InfrastructureServiceContract
             foreach ($specificTargets as $queue => $target) {
                 $targetExpr .= ' WHEN ? THEN ?';
                 $bindings[] = $queue;
-                $bindings[] = (int) $target;
+                $bindings[] = $target;
             }
             $targetExpr .= ' ELSE ? END';
             $bindings[] = $defaultTarget;
@@ -242,7 +263,7 @@ final class InfrastructureService implements InfrastructureServiceContract
                 $bindings
             )
             ->whereNotNull('started_at')
-            ->where('created_at', '>=', now()->subHour())
+            ->where('created_at', '>=', $since)
             ->groupBy('queue')
             ->get();
 
@@ -250,14 +271,14 @@ final class InfrastructureService implements InfrastructureServiceContract
             return new SlaData(
                 available: true,
                 perQueue: [],
-                source: empty($slaTargets) ? 'default' : 'autoscale',
+                source: $source,
             );
         }
 
         $perQueue = [];
         foreach ($rows as $row) {
             $queueStr = (string) $row->queue;
-            $target = $slaTargets[$queueStr] ?? $defaultTarget;
+            $target = $specificTargets[$queueStr] ?? $defaultTarget;
             $total = (int) $row->total;
             $within = (int) $row->within_sla;
 
@@ -287,40 +308,8 @@ final class InfrastructureService implements InfrastructureServiceContract
                 ),
                 $perQueue,
             ),
-            source: empty($slaTargets) ? 'default' : 'autoscale',
+            source: $source,
         );
-    }
-
-    /**
-     * Get SLA targets from autoscale config. Returns queue => seconds mapping.
-     *
-     * @return array<string, int>
-     */
-    private function getAutoscaleSlaTargets(): array
-    {
-        // Try autoscale config
-        /** @var array<string, mixed> $queues */
-        $queues = config('queue-autoscale.queues', []);
-        /** @var array<string, mixed> $defaults */
-        $defaults = config('queue-autoscale.sla_defaults', []);
-
-        $targets = [];
-
-        // Default SLA from autoscale defaults
-        $defaultPickup = $defaults['max_pickup_time_seconds'] ?? null;
-        if (is_numeric($defaultPickup)) {
-            $targets['*'] = (int) $defaultPickup;
-        }
-
-        // Per-queue overrides
-        foreach ($queues as $queueKey => $queueConfig) {
-            $queuePickup = is_array($queueConfig) ? ($queueConfig['max_pickup_time_seconds'] ?? null) : null;
-            if (is_numeric($queuePickup)) {
-                $targets[(string) $queueKey] = (int) $queuePickup;
-            }
-        }
-
-        return $targets;
     }
 
     public function getScalingData(): ScalingData
