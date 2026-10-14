@@ -11,6 +11,7 @@ use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\Models\JobMonitor;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\JobMonitorRepositoryContract;
 use Cbox\LaravelQueueMonitor\Services\Contracts\WorkerContextServiceContract;
+use Cbox\LaravelQueueMonitor\Support\QueueName;
 use Cbox\LaravelQueueMonitor\Utilities\JobPayloadSerializer;
 use Illuminate\Contracts\Queue\Job as QueueJob;
 use Illuminate\Support\Facades\DB;
@@ -170,8 +171,16 @@ final readonly class RecordJobQueuedAction
      * and the job instance's $queue property stays null, so reading it alone
      * mis-records every batched job as `default`. Fall back to the instance, then
      * to the connection's configured default queue name.
+     *
+     * On SQS the worker's job and the connection default are full queue URLs, so
+     * the result is reduced to the queue name to match rows recorded at dispatch.
      */
     private function getQueue(object $event, object $jobInstance, string $connectionName): string
+    {
+        return QueueName::normalize($connectionName, $this->resolveRawQueue($event, $jobInstance, $connectionName));
+    }
+
+    private function resolveRawQueue(object $event, object $jobInstance, string $connectionName): string
     {
         $eventQueue = $event->queue ?? null;
 
