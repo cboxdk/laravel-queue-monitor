@@ -26,7 +26,10 @@ final readonly class RecordJobStartedAction
      *
      * When a job is retried (attempt > 1), a NEW record is created for each attempt
      * and linked to the original via retried_from_id. This preserves the full
-     * attempts trail — every attempt's exception, duration, and metrics are kept.
+     * attempts trail — every attempt's exception, duration, and metrics are kept,
+     * including an attempt whose worker was killed before it could report back.
+     * A released job (parked as `queued`) is the one exception: its redelivery
+     * reuses the same row.
      *
      * Note: Caller (listener) is responsible for checking if monitoring is enabled.
      */
@@ -57,15 +60,12 @@ final readonly class RecordJobStartedAction
             $workerContext = $this->workerContext->capture();
 
             if ($attempt > 1) {
-                $priorAttemptFailed = $jobMonitor->status->isFinished()
-                    || $jobMonitor->exception_class !== null;
-
-                if (! $priorAttemptFailed) {
-                    // The previous attempt is still `processing` with no recorded
-                    // exception: the job was released back onto the queue (rate
-                    // limiting, middleware, a manual release), not retried after a
-                    // failure. Update the same row in place so a release does not
-                    // leave a phantom `failed` row or a duplicate row per delivery.
+                if ($jobMonitor->status === JobStatus::QUEUED) {
+                    // The previous attempt released the job back onto the queue
+                    // (rate limiting, middleware, a manual release) — the
+                    // completed action parks a released attempt as `queued`.
+                    // Update the same row in place so a release does not leave a
+                    // phantom terminal row or a duplicate row per delivery.
                     $this->repository->update($jobMonitor->uuid, [
                         'status' => JobStatus::PROCESSING,
                         'attempt' => $attempt,
@@ -78,17 +78,8 @@ final readonly class RecordJobStartedAction
                     return;
                 }
 
-                // Genuine retry after a failure. Mark the prior attempt FAILED if it
-                // isn't already terminal (Laravel doesn't fire JobFailed for
-                // intermediate retries), then preserve the attempts trail below.
                 if (! $jobMonitor->status->isFinished()) {
-                    $this->repository->update($jobMonitor->uuid, [
-                        'status' => JobStatus::FAILED,
-                        'completed_at' => now(),
-                        'duration_ms' => $jobMonitor->started_at
-                            ? (int) $jobMonitor->started_at->diffInMilliseconds(now())
-                            : null,
-                    ]);
+                    $this->closeUnfinishedAttempt($jobMonitor);
                 }
 
                 // Create a NEW record for this attempt, preserving the previous attempt's data
@@ -134,6 +125,40 @@ final readonly class RecordJobStartedAction
                 ]);
             }
         });
+    }
+
+    /**
+     * Close the previous attempt before a redelivery starts a new one
+     *
+     * Laravel doesn't fire JobFailed for intermediate retries, so an attempt
+     * that threw is still `processing` with an exception recorded: mark it
+     * FAILED. An attempt that is still `processing` with no exception and was
+     * not released never reported back at all — the worker was hard-killed
+     * (SIGKILL, OOM, a supervisor timeout kill) and the broker redelivered the
+     * message once its visibility timeout / retry_after lapsed. Mark it TIMEOUT,
+     * the same terminal status stuck-job resolution uses for an attempt that
+     * never finished. Its duration is left unknown: the time until redelivery
+     * includes the broker's wait and would inflate duration statistics.
+     */
+    private function closeUnfinishedAttempt(JobMonitor $jobMonitor): void
+    {
+        if ($jobMonitor->exception_class !== null) {
+            $this->repository->update($jobMonitor->uuid, [
+                'status' => JobStatus::FAILED,
+                'completed_at' => now(),
+                'duration_ms' => $jobMonitor->started_at
+                    ? (int) $jobMonitor->started_at->diffInMilliseconds(now())
+                    : null,
+            ]);
+
+            return;
+        }
+
+        $this->repository->update($jobMonitor->uuid, [
+            'status' => JobStatus::TIMEOUT,
+            'completed_at' => now(),
+            'duration_ms' => null,
+        ]);
     }
 
     /**

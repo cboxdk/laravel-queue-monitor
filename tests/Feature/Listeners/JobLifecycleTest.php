@@ -128,8 +128,10 @@ test('job processed event does not complete a released job', function () {
 
     app(RecordJobCompletedAction::class)->execute(new JobProcessed('redis', $mockJob));
 
+    // Parked as queued — the job is back on the queue, and the redelivery can
+    // tell this release apart from an attempt whose worker was killed.
     $monitor->refresh();
-    expect($monitor->status)->toBe(JobStatus::PROCESSING);
+    expect($monitor->status)->toBe(JobStatus::QUEUED);
     expect($monitor->completed_at)->toBeNull();
 });
 
