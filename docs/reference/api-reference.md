@@ -212,7 +212,8 @@ Permanently removes a single job record. Returns `404` if the UUID is unknown.
 **Endpoint:** `GET /jobs/{uuid}/retry-chain`
 
 Returns the job and every job in its retry chain as a collection, ordered by
-attempt.
+attempt. Each entry is one attempt with its own status, duration and exception; see
+[Job Lifecycle and Attempts](job-lifecycle).
 
 ```json
 { "data": [ /* job resources */ ], "meta": { "total": 3 } }

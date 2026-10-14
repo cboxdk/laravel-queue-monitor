@@ -95,6 +95,26 @@ $this->repository->update($jobMonitor->uuid, [
 ]);
 ```
 
+## Matching Metrics to an Attempt
+
+A retried or redelivered job has one row per attempt, all sharing one `job_id`.
+`JobMetricsCompleted` and `JobMetricsFailed` carry that `job_id` but not the attempt
+number, so the subscriber picks the row in this order:
+
+1. **The attempt this worker started.** When a job starts, `JobProcessingListener`
+   remembers in the worker process which attempt it began. The metrics event is raised
+   synchronously in the same worker when the job ends, so that attempt is the one that
+   was measured.
+2. **The attempt still `processing`.** This is used when the worker did not see the
+   start.
+3. **The latest attempt with no metrics yet.** This is used when the row has already
+   moved to `completed` or `failed`.
+
+The first rule matters when the broker redelivers a slow job to a second worker while
+the first is still running it. The newer attempt is then the latest row, and the one
+still `processing`, but its figures belong to the second worker. See
+[Job Lifecycle and Attempts](job-lifecycle#how-attempts-are-matched).
+
 ## Accessing Metrics
 
 ### Via Model

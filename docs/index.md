@@ -99,6 +99,7 @@ echo "Success Rate: {$stats['success_rate']}%\n";
 - [API Reference](reference/api-reference) - Complete REST API docs
 - [Testing Guide](reference/testing) - Write tests with Pest 4
 - [Architecture](reference/architecture) - Package design patterns
+- [Job Lifecycle and Attempts](reference/job-lifecycle) - Statuses, retries, and redeliveries
 
 ## Architecture
 

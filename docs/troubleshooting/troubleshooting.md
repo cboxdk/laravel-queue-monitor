@@ -468,24 +468,79 @@ foreach ($stuck as $job) {
 }
 ```
 
+The `queue-monitor:resolve-stuck` command and the stuck-jobs API do this for you. A
+resolved row is an inferred outcome: if the job was only slow and finishes later, its
+real outcome replaces the `timeout`.
+
+### An Attempt Shows `timeout` but the Job Ran
+
+**Problem**: A retry chain shows an attempt as `timeout` with no duration, followed by
+another attempt, but the job's work was done.
+
+**Cause**: The attempt outlived the broker's redelivery window: the SQS visibility
+timeout, or `retry_after` on Redis, database or Beanstalkd. The broker redelivered the
+job while the first worker was still running it. When the redelivered attempt starts,
+the earlier attempt has not reported back, so it is closed as `timeout`. That is the
+same thing a killed worker looks like.
+
+If the first worker finishes, its real outcome (`completed` or `failed`, with its real
+duration) replaces the `timeout`. A `timeout` with no duration that never changes means
+the worker really did die. See
+[Job Lifecycle and Attempts](../reference/job-lifecycle#inferred-timeouts).
+
+**Solution**: Set `retry_after` (or the visibility timeout) longer than your slowest
+job, and the worker `--timeout` below it, so a running job is never redelivered:
+
+```php
+// config/queue.php
+'redis' => [
+    'driver' => 'redis',
+    'retry_after' => 600,   // longer than the slowest job
+],
+```
+
+```bash
+php artisan queue:work redis --timeout=540
+```
+
+### `job_class` Shows a Display Name
+
+**Problem**: Sync jobs, or jobs first seen when they started processing, appear under
+a `job_class` such as `Send invoice reminder` instead of a class name.
+
+**Cause**: Earlier versions recorded the payload's display name as `job_class` for
+rows created from a running job. Current versions record the command's class name and
+keep the display name in `display_name`. Rows recorded before the upgrade keep the old
+value until they are pruned.
+
 ### Duplicate Job Records
 
 **Problem**: Multiple records for same job.
 
+A job has one row per attempt, so several rows sharing a `job_id` with different
+`attempt` numbers are expected: they are its retry chain. Do not deduplicate on
+`job_id` alone, or you delete the history of every retried job. Only rows that share
+both `job_id` and `attempt` are duplicates.
+
 **Solution**:
 ```php
-// This shouldn't happen, but if it does:
-$duplicates = JobMonitor::select('job_id')
+// Find (job_id, attempt) pairs recorded more than once
+$duplicates = JobMonitor::select('job_id', 'attempt')
     ->whereNotNull('job_id')
-    ->groupBy('job_id')
+    ->groupBy('job_id', 'attempt')
     ->havingRaw('COUNT(*) > 1')
     ->get();
 
-// Keep only latest record
+// Keep the most recent row of each pair
 foreach ($duplicates as $dup) {
+    $keep = JobMonitor::where('job_id', $dup->job_id)
+        ->where('attempt', $dup->attempt)
+        ->latest('id')
+        ->value('id');
+
     JobMonitor::where('job_id', $dup->job_id)
-        ->orderBy('created_at')
-        ->skip(1)
+        ->where('attempt', $dup->attempt)
+        ->where('id', '!=', $keep)
         ->delete();
 }
 ```

@@ -70,6 +70,7 @@ src/
 │   ├── JobProcessedListener
 │   ├── JobFailedListener
 │   ├── JobTimedOutListener
+│   ├── JobExceptionOccurredListener
 │   └── QueueMetricsSubscriber
 ├── Models/                       # Eloquent models
 │   ├── JobMonitor
@@ -77,6 +78,7 @@ src/
 ├── Repositories/
 │   ├── Contracts/                # Repository interfaces
 │   │   ├── JobMonitorRepositoryContract
+│   │   ├── JobAttemptRepositoryContract
 │   │   ├── TagRepositoryContract
 │   │   └── StatisticsRepositoryContract
 │   └── Eloquent/                 # Eloquent implementations
@@ -85,6 +87,10 @@ src/
 │       └── EloquentStatisticsRepository
 ├── Services/                     # Domain services
 │   └── WorkerContextService
+├── Support/
+│   ├── JobKey                    # The key a job's rows share (job_id)
+│   ├── JobAttemptResolver        # Finds the row of the attempt a worker ran
+│   └── InFlightAttempts          # Attempts this worker process started
 ├── Facades/
 │   └── LaravelQueueMonitor
 └── LaravelQueueMonitorServiceProvider
@@ -106,13 +112,16 @@ src/
    └→ JobProcessing Event
       └→ JobProcessingListener
          └→ RecordJobStartedAction
-            └→ JobMonitorRepository::update()
-               └→ DB: UPDATE status=processing, started_at
+            └→ JobMonitorRepository::update()      (first attempt, or a released row)
+               └→ DB: UPDATE status=processing, started_at, attempt
+            └→ JobMonitorRepository::create()      (a later attempt)
+               └→ DB: close the previous attempt, INSERT a row linked by retried_from_id
 
 3. Job Completed/Failed
    └→ JobProcessed/JobFailed Event
       └→ Listener
          └→ RecordJobCompletedAction/RecordJobFailedAction
+            └→ JobAttemptResolver::rowFor()        (job key + attempt number)
             └→ JobMonitorRepository::update()
                └→ DB: UPDATE status, completed_at, metrics
                └→ TagRepository::storeTags()
@@ -120,6 +129,7 @@ src/
 4. Metrics Enrichment (async)
    └→ JobMetricsCompleted / JobMetricsFailed (from laravel-queue-metrics)
       └→ QueueMetricsSubscriber::handleJobMetricsCompleted()
+         └→ InFlightAttempts                       (the attempt this worker started)
          └→ JobMonitorRepository::update()
             └→ DB: UPDATE cpu_time_ms, memory_peak_mb
 ```
@@ -185,6 +195,10 @@ Override default repository implementations:
 ],
 ```
 
+Also implement `JobAttemptRepositoryContract` on a custom job repository to get
+per-attempt outcome matching. Without it, outcomes go to the latest attempt. See
+[Job Lifecycle and Attempts](job-lifecycle#custom-repositories).
+
 ### Custom Actions
 
 Replace action implementations:
@@ -225,6 +239,7 @@ Event::listen(JobReplayRequested::class, function($event) {
 - **JobProcessed** - When job completes successfully
 - **JobFailed** - When job fails with exception
 - **JobTimedOut** - When job exceeds timeout
+- **JobExceptionOccurred** - On every exception, including attempts that will be retried
 
 ### Queue-Metrics Events
 - **JobMetricsCompleted / JobMetricsFailed** - When queue-metrics records per-job metrics
@@ -242,8 +257,10 @@ Event::listen(JobReplayRequested::class, function($event) {
 
 **Primary Keys & Identification:**
 - `id` - Auto-increment primary key
-- `uuid` - Job UUID for tracking across retries
-- `job_id` - Laravel's internal job ID
+- `uuid` - Identifies one row, i.e. one attempt
+- `job_id` - The job key every attempt of the job shares (the driver's job id, or the payload uuid for sync jobs)
+- `attempt` - The attempt number the broker reported for this run
+- `job_class` - The queued command's class name; `display_name` holds its `displayName()`
 
 **Indexes:**
 - Single: uuid, job_id, job_class, queue, status, duration_ms

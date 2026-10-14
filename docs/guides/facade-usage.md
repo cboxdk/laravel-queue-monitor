@@ -89,7 +89,9 @@ if ($cancelled) {
 
 ## Retry Chain
 
-Get all retry attempts for a job:
+Get all retry attempts for a job. Each attempt is its own row, ordered by attempt
+number, and each row holds that attempt's own status, duration, exception and metrics.
+See [Job Lifecycle and Attempts](../reference/job-lifecycle).
 
 ```php
 $retryChain = QueueMonitor::getRetryChain('9a123456-7890-1234-5678-90abcdef1234');

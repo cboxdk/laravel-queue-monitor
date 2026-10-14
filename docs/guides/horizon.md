@@ -28,7 +28,7 @@ If you use Horizon, follow Horizon's own production requirements:
 - Use Redis as the queue connection for Horizon-managed workers.
 - Run Horizon under a process monitor such as Supervisor.
 - Protect Horizon's `/horizon` dashboard with its `viewHorizon` gate.
-- Keep Horizon's worker timeout greater than any job-level timeout and lower than the queue connection's `retry_after`.
+- Keep Horizon's worker timeout greater than any job-level timeout and lower than the queue connection's `retry_after`. If a job outlives `retry_after`, Redis redelivers it while it is still running. Queue Monitor then records the first attempt as `timeout` until its real outcome arrives. See [Job Lifecycle and Attempts](../reference/job-lifecycle#inferred-timeouts).
 
 Queue Monitor does not replace those requirements. It observes jobs and reads Horizon metadata when available.
 

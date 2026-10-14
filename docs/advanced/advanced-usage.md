@@ -140,6 +140,37 @@ Register in config:
 ],
 ```
 
+### Per-Attempt Lookup
+
+A broker can redeliver a slow job to a second worker while the first is still running
+it, so two attempts of one job can report at the same time. To write each outcome to
+the right attempt's row, the recorders look the row up by job key and attempt number
+through `JobAttemptRepositoryContract`. Implement it next to
+`JobMonitorRepositoryContract`:
+
+```php
+use Cbox\LaravelQueueMonitor\Models\JobMonitor;
+use Cbox\LaravelQueueMonitor\Repositories\Contracts\JobAttemptRepositoryContract;
+use Cbox\LaravelQueueMonitor\Repositories\Contracts\JobMonitorRepositoryContract;
+
+class RedisJobMonitorRepository implements JobAttemptRepositoryContract, JobMonitorRepositoryContract
+{
+    public function findAttemptByJobId(int|string $jobId, int $attempt): ?JobMonitor
+    {
+        return JobMonitor::where('job_id', (string) $jobId)
+            ->where('attempt', $attempt)
+            ->orderByDesc('created_at')
+            ->first();
+    }
+
+    // ...
+}
+```
+
+It is optional. A repository that implements only `JobMonitorRepositoryContract` keeps
+working, and outcomes go to the job's latest attempt, as in earlier versions. See
+[Job Lifecycle and Attempts](../reference/job-lifecycle#how-attempts-are-matched).
+
 ## Performance Optimization
 
 ### Query Optimization

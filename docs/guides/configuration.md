@@ -323,6 +323,12 @@ Override default repository implementations:
 ],
 ```
 
+A custom job repository can also implement `JobAttemptRepositoryContract`. It is a
+separate contract, so existing implementations keep working. With it, each worker's
+outcome is written to the row of the attempt that worker ran. Without it, outcomes go
+to the job's latest attempt. See
+[Job Lifecycle and Attempts](../reference/job-lifecycle#custom-repositories).
+
 ## Action Bindings
 
 Override default action implementations:

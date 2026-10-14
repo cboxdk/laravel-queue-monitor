@@ -198,6 +198,7 @@ Full documentation lives in [`docs/`](docs/index.md):
 - [Configuration](docs/guides/configuration.md) — retention, cache, dashboard, and API settings
 - [Authentication & Access Control](docs/guides/authentication.md) — securing the dashboard and REST API
 - [API Reference](docs/reference/api-reference.md) — every REST endpoint with parameters and responses
+- [Job Lifecycle and Attempts](docs/reference/job-lifecycle.md) — statuses, retry chains, and how redelivered jobs are recorded
 - [Job Replay](docs/guides/job-replay.md) — re-dispatching failed jobs from stored payloads
 - [Laravel Horizon Integration](docs/guides/horizon.md) — auto-detected supervisor data
 

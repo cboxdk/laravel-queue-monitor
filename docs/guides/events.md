@@ -10,7 +10,11 @@ The package uses an event-driven architecture for loose coupling and extensibili
 
 ## Laravel Queue Events (Listeners)
 
-The package automatically listens to Laravel's built-in queue events:
+The package automatically listens to Laravel's built-in queue events. Every attempt
+of a job gets its own row, and each event below is recorded on the row of the attempt
+that raised it. A slow attempt that reports after the broker has already redelivered
+the job therefore updates its own row, not the newer attempt's. See
+[Job Lifecycle and Attempts](../reference/job-lifecycle) for the full model.
 
 ### JobQueued
 
@@ -19,7 +23,8 @@ Fired when a job is pushed to the queue.
 **Listener**: `JobQueuedListener`
 **Action**: `RecordJobQueuedAction`
 **Data Captured**:
-- Job class and payload
+- Job class (`job_class`, the command's class name) and display name (`display_name`, from `displayName()`)
+- Payload
 - Queue and connection
 - Server and worker context
 - Tags (if job implements `tags()` method)
@@ -32,9 +37,17 @@ Fired when a worker picks up a job for processing.
 **Action**: `RecordJobStartedAction`
 **Data Updated**:
 - Status → processing
-- Job ID (Laravel's internal ID)
+- Job ID (the driver's job id; the payload uuid for sync jobs)
 - Started timestamp
-- Attempt number
+- Attempt number, as the broker reports it
+
+On a later attempt, a released row (parked as `queued`) is reused. Otherwise the
+previous attempt's row is closed and a new row is created for this attempt, linked
+through `retried_from_id`. A previous row with an exception is closed as `failed`. A
+previous row that never reported back is closed as `timeout`, because its worker was
+killed or the job outlived the broker's redelivery window. The listener also remembers,
+inside the worker process, which attempt it started, so per-job metrics can be matched
+to it later.
 
 ### JobProcessed
 
@@ -43,10 +56,13 @@ Fired when a job completes successfully.
 **Listener**: `JobProcessedListener`
 **Action**: `RecordJobCompletedAction`
 **Data Updated**:
-- Status → completed
+- Status → completed (a released attempt is parked as `queued` instead)
 - Completed timestamp
 - Duration calculation
 - Tag storage (normalized)
+
+If the attempt had already been closed as `timeout` because the job was redelivered
+while it ran, the real outcome replaces that inferred timeout.
 
 ### JobFailed
 
@@ -60,6 +76,18 @@ Fired when a job fails with an exception.
 - Completed timestamp
 - Duration calculation
 
+### JobExceptionOccurred
+
+Fired on every exception, including attempts that will be retried. `JobFailed` only
+fires for the final attempt.
+
+**Listener**: `JobExceptionOccurredListener`
+**Data Updated**:
+- Exception details (class, message, trace) on the attempt that threw
+- Status → failed, but only when that attempt had already been closed as an inferred
+  `timeout`. Otherwise the row stays `processing` until the next attempt starts and
+  closes it as `failed`.
+
 ### JobTimedOut
 
 Fired when a job exceeds its timeout limit.
@@ -69,7 +97,7 @@ Fired when a job exceeds its timeout limit.
 **Data Updated**:
 - Status → timeout
 - Timeout exception details
-- Completed timestamp
+- Completed timestamp and duration
 
 ## Queue-Metrics Events (Subscriber)
 
@@ -83,6 +111,10 @@ Fired by laravel-queue-metrics per job when metrics are recorded.
 - CPU time (milliseconds)
 - Memory peak (megabytes)
 - Worker memory limit (megabytes, if available)
+
+The event carries the job key but not the attempt number. It is raised in the worker
+that ran the job, so the subscriber uses the attempt that worker started. The metrics
+of a slow, redelivered attempt therefore land on that attempt's row.
 
 **Event Structure**:
 ```php

@@ -12,5 +12,6 @@ Queue Monitor for Laravel: complete technical reference materials.
 
 - **[API Reference](api-reference)** - All 14 REST API endpoints with request/response examples
 - **[Architecture](architecture)** - Action, DTO, and Repository patterns explained
+- **[Job Lifecycle and Attempts](job-lifecycle)** - Statuses, retries, redeliveries, and how outcomes are matched to attempts
 - **[Queue-Metrics Integration](metrics-integration)** - Resource tracking via laravel-queue-metrics
 - **[Testing Guide](testing)** - Write tests with Pest 4
