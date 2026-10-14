@@ -37,6 +37,16 @@ final class QueueName
     }
 
     /**
+     * Whether the queue lives on an SQS FIFO queue. FIFO queues reject a
+     * per-message delay and require a message group on every send.
+     */
+    public static function isSqsFifo(string $connection, string $queue): bool
+    {
+        return config("queue.connections.{$connection}.driver") === 'sqs'
+            && str_ends_with($queue, '.fifo');
+    }
+
+    /**
      * A plain scheme check rather than FILTER_VALIDATE_URL, which rejects
      * hostnames containing underscores — common for Docker Compose service
      * names such as `http://local_stack:4566/...`.

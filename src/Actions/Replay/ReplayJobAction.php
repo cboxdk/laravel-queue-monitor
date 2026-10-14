@@ -10,6 +10,7 @@ use Cbox\LaravelQueueMonitor\Exceptions\JobNotFoundException;
 use Cbox\LaravelQueueMonitor\Exceptions\JobReplayException;
 use Cbox\LaravelQueueMonitor\Models\JobMonitor;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\JobMonitorRepositoryContract;
+use Cbox\LaravelQueueMonitor\Support\QueueName;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Str;
 
@@ -60,7 +61,7 @@ final readonly class ReplayJobAction
         }
 
         $queueJobId = Queue::connection($jobMonitor->connection)
-            ->pushRaw($payloadJson, $jobMonitor->queue);
+            ->pushRaw($payloadJson, $jobMonitor->queue, $this->pushOptions($jobMonitor));
 
         return new JobReplayData(
             originalUuid: $uuid,
@@ -70,6 +71,29 @@ final readonly class ReplayJobAction
             connection: $jobMonitor->connection,
             replayedAt: now(),
         );
+    }
+
+    /**
+     * Driver options for the raw push.
+     *
+     * A raw push skips SqsQueue::getQueueableOptions(), and SQS rejects a send
+     * to a FIFO queue without a MessageGroupId and MessageDeduplicationId. This
+     * applies Laravel's own defaults for a job that declares neither: the queue
+     * name as the group and a fresh ordered UUID as the deduplication id, so a
+     * replay is never deduplicated against the original send.
+     *
+     * @return array{MessageGroupId?: string, MessageDeduplicationId?: string}
+     */
+    private function pushOptions(JobMonitor $jobMonitor): array
+    {
+        if (! QueueName::isSqsFifo($jobMonitor->connection, $jobMonitor->queue)) {
+            return [];
+        }
+
+        return [
+            'MessageGroupId' => QueueName::normalize($jobMonitor->connection, $jobMonitor->queue),
+            'MessageDeduplicationId' => (string) Str::orderedUuid(),
+        ];
     }
 
     /**
