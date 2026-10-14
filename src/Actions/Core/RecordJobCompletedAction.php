@@ -9,6 +9,8 @@ use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\Jobs\StoreJobTagsJob;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\JobMonitorRepositoryContract;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\TagRepositoryContract;
+use Cbox\LaravelQueueMonitor\Support\JobKey;
+use Illuminate\Contracts\Queue\Job;
 
 final readonly class RecordJobCompletedAction
 {
@@ -26,11 +28,11 @@ final readonly class RecordJobCompletedAction
     {
         $job = $event->job ?? null;
 
-        if ($job === null) {
+        if (! $job instanceof Job) {
             return;
         }
 
-        $jobId = $job->getJobId();
+        $jobId = JobKey::of($job);
         $jobMonitor = $this->repository->findLatestAttemptByJobId($jobId);
 
         if ($jobMonitor === null) {

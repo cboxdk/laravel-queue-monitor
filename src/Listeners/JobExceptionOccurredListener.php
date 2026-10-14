@@ -7,6 +7,7 @@ namespace Cbox\LaravelQueueMonitor\Listeners;
 use Cbox\LaravelQueueMonitor\DataTransferObjects\ExceptionData;
 use Cbox\LaravelQueueMonitor\Models\JobMonitor;
 use Cbox\LaravelQueueMonitor\Services\Contracts\DashboardCacheServiceContract;
+use Cbox\LaravelQueueMonitor\Support\JobKey;
 use Illuminate\Queue\Events\JobExceptionOccurred;
 
 /**
@@ -30,7 +31,7 @@ final class JobExceptionOccurredListener
 
         try {
             $job = $event->job;
-            $jobId = (string) $job->getJobId();
+            $jobId = JobKey::of($job);
             $exception = $event->exception;
             $exceptionData = ExceptionData::fromThrowable($exception);
 

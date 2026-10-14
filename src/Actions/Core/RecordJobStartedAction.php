@@ -9,6 +9,7 @@ use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\Models\JobMonitor;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\JobMonitorRepositoryContract;
 use Cbox\LaravelQueueMonitor\Services\Contracts\WorkerContextServiceContract;
+use Cbox\LaravelQueueMonitor\Support\JobKey;
 use Illuminate\Contracts\Queue\Job;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -37,11 +38,11 @@ final readonly class RecordJobStartedAction
     {
         $job = $event->job ?? null;
 
-        if ($job === null) {
+        if (! $job instanceof Job) {
             return;
         }
 
-        $jobId = $this->getJobId($job);
+        $jobId = JobKey::of($job);
 
         DB::transaction(function () use ($event, $job, $jobId): void {
             // Find the LATEST record for this job_id (most recent attempt)
@@ -168,7 +169,7 @@ final readonly class RecordJobStartedAction
     {
         $job = $event->job ?? null;
 
-        if ($job === null) {
+        if (! $job instanceof Job) {
             return;
         }
 
@@ -182,19 +183,8 @@ final readonly class RecordJobStartedAction
         // Immediately update to processing
         $this->repository->update($jobMonitor->uuid, [
             'status' => JobStatus::PROCESSING,
-            'job_id' => $this->getJobId($job),
+            'job_id' => JobKey::of($job),
             'started_at' => now(),
         ]);
-    }
-
-    /**
-     * Get job ID from Laravel job instance
-     *
-     * The Job contract declares getJobId(): string, but the database queue
-     * driver returns the integer auto-increment id, so normalize to string.
-     */
-    private function getJobId(Job $job): string
-    {
-        return (string) $job->getJobId();
     }
 }

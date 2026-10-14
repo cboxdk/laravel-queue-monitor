@@ -11,6 +11,7 @@ use Cbox\LaravelQueueMonitor\Listeners\JobTimedOutListener;
 use Cbox\LaravelQueueMonitor\Listeners\ScalingEventListener;
 use Cbox\LaravelQueueMonitor\Models\JobMonitor;
 use Cbox\LaravelQueueMonitor\Models\ScalingEvent;
+use Illuminate\Contracts\Queue\Job;
 use Illuminate\Queue\Events\JobExceptionOccurred;
 
 test('listeners skip when monitoring is disabled', function () {
@@ -58,13 +59,8 @@ test('job exception occurred listener captures exception on processing job', fun
 
     $listener = app(JobExceptionOccurredListener::class);
 
-    $mockQueueJob = new class
-    {
-        public function getJobId(): string
-        {
-            return 'test-job-123';
-        }
-    };
+    $mockQueueJob = Mockery::mock(Job::class);
+    $mockQueueJob->shouldReceive('getJobId')->andReturn('test-job-123');
 
     $listener->handle(new JobExceptionOccurred(
         'redis',

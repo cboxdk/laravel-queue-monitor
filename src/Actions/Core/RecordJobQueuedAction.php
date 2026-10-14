@@ -11,6 +11,7 @@ use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\Models\JobMonitor;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\JobMonitorRepositoryContract;
 use Cbox\LaravelQueueMonitor\Services\Contracts\WorkerContextServiceContract;
+use Cbox\LaravelQueueMonitor\Support\JobKey;
 use Cbox\LaravelQueueMonitor\Support\QueueName;
 use Cbox\LaravelQueueMonitor\Utilities\JobPayloadSerializer;
 use Illuminate\Contracts\Queue\Job as QueueJob;
@@ -34,11 +35,12 @@ final readonly class RecordJobQueuedAction
         // JobQueued event has: connectionName, queue, id, job, payload, delay
         $jobInstance = $event->job ?? null;
         $connectionName = $event->connectionName ?? 'default';
-        $jobId = isset($event->id) ? (string) $event->id : null;
 
         if ($jobInstance === null) {
             throw new \RuntimeException('Job instance not found in event');
         }
+
+        $jobId = $this->resolveJobId($event, $jobInstance);
 
         $queue = $this->getQueue($event, $jobInstance, $connectionName);
         $availableAt = $this->calculateAvailableAt($event->delay ?? null, $connectionName, $queue);
@@ -90,6 +92,41 @@ final readonly class RecordJobQueuedAction
 
         /** @var JobMonitor */
         return DB::transaction(fn (): JobMonitor => $this->repository->create($data));
+    }
+
+    /**
+     * Resolve the key the row is recorded under, following the JobKey rule
+     *
+     * When the event already carries a queue Job (a job recorded on first
+     * processing because it was never seen being queued), JobKey derives the key
+     * directly. On JobQueued, the driver's id is used when it has one; otherwise
+     * the payload uuid is used, which is what JobKey falls back to when the worker
+     * later reports an empty job id, so the queued row and the processing row
+     * still match. Laravel's SyncQueue executes jobs inline without raising
+     * JobQueued, so sync jobs take the first path.
+     */
+    private function resolveJobId(object $event, object $jobInstance): ?string
+    {
+        if ($jobInstance instanceof QueueJob) {
+            return JobKey::of($jobInstance);
+        }
+
+        $eventJobId = $event->id ?? null;
+
+        if ((is_string($eventJobId) || is_int($eventJobId)) && (string) $eventJobId !== '') {
+            return (string) $eventJobId;
+        }
+
+        $payload = $event->payload ?? null;
+
+        if (! is_string($payload) || $payload === '') {
+            return null;
+        }
+
+        $decoded = json_decode($payload, true);
+        $uuid = is_array($decoded) ? ($decoded['uuid'] ?? null) : null;
+
+        return is_string($uuid) && $uuid !== '' ? $uuid : null;
     }
 
     private function shouldMonitor(object $jobInstance): bool

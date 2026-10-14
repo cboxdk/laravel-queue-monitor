@@ -7,6 +7,8 @@ namespace Cbox\LaravelQueueMonitor\Actions\Core;
 use Carbon\CarbonInterface;
 use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\JobMonitorRepositoryContract;
+use Cbox\LaravelQueueMonitor\Support\JobKey;
+use Illuminate\Contracts\Queue\Job;
 
 final readonly class RecordJobTimeoutAction
 {
@@ -23,11 +25,11 @@ final readonly class RecordJobTimeoutAction
     {
         $job = $event->job ?? null;
 
-        if ($job === null) {
+        if (! $job instanceof Job) {
             return;
         }
 
-        $jobId = $job->getJobId();
+        $jobId = JobKey::of($job);
         // Use the latest attempt, matching completed/failed recording — a
         // first-match lookup would mark an earlier attempt's row on a retry.
         $jobMonitor = $this->repository->findLatestAttemptByJobId($jobId);
