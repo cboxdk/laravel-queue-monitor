@@ -2,6 +2,29 @@
 
 All notable changes to `laravel-queue-monitor` will be documented in this file.
 
+## v1.12.0 — Attempt matching and job classes - 2026-10-14
+
+### Fixes
+
+- **A slow job's late outcome lands on its own attempt.** When a job outlived the SQS visibility timeout or the Redis/database `retry_after`, it was redelivered while the first worker was still running it. When that first worker finished, its status, duration, exception, CPU and memory were written onto the newer attempt's row. Outcomes are now matched by job and attempt number (`$job->attempts()`, which every driver reports for the delivery a worker runs). The slow attempt's real outcome replaces the `timeout` that was inferred when the redelivery started.
+- An exception from an attempt that was already closed as an inferred `timeout` now marks that attempt `failed`.
+- A superseded attempt that releases itself is no longer left `queued` forever.
+- A job first seen on a later delivery records the broker's attempt number instead of 1.
+- **`job_class` is the job's class name.** Sync jobs, and any job first recorded when it started processing, stored their `displayName()` as `job_class`. It now comes from the payload's `commandName`. `display_name` is unchanged. Rows recorded before the upgrade keep their old value.
+
+### Added
+
+- `JobAttemptRepositoryContract` (`findAttemptByJobId()`), implemented by the Eloquent repository. A custom `JobMonitorRepositoryContract` implementation keeps working unchanged and keeps the latest-attempt behaviour unless it implements the new contract too.
+
+### Documentation
+
+- New "Job Lifecycle and Attempts" reference: statuses, releases, inferred timeouts and the late real outcome, attempt matching for each driver, and `job_class` vs `display_name`.
+- The troubleshooting recipe for duplicate records no longer deletes retry chains. It now deduplicates on `(job_id, attempt)`.
+
+### Upgrading
+
+No configuration changes. Three actions and three listeners gained constructor parameters; they are resolved from the container, so this only matters if you construct them yourself.
+
 ## v1.11.3 — Killed attempts, SLA targets and sync job ids - 2026-10-14
 
 ### Fixes
@@ -408,6 +431,7 @@ First stable release of Queue Monitor for Laravel - a comprehensive job monitori
 
 ```bash
 composer require cboxdk/laravel-queue-monitor
+
 
 
 
