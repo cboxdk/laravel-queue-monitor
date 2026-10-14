@@ -2,6 +2,19 @@
 
 All notable changes to `laravel-queue-monitor` will be documented in this file.
 
+## v1.11.3 — Killed attempts, SLA targets and sync job ids - 2026-10-14
+
+### Fixes
+
+- **A hard-killed attempt is recorded, not overwritten.** When a worker was killed mid-job (SIGKILL, OOM, a supervisor timeout kill) and the broker redelivered the message, the next attempt overwrote the killed attempt's row, and the kill disappeared from history. The killed attempt is now closed as `timeout`, the status stuck-job resolution already uses, and the redelivery gets its own row linked by `retried_from_id`. A released job now shows as `queued` until it runs again, and its redelivery still reuses the same row.
+- **SLA compliance reads pickup targets from current queue-autoscale config.** `getSlaData()` only read the v1 `max_pickup_time_seconds` key, which queue-autoscale removed in v3.0.0, so every queue showed the 30s default. It now reads profiles, `sla.target_seconds`, glob keys such as `*.fifo` and queue groups, the way queue-autoscale resolves them. The v1 key still works.
+- **The infrastructure endpoint's per-queue figures are filled in.** laravel-queue-metrics v3 nests its per-queue figures under `depth`, `performance_60s`, `lifetime` and `workers`, and the endpoint read flat keys. Pending, scheduled, reserved, workers, throughput, failure rate, utilization and oldest job age read 0. Nested paths are read first, with the flat keys as a fallback.
+- **Sync jobs get their own job id.** Every sync-queue job was recorded under an empty job id, so a sync job that dispatched another sync job had its completion or failure written to the wrong row. Sync jobs are now keyed by their payload uuid, the same key laravel-queue-metrics v3.4.2 reports, so CPU and memory from metrics still match.
+
+### Upgrading
+
+No configuration changes. A job that was released before the upgrade and is redelivered after it will be closed as `timeout` once.
+
 ## v1.11.2 — SQS queue names and FIFO replay - 2026-10-14
 
 ### Fixes
@@ -395,6 +408,7 @@ First stable release of Queue Monitor for Laravel - a comprehensive job monitori
 
 ```bash
 composer require cboxdk/laravel-queue-monitor
+
 
 
 
