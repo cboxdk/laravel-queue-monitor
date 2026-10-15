@@ -12,9 +12,10 @@ use Illuminate\Queue\Events\JobReleasedAfterException;
  * Lets the redelivery of a database job released on an exception find its rows.
  *
  * The attempt's row was already closed as FAILED on JobExceptionOccurred. The
- * database driver gives the redelivery a new job id, so the job's rows are
- * re-keyed for it (see ReleasedDatabaseJobs). An attempt a redelivery already
- * superseded is left alone: the job's rows belong to the newer attempt now.
+ * database driver gives the redelivery a new job id, so the row is recorded
+ * for the redelivery to link to (see ReleasedDatabaseJobs). An attempt a
+ * redelivery already superseded is left alone: its job continues on the newer
+ * attempt's row.
  */
 final class JobReleasedAfterExceptionListener
 {
@@ -30,7 +31,7 @@ final class JobReleasedAfterExceptionListener
         }
 
         try {
-            if ($this->releasedDatabaseJobs->markerFor($event->job) === null) {
+            if (! $this->releasedDatabaseJobs->tracks($event->job)) {
                 return;
             }
 
@@ -40,7 +41,7 @@ final class JobReleasedAfterExceptionListener
                 return;
             }
 
-            $this->releasedDatabaseJobs->markReleased($event->job);
+            $this->releasedDatabaseJobs->recordRelease($event->job, $row);
         } catch (\Throwable $e) {
             report($e);
         }

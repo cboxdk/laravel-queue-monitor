@@ -20,7 +20,7 @@ when two attempts of the same job run at the same time.
 | Column | Meaning |
 |---|---|
 | `uuid` | Identifies this row, so one attempt. Each attempt has its own uuid. |
-| `job_id` | The job key, shared by every attempt of the job. It is the driver's job id (Redis payload id, SQS message id, database row id). Sync jobs have no driver id, so their key is the payload uuid. A database job gets a new row id each time it is released; its rows follow it (see [Released Jobs](#released-jobs)). |
+| `job_id` | The job key, shared by every attempt of the job. It is the driver's job id (Redis payload id, SQS message id, database row id). Sync jobs have no driver id, so their key is the payload uuid. A database job gets a new row id each time it is released; see [Released Jobs](#released-jobs). |
 | `attempt` | The attempt number the broker reported for this run. |
 | `retried_from_id` | The `id` of the previous attempt's row, or `null` for the first attempt. |
 | `job_class` | The fully qualified class name of the queued command. |
@@ -90,11 +90,26 @@ parked as `queued`, and the next delivery reuses the same row and updates its at
 number. A release therefore does not leave a duplicate row or a false failure.
 
 The database driver releases a job by deleting its row from the `jobs` table and
-inserting a new one, so the next delivery has a **new job id**. Queue Monitor carries
-the job's rows across: on release it re-keys them to `released:{payload uuid}`, and the
-next delivery takes them over under its new id. Until that delivery starts, the rows'
-`job_id` reads `released:{payload uuid}`. The same happens when a database job is
-released after an exception, so the failed attempt and the retry stay in one chain.
+inserting a new one, so the next delivery has a **new job id**. Queue Monitor connects
+the two through the payload uuid, which survives the release, in Laravel's cache:
+
+- After a plain release, the next delivery takes over the parked row: the row moves
+  to the new job id and is reused, as on every other driver.
+- After a release on an exception, the failed attempt keeps its row and its job id,
+  and the next attempt's row links to it through `retried_from_id`.
+- The new `jobs` row exists as soon as the job is released, so another worker can
+  start the next delivery before the release is recorded. Queue Monitor connects the
+  two whichever is recorded first.
+- Only the released attempt's own row moves. A slow attempt that the broker
+  redelivered under the same id keeps its row, and its late outcome lands there.
+  Per-job CPU and memory reported under the old id still find a row that moved.
+
+This needs a cache store that every worker shares, which is what Laravel's own
+`queue:restart` relies on too. The store is `queue-monitor.cache.store`, or the
+default store when that is not set. With the `array` store, or a `file` store across
+several hosts, a released row stays `queued`. A job released with a delay longer than
+seven days is not connected to its next delivery.
+
 Every other driver keeps the job id across a release.
 
 ### Intermediate Failures

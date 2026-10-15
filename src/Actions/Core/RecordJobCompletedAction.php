@@ -92,26 +92,31 @@ final readonly class RecordJobCompletedAction
      * close it and open its own, and the update would then park the closed
      * row as `queued` forever.
      *
-     * A database job comes back under a new job id, so its rows are re-keyed
-     * for the redelivery to find (see ReleasedDatabaseJobs).
+     * A database job comes back under a new job id, so the parked row is
+     * recorded for its next delivery to find (see ReleasedDatabaseJobs), once
+     * the parking is committed.
      */
     private function parkReleasedAttempt(Job $job, JobMonitor $jobMonitor): void
     {
-        JobMonitor::transaction(function () use ($job, $jobMonitor): void {
+        $parked = JobMonitor::transaction(function () use ($jobMonitor): ?JobMonitor {
             /** @var JobMonitor|null $locked */
             $locked = JobMonitor::query()->whereKey($jobMonitor->getKey())
                 ->lockForUpdate()->first();
 
             if ($locked === null || $this->attempts->isSuperseded($locked)) {
-                return;
+                return null;
             }
 
             $this->repository->update($locked->uuid, [
                 'status' => JobStatus::QUEUED,
             ]);
 
-            $this->releasedDatabaseJobs->markReleased($job);
+            return $locked;
         });
+
+        if ($parked !== null) {
+            $this->releasedDatabaseJobs->recordRelease($job, $parked);
+        }
     }
 
     /**

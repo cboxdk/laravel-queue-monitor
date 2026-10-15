@@ -10,6 +10,7 @@ use Cbox\LaravelQueueMonitor\Models\JobMonitor;
 use Cbox\LaravelQueueMonitor\Services\Contracts\DashboardCacheServiceContract;
 use Cbox\LaravelQueueMonitor\Support\InFlightAttempts;
 use Cbox\LaravelQueueMonitor\Support\JobAttemptResolver;
+use Cbox\LaravelQueueMonitor\Support\ReleasedDatabaseJobs;
 use Illuminate\Events\Dispatcher;
 
 /**
@@ -24,16 +25,17 @@ final class QueueMetricsSubscriber
         private readonly DashboardCacheServiceContract $dashboardCache,
         private readonly InFlightAttempts $inFlightAttempts,
         private readonly JobAttemptResolver $attempts,
+        private readonly ReleasedDatabaseJobs $releasedDatabaseJobs,
     ) {}
 
     public function handleJobMetricsCompleted(JobMetricsCompleted $event): void
     {
-        $this->updateJobMetrics($event->jobId, $event->cpuTimeMs, $event->memoryMb, $event->workerMemoryLimitMb);
+        $this->updateJobMetrics($event->jobId, $event->connection, $event->cpuTimeMs, $event->memoryMb, $event->workerMemoryLimitMb);
     }
 
     public function handleJobMetricsFailed(JobMetricsFailed $event): void
     {
-        $this->updateJobMetrics($event->jobId, $event->cpuTimeMs, $event->memoryMb, $event->workerMemoryLimitMb);
+        $this->updateJobMetrics($event->jobId, $event->connection, $event->cpuTimeMs, $event->memoryMb, $event->workerMemoryLimitMb);
     }
 
     public function subscribe(Dispatcher $events): void
@@ -42,14 +44,14 @@ final class QueueMetricsSubscriber
         $events->listen(JobMetricsFailed::class, [self::class, 'handleJobMetricsFailed']);
     }
 
-    private function updateJobMetrics(string $jobId, float $cpuTimeMs, float $memoryMb, ?float $workerMemoryLimitMb = null): void
+    private function updateJobMetrics(string $jobId, string $connection, float $cpuTimeMs, float $memoryMb, ?float $workerMemoryLimitMb = null): void
     {
         if (! config('queue-monitor.enabled', true)) {
             return;
         }
 
         try {
-            $monitor = $this->findMonitor($jobId);
+            $monitor = $this->findMonitor($jobId, $connection);
 
             if ($monitor === null) {
                 return;
@@ -78,7 +80,7 @@ final class QueueMetricsSubscriber
      * redelivered the job to another worker, whose newer attempt is the latest
      * row and may well be the one still `processing`.
      */
-    private function findMonitor(string $jobId): ?JobMonitor
+    private function findMonitor(string $jobId, string $connection): ?JobMonitor
     {
         $attempt = $this->inFlightAttempts->attemptFor($jobId);
 
@@ -87,6 +89,15 @@ final class QueueMetricsSubscriber
 
             if ($monitor !== null) {
                 return $monitor;
+            }
+
+            // A released database job's row moves to the job id of its next
+            // delivery, which may already have started; the figures still
+            // arrive under the id the released attempt ran with.
+            $moved = $this->releasedDatabaseJobs->movedRow($connection, $jobId);
+
+            if ($moved !== null) {
+                return $moved;
             }
         }
 

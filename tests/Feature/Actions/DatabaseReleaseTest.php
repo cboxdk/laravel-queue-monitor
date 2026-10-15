@@ -2,9 +2,11 @@
 
 declare(strict_types=1);
 
+use Cbox\LaravelQueueMetrics\Events\JobMetricsCompleted;
 use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\Facades\LaravelQueueMonitor as QueueMonitor;
 use Cbox\LaravelQueueMonitor\Models\JobMonitor;
+use Cbox\LaravelQueueMonitor\Support\InFlightAttempts;
 use Cbox\LaravelQueueMonitor\Tests\Support\ExampleJob;
 use Cbox\LaravelQueueMonitor\Tests\Support\FailingJob;
 use Illuminate\Database\Schema\Blueprint;
@@ -21,12 +23,18 @@ use Illuminate\Support\Facades\Schema;
 
 /**
  * The database driver releases a job by deleting its row and inserting a new
- * one (DatabaseQueue::deleteAndRelease), so the redelivery has a new job id.
- * Queue Monitor keys rows by the job id, and the redelivery must still find
+ * one (DatabaseQueue::deleteAndRelease), so the next delivery has a new job
+ * id. Queue Monitor keys rows by the job id, and the delivery must still find
  * the released attempt's row: reuse it after a plain release, or link a new
  * row to it after a release on an exception. Otherwise the released row is
- * left `queued` (or `failed` and unlinked) and the redelivery starts a
- * history of its own.
+ * left `queued` (or `failed` and unlinked) and the delivery starts a history
+ * of its own.
+ *
+ * The new jobs row exists as soon as release() returns, so another worker can
+ * start the next delivery before the releasing worker records the release.
+ * Both orders are covered, and only the released attempt's own row may move:
+ * a slow attempt redelivered under the same id keeps its row, and its late
+ * outcome still lands there.
  *
  * Exercised with the real DatabaseQueue and, for exceptions, the real Worker,
  * so the event order and the release are the framework's own.
@@ -110,14 +118,16 @@ test('a database job released on an exception links its redelivery to the failed
     workDatabaseJob(popReleasedDatabaseJob());
 
     $rows = JobMonitor::orderBy('id')->get();
-    $payload = json_decode((string) DB::table('jobs')->value('payload'), true, flags: JSON_THROW_ON_ERROR);
+    $nextId = (string) DB::table('jobs')->value('id');
 
     expect($rows)->toHaveCount(2)
         ->and($rows->pluck('status')->all())->toBe([JobStatus::FAILED, JobStatus::FAILED])
         ->and($rows->pluck('attempt')->all())->toBe([1, 2])
         ->and($rows[1]->retried_from_id)->toBe($rows[0]->id)
-        // Until the next delivery starts, both rows wait under the payload uuid.
-        ->and($rows->pluck('job_id')->unique()->all())->toBe(['released:'.$payload['uuid']])
+        // Each failed attempt keeps the id it ran under; the job is waiting
+        // under a third one.
+        ->and($rows->pluck('job_id')->unique())->toHaveCount(2)
+        ->and($rows->pluck('job_id')->all())->not->toContain($nextId)
         ->and(JobMonitor::where('status', JobStatus::QUEUED)->count())->toBe(0);
 });
 
@@ -134,9 +144,11 @@ test('the final database failure closes the chain under the last delivery\'s id'
     expect($rows)->toHaveCount(3)
         ->and($rows->pluck('status')->all())->toBe([JobStatus::FAILED, JobStatus::FAILED, JobStatus::FAILED])
         ->and($rows->pluck('attempt')->all())->toBe([1, 2, 3])
-        ->and($rows->pluck('job_id')->unique()->all())->toBe([(string) $last->getJobId()])
+        ->and($rows[2]->job_id)->toBe((string) $last->getJobId())
+        ->and($rows[1]->retried_from_id)->toBe($rows[0]->id)
+        ->and($rows[2]->retried_from_id)->toBe($rows[1]->id)
         ->and($rows[2]->exception_message)->toBe('This job always fails')
-        ->and(QueueMonitor::getRetryChain($rows[0]->uuid)->pluck('attempt')->all())->toBe([1, 2, 3]);
+        ->and(QueueMonitor::getRetryChain($rows[2]->uuid)->pluck('attempt')->all())->toBe([1, 2, 3]);
 });
 
 test('a database job released twice keeps one row until it completes', function () {
@@ -204,4 +216,119 @@ test('a released database job whose release left no rows starts a row of its own
     expect($row->job_id)->toBe((string) $second->getJobId())
         ->and($row->attempt)->toBe(2)
         ->and($row->status)->toBe(JobStatus::PROCESSING);
+});
+
+test('a delivery that starts before the release is recorded takes the parked row\'s place', function () {
+    dispatch(new ExampleJob);
+
+    $first = popReleasedDatabaseJob();
+    event(new JobProcessing('database', $first));
+    $first->release();
+
+    // Another worker picks up the new jobs row before the first worker
+    // raises JobProcessed for the release.
+    $second = popReleasedDatabaseJob();
+    event(new JobProcessing('database', $second));
+    event(new JobProcessed('database', $first));
+
+    $this->travel(2)->seconds();
+    event(new JobProcessed('database', $second));
+
+    $row = JobMonitor::sole();
+
+    expect($row->status)->toBe(JobStatus::COMPLETED)
+        ->and($row->attempt)->toBe(2)
+        ->and($row->job_id)->toBe((string) $second->getJobId())
+        ->and($row->duration_ms)->toBe(2_000);
+});
+
+test('a delivery that starts before an exception release is recorded links to the failed attempt', function () {
+    dispatch(new ExampleJob);
+
+    $first = popReleasedDatabaseJob();
+    event(new JobProcessing('database', $first));
+    event(new JobExceptionOccurred('database', $first, new RuntimeException('attempt 1 threw')));
+    $first->release();
+
+    $second = popReleasedDatabaseJob();
+    event(new JobProcessing('database', $second));
+    event(new JobReleasedAfterException('database', $first, 0, new RuntimeException('attempt 1 threw')));
+
+    $rows = JobMonitor::orderBy('id')->get();
+
+    expect($rows)->toHaveCount(2)
+        ->and($rows[0]->status)->toBe(JobStatus::FAILED)
+        ->and($rows[0]->job_id)->toBe((string) $first->getJobId())
+        ->and($rows[1]->status)->toBe(JobStatus::PROCESSING)
+        ->and($rows[1]->attempt)->toBe(2)
+        ->and($rows[1]->retried_from_id)->toBe($rows[0]->id);
+});
+
+test('a slow attempt keeps its row when the redelivery that superseded it is released', function () {
+    dispatch(new ExampleJob);
+    $slowId = null;
+
+    $slow = popReleasedDatabaseJob();
+    event(new JobProcessing('database', $slow));
+    $slowId = (string) $slow->getJobId();
+
+    // retry_after lapses: the same jobs row, same id, is reserved again.
+    $this->travel(91)->seconds();
+    $redelivery = popReleasedDatabaseJob();
+    event(new JobProcessing('database', $redelivery));
+
+    // The redelivery releases itself (rate limited, say).
+    $redelivery->release();
+    event(new JobProcessed('database', $redelivery));
+
+    // The slow attempt finishes late, under the id it ran with.
+    $this->travel(30)->seconds();
+    event(new JobProcessed('database', $slow));
+
+    $next = popReleasedDatabaseJob();
+    event(new JobProcessing('database', $next));
+
+    $slowRow = JobMonitor::where('attempt', 1)->sole();
+    $releasedRow = JobMonitor::where('id', '!=', $slowRow->id)->sole();
+
+    expect(JobMonitor::count())->toBe(2)
+        ->and($slowRow->status)->toBe(JobStatus::COMPLETED)
+        ->and($slowRow->job_id)->toBe($slowId)
+        ->and($slowRow->duration_ms)->toBe(121_000)
+        ->and($releasedRow->status)->toBe(JobStatus::PROCESSING)
+        ->and($releasedRow->attempt)->toBe(3)
+        ->and($releasedRow->job_id)->toBe((string) $next->getJobId())
+        ->and($releasedRow->retried_from_id)->toBe($slowRow->id);
+});
+
+test('metrics reported under the released attempt\'s id after its row moved still land on it', function () {
+    dispatch(new ExampleJob);
+
+    $first = popReleasedDatabaseJob();
+    $releasedId = (string) $first->getJobId();
+    event(new JobProcessing('database', $first));
+    $first->release();
+    event(new JobProcessed('database', $first));
+
+    $second = popReleasedDatabaseJob();
+    event(new JobProcessing('database', $second));
+
+    // laravel-queue-metrics reports the released attempt's figures under the
+    // id it ran with, after the next delivery has taken the row over.
+    app()->instance(InFlightAttempts::class, tap(new InFlightAttempts)->remember($releasedId, 1));
+    event(new JobMetricsCompleted(
+        jobId: $releasedId,
+        jobClass: ExampleJob::class,
+        connection: 'database',
+        queue: 'default',
+        durationMs: 50.0,
+        memoryMb: 64.0,
+        cpuTimeMs: 40.0,
+    ));
+
+    $row = JobMonitor::sole();
+
+    expect($row->job_id)->toBe((string) $second->getJobId())
+        ->and($row->cpu_time_ms)->toEqual(40.0)
+        ->and($row->memory_peak_mb)->toEqual(64.0);
 });

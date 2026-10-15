@@ -45,19 +45,14 @@ final readonly class RecordJobStartedAction
 
         $jobId = JobKey::of($job);
 
-        JobMonitor::transaction(function () use ($event, $job, $jobId): void {
-            $jobMonitor = $this->latestRow($jobId);
-
+        $created = JobMonitor::transaction(function () use ($event, $job, $jobId): ?JobMonitor {
             // A released database job comes back under a new job id; take over
-            // the rows its release left for it (see ReleasedDatabaseJobs).
-            if ($jobMonitor === null && $this->releasedDatabaseJobs->reclaim($job, $jobId)) {
-                $jobMonitor = $this->latestRow($jobId);
-            }
+            // the row its release left for it (see ReleasedDatabaseJobs).
+            $jobMonitor = $this->latestRow($jobId)
+                ?? $this->releasedDatabaseJobs->adopt($job, $jobId);
 
             if ($jobMonitor === null) {
-                $this->createFromProcessing($event);
-
-                return;
+                return $this->createFromProcessing($event);
             }
 
             $attempt = $job->attempts();
@@ -79,7 +74,7 @@ final readonly class RecordJobStartedAction
                         'worker_type' => $workerContext->workerType->value,
                     ]);
 
-                    return;
+                    return null;
                 }
 
                 if (! $jobMonitor->status->isFinished()) {
@@ -106,7 +101,15 @@ final readonly class RecordJobStartedAction
                     'worker_type' => $workerContext->workerType->value,
                 ]);
             }
+
+            return null;
         });
+
+        // A delivery that found no row under its own id may follow a release
+        // that has not been recorded yet; record it once its row is committed.
+        if ($created !== null) {
+            $this->releasedDatabaseJobs->recordRedelivery($job, $created);
+        }
     }
 
     /**
@@ -195,19 +198,19 @@ final readonly class RecordJobStartedAction
     /**
      * Create job record when it starts processing (wasn't queued normally)
      */
-    private function createFromProcessing(object $event): void
+    private function createFromProcessing(object $event): ?JobMonitor
     {
         $job = $event->job ?? null;
 
         if (! $job instanceof Job) {
-            return;
+            return null;
         }
 
         // Use injected action instead of service locator
         $jobMonitor = $this->recordQueuedAction->execute($event);
 
         if ($jobMonitor === null) {
-            return;
+            return null;
         }
 
         // Immediately update to processing. The queued action records every
@@ -220,5 +223,7 @@ final readonly class RecordJobStartedAction
             'attempt' => max(1, $job->attempts()),
             'started_at' => now(),
         ]);
+
+        return $jobMonitor->refresh();
     }
 }

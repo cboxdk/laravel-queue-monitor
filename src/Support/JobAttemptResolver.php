@@ -38,10 +38,14 @@ final readonly class JobAttemptResolver
     public function __construct(
         private JobMonitorRepositoryContract $repository,
         private InFlightAttempts $inFlightAttempts,
+        private ReleasedDatabaseJobs $releasedDatabaseJobs,
     ) {}
 
     /**
      * The row of the attempt this job object is running, else the latest row
+     *
+     * A released database job's row moves to the job id of its next delivery;
+     * when nothing is left under this id, that row is found by the old id.
      */
     public function rowFor(Job $job): ?JobMonitor
     {
@@ -56,7 +60,20 @@ final readonly class JobAttemptResolver
             }
         }
 
-        return $this->repository->findLatestAttemptByJobId($jobKey);
+        return $this->repository->findLatestAttemptByJobId($jobKey)
+            ?? $this->movedRow($job, $jobKey);
+    }
+
+    /**
+     * The row a released database job's attempt moved to with its next delivery
+     */
+    private function movedRow(Job $job, string $jobKey): ?JobMonitor
+    {
+        if (! $this->releasedDatabaseJobs->tracks($job)) {
+            return null;
+        }
+
+        return $this->releasedDatabaseJobs->movedRow($job->getConnectionName(), $jobKey);
     }
 
     /**
