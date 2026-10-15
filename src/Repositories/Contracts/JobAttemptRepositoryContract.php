@@ -19,7 +19,10 @@ use Cbox\LaravelQueueMonitor\Models\JobMonitor;
  * implementable by hosts, and adding a method to it would break every custom
  * implementation. A custom JobMonitorRepositoryContract that does not also
  * implement this contract keeps the previous behaviour: outcomes are written to
- * the latest attempt's row. Implement it alongside to get per-attempt matching.
+ * the latest attempt's row. While two attempts are in flight, that puts the
+ * slower attempt's outcome on the newer attempt's row, and its CPU and memory
+ * figures from laravel-queue-metrics on the attempt still `processing` — also
+ * the newer one. Implement it alongside to get per-attempt matching.
  */
 interface JobAttemptRepositoryContract
 {

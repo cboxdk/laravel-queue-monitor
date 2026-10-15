@@ -186,6 +186,23 @@ If a slow, superseded attempt releases itself, its row is left as it is rather t
 parked as `queued`. The next delivery continues on the newer attempt's row, so a
 parked row would stay queued forever.
 
+### A Late SQS Delete That Fails
+
+When a slow SQS job finishes after its visibility timeout, the first worker deletes
+the message with the receipt handle it received. That handle belongs to a delivery SQS
+has since replaced, so whether the delete works depends on the service:
+
+- **Amazon SQS** usually accepts the old handle and deletes the message. The slow
+  attempt is recorded as `completed`, as in the timeline above.
+- **ElasticMQ and some other SQS emulators** reject it with `ReceiptHandleIsInvalid`.
+  The worker raises that error after `handle()` returned, so Laravel treats the attempt
+  as having thrown, and Queue Monitor records it as `failed` with the
+  `ReceiptHandleIsInvalid` exception. The job's own work did complete.
+
+Either way the job ran twice, once per attempt, which is the problem to fix. A
+`failed` attempt whose exception is `ReceiptHandleIsInvalid` (or another error from
+`DeleteMessage`) is the signature of a visibility timeout that is shorter than the job.
+
 > **Avoid redelivering running jobs.** A slow job that is redelivered runs twice. Set
 > the queue's `retry_after` (or the SQS visibility timeout) longer than the longest job
 > can take, and keep the worker `--timeout` below it. See the
@@ -242,8 +259,15 @@ break every host that implements it. The default `EloquentJobMonitorRepository`
 implements both contracts.
 
 A custom repository that implements only `JobMonitorRepositoryContract` keeps working,
-and outcomes go to the latest attempt as before. To get per-attempt matching, implement
-the second contract as well:
+and outcomes go to the latest attempt as before. That is right whenever one attempt of
+a job runs at a time. When a slow job is redelivered while its first worker still runs
+it, two things land on the wrong row:
+
+- the slow attempt's status, duration and exception go to the newer attempt's row;
+- its CPU and memory from laravel-queue-metrics go to the attempt still `processing`,
+  which is the newer one, so the newer attempt shows the slow attempt's figures.
+
+To get per-attempt matching, implement the second contract as well:
 
 ```php
 use Cbox\LaravelQueueMonitor\Models\JobMonitor;
