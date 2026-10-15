@@ -99,7 +99,6 @@ final class EloquentJobMonitorRepository implements JobAttemptRepositoryContract
     {
         return JobMonitor::where('job_id', (string) $jobId)
             ->where('attempt', $attempt)
-            ->orderByDesc('created_at')
             ->orderByDesc('id')
             ->first();
     }

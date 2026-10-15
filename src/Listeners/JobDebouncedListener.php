@@ -24,7 +24,7 @@ final class JobDebouncedListener
 
             $monitor = JobMonitor::where('job_id', $jobId)
                 ->where('status', JobStatus::QUEUED->value)
-                ->orderByDesc('attempt')
+                ->orderByDesc('id')
                 ->first();
 
             if ($monitor === null) {

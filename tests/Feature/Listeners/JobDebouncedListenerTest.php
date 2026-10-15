@@ -47,3 +47,18 @@ test('debounced listener never throws', function () {
 
     expect(JobMonitor::count())->toBe(0);
 });
+
+test('debounced listener marks the queued row recorded last', function () {
+    // A Redis job retried with queue:retry keeps its id and starts again at
+    // attempt 1, so the newest queued row can have the lower attempt number.
+    $older = JobMonitor::factory()->queued()->create(['job_id' => 'debounce-rerun', 'attempt' => 3]);
+    $newer = JobMonitor::factory()->queued()->create(['job_id' => 'debounce-rerun', 'attempt' => 1]);
+
+    $event = new stdClass;
+    $event->id = 'debounce-rerun';
+
+    (new JobDebouncedListener)->handle($event);
+
+    expect($newer->refresh()->status)->toBe(JobStatus::DEBOUNCED)
+        ->and($older->refresh()->status)->toBe(JobStatus::QUEUED);
+});

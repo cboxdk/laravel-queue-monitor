@@ -31,7 +31,8 @@ interface JobAttemptRepositoryContract
      *
      * Accepts int|string because the database queue driver returns an
      * integer job id while other drivers return a string. When several rows
-     * share the attempt number, the most recently created one is returned.
+     * share the attempt number, the one with the highest id — the row
+     * recorded last — is returned.
      */
     public function findAttemptByJobId(int|string $jobId, int $attempt): ?JobMonitor;
 }

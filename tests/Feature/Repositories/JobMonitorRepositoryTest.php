@@ -148,3 +148,20 @@ test('finding an attempt with duplicate rows returns the most recent', function 
 
     expect($this->repository->findAttemptByJobId('duplicated', 2)?->uuid)->toBe($newer->uuid);
 });
+
+test('finding an attempt with duplicate rows returns the row recorded last, whatever created_at says', function () {
+    // created_at holds whole seconds and can tie or go backwards (clock steps
+    // between hosts); the id is the order the rows were recorded in.
+    JobMonitor::factory()->create(['job_id' => 'skewed', 'attempt' => 1, 'created_at' => now()]);
+    $recordedLast = JobMonitor::factory()->create(['job_id' => 'skewed', 'attempt' => 1, 'created_at' => now()->subMinute()]);
+
+    expect($this->repository->findAttemptByJobId('skewed', 1)?->uuid)->toBe($recordedLast->uuid)
+        ->and($this->repository->findLatestAttemptByJobId('skewed')?->uuid)->toBe($recordedLast->uuid);
+});
+
+test('the latest attempt is the row recorded last, not the highest attempt number', function () {
+    JobMonitor::factory()->create(['job_id' => 'rerun', 'attempt' => 3]);
+    $retryRun = JobMonitor::factory()->create(['job_id' => 'rerun', 'attempt' => 1]);
+
+    expect($this->repository->findLatestAttemptByJobId('rerun')?->uuid)->toBe($retryRun->uuid);
+});
