@@ -52,14 +52,17 @@ final class JobExceptionOccurredListener
                 'exception_trace' => $exceptionData->trace,
             ];
 
-            // The attempt is over: Laravel either already failed it (JobFailed
-            // fires first for a final attempt, which recorded the exception, so
-            // this listener returned above) or releases it right after this
-            // event for a retry. Close the row now, with the duration of the
-            // attempt itself. Waiting for the next attempt's start would add
-            // the backoff and the wait for redelivery to the duration, and
-            // leave the row `processing` (counted as stuck) when no further
-            // attempt ever starts.
+            // The attempt is over. On a worker, Laravel either already failed
+            // it (JobFailed fires before this event for a final attempt and
+            // records the exception, so this listener returned above) or
+            // releases it right after this event for a retry. The sync driver,
+            // and the deferred and background drivers built on it, raise this
+            // event first and JobFailed after it; the failed action then keeps
+            // the duration recorded here. Either way the row is closed now,
+            // with the duration of the attempt itself. Waiting for the next
+            // attempt's start would add the backoff and the wait for
+            // redelivery to the duration, and leave the row `processing`
+            // (counted as stuck) when no further attempt ever starts.
             //
             // A row already closed as TIMEOUT without an exception was closed
             // by inference — the broker redelivered the job while this worker

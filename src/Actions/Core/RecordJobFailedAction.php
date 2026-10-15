@@ -46,7 +46,7 @@ final readonly class RecordJobFailedAction
         }
 
         $completedAt = now();
-        $durationMs = $this->attempts->durationMs($job, $jobMonitor, $completedAt);
+        $durationMs = $this->attempts->closingDurationMs($job, $jobMonitor, $completedAt);
         $this->attempts->attemptEnded($job, $jobMonitor);
         $exceptionData = $exception instanceof Throwable ? ExceptionData::fromThrowable($exception) : null;
 

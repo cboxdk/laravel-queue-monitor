@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Cbox\LaravelQueueMonitor\Support;
 
 use Carbon\CarbonInterface;
+use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\Models\JobMonitor;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\JobAttemptRepositoryContract;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\JobMonitorRepositoryContract;
@@ -103,6 +104,28 @@ final readonly class JobAttemptResolver
         }
 
         return max(0, (int) $startedAt->diffInMilliseconds($endedAt));
+    }
+
+    /**
+     * The duration to record for a failure or timeout of the attempt in the row
+     *
+     * Two outcomes can be reported for one attempt. The sync driver (and the
+     * deferred and background drivers built on it) raises JobExceptionOccurred
+     * before JobFailed, the reverse of the worker, and a final attempt that
+     * times out raises JobFailed before JobTimedOut. The first of the two has
+     * already recorded the exact duration and forgotten the start, so the
+     * second keeps that duration instead of measuring again from the
+     * whole-second `started_at`.
+     */
+    public function closingDurationMs(Job $job, JobMonitor $row, CarbonInterface $endedAt): ?int
+    {
+        $hasPreciseStart = $this->inFlightAttempts->startedAtFor(JobKey::of($job), $row->attempt) !== null;
+
+        if (! $hasPreciseStart && $row->status === JobStatus::FAILED && $row->duration_ms !== null) {
+            return $row->duration_ms;
+        }
+
+        return $this->durationMs($job, $row, $endedAt);
     }
 
     /**

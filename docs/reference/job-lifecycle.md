@@ -110,6 +110,12 @@ For the final attempt the worker raises `JobFailed` first, which records the fai
 and `JobExceptionOccurred` after it. The second event leaves the row alone, so the
 exception and duration are recorded once.
 
+The `sync` driver, and the `deferred` and `background` drivers built on it, raise the
+two events the other way round: `JobExceptionOccurred` first, then `JobFailed`. The
+row is closed as `failed` on the first, and the second keeps the duration already
+recorded. A final attempt that times out raises `JobFailed` and then `JobTimedOut`;
+the row ends as `timeout`, also keeping the duration recorded on `JobFailed`.
+
 Rows recorded by versions before 1.12.1 left an intermediate failure `processing`
 until the next attempt started. Such a row is still closed as `failed` when the next
 attempt starts, with no duration, because the time until then includes the backoff.
@@ -215,6 +221,10 @@ started the attempt to the moment its outcome is recorded, to the millisecond. T
 `started_at` column only holds whole seconds, so it is used only when the outcome is
 recorded by a process that did not see the start: a stuck-job resolution, or a worker
 that restarted in between. A duration measured that way can be up to a second too long.
+
+When one attempt reports two outcomes — `JobExceptionOccurred` then `JobFailed` on the
+sync driver, `JobFailed` then `JobTimedOut` for a final attempt that times out — the
+duration is measured once, on the first, and the second keeps it.
 
 ## How Attempts Are Matched
 

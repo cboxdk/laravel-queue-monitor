@@ -38,7 +38,7 @@ final readonly class RecordJobTimeoutAction
         }
 
         $completedAt = now();
-        $durationMs = $this->attempts->durationMs($job, $jobMonitor, $completedAt);
+        $durationMs = $this->attempts->closingDurationMs($job, $jobMonitor, $completedAt);
         $this->attempts->attemptEnded($job, $jobMonitor);
 
         $this->repository->update($jobMonitor->uuid, [

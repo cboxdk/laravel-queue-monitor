@@ -7,6 +7,7 @@ use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\Models\JobMonitor;
 use Cbox\LaravelQueueMonitor\Support\InFlightAttempts;
 use Cbox\LaravelQueueMonitor\Tests\Support\BrokerJobs;
+use Cbox\LaravelQueueMonitor\Tests\Support\FailingJob;
 use Illuminate\Queue\Events\JobExceptionOccurred;
 use Illuminate\Queue\Events\JobFailed;
 use Illuminate\Queue\Events\JobProcessed;
@@ -129,4 +130,52 @@ test('a released attempt forgets its start time', function () {
     event(new JobProcessed('redis', BrokerJobs::released(preciseJob())));
 
     expect(app(InFlightAttempts::class)->startedAtFor('precise-job', 1))->toBeNull();
+});
+
+test('the sync order — exception before failure — keeps the exact duration', function () {
+    startPreciseJob();
+    event(new JobExceptionOccurred('redis', preciseJob(), new RuntimeException('sync failure')));
+    $this->travel(400)->milliseconds();
+    event(new JobFailed('redis', preciseJob(), new RuntimeException('sync failure')));
+
+    expect(preciseRow()->status)->toBe(JobStatus::FAILED)
+        ->and(preciseRow()->duration_ms)->toBe(100)
+        ->and(preciseRow()->exception_message)->toBe('sync failure');
+});
+
+test('a final attempt that times out keeps the exact duration recorded on JobFailed', function () {
+    startPreciseJob();
+    event(new JobFailed('redis', preciseJob(), new RuntimeException('timed out')));
+    $this->travel(400)->milliseconds();
+    event(new JobTimedOut('redis', preciseJob()));
+
+    expect(preciseRow()->status)->toBe(JobStatus::TIMEOUT)
+        ->and(preciseRow()->duration_ms)->toBe(100);
+});
+
+test('a real dispatch_sync failure records the exact duration', function () {
+    // Through SyncQueue itself, so the event order is the framework's own.
+    try {
+        dispatch_sync(new FailingJob);
+    } catch (RuntimeException) {
+        // The sync driver rethrows the job's exception.
+    }
+
+    $row = JobMonitor::sole();
+
+    expect($row->status)->toBe(JobStatus::FAILED)
+        ->and($row->duration_ms)->toBe(0)
+        ->and($row->exception_message)->toBe('This job always fails');
+});
+
+test('a late failure on a row a stuck-job resolution closed is measured again', function () {
+    startPreciseJob();
+    preciseRow()->update(['status' => JobStatus::TIMEOUT, 'duration_ms' => 30_000]);
+
+    // Reported by a process that did not see the start.
+    app()->instance(InFlightAttempts::class, new InFlightAttempts);
+    event(new JobFailed('redis', preciseJob(), new RuntimeException('late')));
+
+    expect(preciseRow()->status)->toBe(JobStatus::FAILED)
+        ->and(preciseRow()->duration_ms)->toBe(1_050);
 });
