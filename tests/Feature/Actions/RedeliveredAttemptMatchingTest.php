@@ -216,20 +216,25 @@ test('a slow attempt throwing with retries left replaces the inferred timeout wi
         ->and($second->exception_class)->toBeNull();
 })->with('brokers');
 
-test('an exception on the running attempt is still recorded without closing it', function (string $broker) {
+test('an exception on the running attempt closes it as failed with its own duration', function (string $broker) {
     slowAttemptRedelivered($broker);
 
+    $this->travel(3)->seconds();
     onWorker('B');
     event(new JobExceptionOccurred($broker, brokerJob($broker, 2), new RuntimeException('Attempt 2 threw')));
 
     $key = brokerJobKey($broker);
     $second = attemptRow($key, 2);
 
-    // Unchanged behaviour: the row stays processing until the next attempt
-    // starts and closes it as FAILED.
-    expect($second->status)->toBe(JobStatus::PROCESSING)
+    // The attempt ended when it threw: Laravel releases it for a retry right
+    // after this event, so its duration stops here rather than at the next
+    // attempt's start, which would add the backoff and the redelivery wait.
+    expect($second->status)->toBe(JobStatus::FAILED)
         ->and($second->exception_message)->toBe('Attempt 2 threw')
-        ->and(attemptRow($key, 1)->exception_class)->toBeNull();
+        ->and($second->duration_ms)->toBe(3_000)
+        ->and($second->completed_at)->not->toBeNull()
+        ->and(attemptRow($key, 1)->exception_class)->toBeNull()
+        ->and(attemptRow($key, 1)->status)->toBe(JobStatus::TIMEOUT);
 })->with('brokers');
 
 test('the redelivery failing and the slow attempt completing each keep their own outcome', function (string $broker) {

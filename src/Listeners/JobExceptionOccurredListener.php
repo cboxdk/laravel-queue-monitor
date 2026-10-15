@@ -52,13 +52,20 @@ final class JobExceptionOccurredListener
                 'exception_trace' => $exceptionData->trace,
             ];
 
-            // An intermediate failure leaves the row `processing`; the next
-            // attempt's start closes it as FAILED. A row already closed as
-            // TIMEOUT without an exception was closed by inference — the broker
-            // redelivered the job while this worker was still running it, or a
-            // stuck-job resolution gave up on it — and nothing will close it
-            // again, so the real outcome replaces the inference here.
-            if ($monitor->status === JobStatus::TIMEOUT) {
+            // The attempt is over: Laravel either already failed it (JobFailed
+            // fires first for a final attempt, which recorded the exception, so
+            // this listener returned above) or releases it right after this
+            // event for a retry. Close the row now, with the duration of the
+            // attempt itself. Waiting for the next attempt's start would add
+            // the backoff and the wait for redelivery to the duration, and
+            // leave the row `processing` (counted as stuck) when no further
+            // attempt ever starts.
+            //
+            // A row already closed as TIMEOUT without an exception was closed
+            // by inference — the broker redelivered the job while this worker
+            // was still running it, or a stuck-job resolution gave up on it —
+            // and the real outcome replaces the inference here.
+            if ($monitor->status === JobStatus::PROCESSING || $monitor->status === JobStatus::TIMEOUT) {
                 $completedAt = now();
 
                 $data['status'] = JobStatus::FAILED;

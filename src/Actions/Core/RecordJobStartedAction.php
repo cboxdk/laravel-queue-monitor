@@ -131,32 +131,24 @@ final readonly class RecordJobStartedAction
     /**
      * Close the previous attempt before a redelivery starts a new one
      *
-     * Laravel doesn't fire JobFailed for intermediate retries, so an attempt
-     * that threw is still `processing` with an exception recorded: mark it
-     * FAILED. An attempt that is still `processing` with no exception and was
-     * not released never reported back at all — the worker was hard-killed
-     * (SIGKILL, OOM, a supervisor timeout kill) and the broker redelivered the
-     * message once its visibility timeout / retry_after lapsed. Mark it TIMEOUT,
-     * the same terminal status stuck-job resolution uses for an attempt that
-     * never finished. Its duration is left unknown: the time until redelivery
-     * includes the broker's wait and would inflate duration statistics.
+     * An attempt that threw is closed as FAILED by JobExceptionOccurredListener
+     * the moment it throws, so it is already finished here. A row still
+     * `processing` with an exception was recorded by an earlier version, which
+     * left intermediate failures open until the next attempt: mark it FAILED,
+     * with its duration unknown, because the time until now includes the
+     * backoff and the wait for redelivery.
+     *
+     * An attempt still `processing` with no exception and not released never
+     * reported back at all — the worker was hard-killed (SIGKILL, OOM, a
+     * supervisor timeout kill) and the broker redelivered the message once its
+     * visibility timeout / retry_after lapsed. Mark it TIMEOUT, the same
+     * terminal status stuck-job resolution uses for an attempt that never
+     * finished. Its duration is left unknown for the same reason.
      */
     private function closeUnfinishedAttempt(JobMonitor $jobMonitor): void
     {
-        if ($jobMonitor->exception_class !== null) {
-            $this->repository->update($jobMonitor->uuid, [
-                'status' => JobStatus::FAILED,
-                'completed_at' => now(),
-                'duration_ms' => $jobMonitor->started_at
-                    ? (int) $jobMonitor->started_at->diffInMilliseconds(now())
-                    : null,
-            ]);
-
-            return;
-        }
-
         $this->repository->update($jobMonitor->uuid, [
-            'status' => JobStatus::TIMEOUT,
+            'status' => $jobMonitor->exception_class !== null ? JobStatus::FAILED : JobStatus::TIMEOUT,
             'completed_at' => now(),
             'duration_ms' => null,
         ]);

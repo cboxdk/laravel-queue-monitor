@@ -64,7 +64,7 @@ Two cases need care:
 | `queued` | The job was pushed (`JobQueued`), or an attempt released the job back onto the queue | No |
 | `processing` | A worker started the attempt (`JobProcessing`) | No |
 | `completed` | The attempt finished without error (`JobProcessed`) | Yes |
-| `failed` | The attempt threw. This is recorded on `JobFailed` for the final attempt, or when the next attempt starts after an intermediate failure. | Yes |
+| `failed` | The attempt threw. This is recorded on `JobFailed` for the final attempt, and on `JobExceptionOccurred` for an attempt with retries left. | Yes |
 | `timeout` | Either the worker's own timeout fired (`JobTimedOut`), or Queue Monitor concluded the attempt will never report back. See [Inferred Timeouts](#inferred-timeouts). | Yes, but a late real outcome replaces an inferred timeout |
 | `cancelled` | The job was cancelled through Queue Monitor | Yes |
 | `debounced` | The job was superseded by a newer debounced dispatch | Yes |
@@ -76,7 +76,7 @@ Two cases need care:
 | `JobQueued` | A row is created with status `queued` and attempt `1`. |
 | `JobProcessing`, first attempt | The queued row becomes `processing`. If there is no row, because the job is a sync job or monitoring was enabled mid-flight, one is created, using the attempt number the broker reports. |
 | `JobProcessing`, later attempt | If the previous row is `queued` (it was released), that row is reused and its attempt number is updated. If not, the previous row is closed and a new row is created for this attempt, linked through `retried_from_id`. |
-| `JobExceptionOccurred` | The exception is recorded on the row of the attempt that threw. The row stays `processing` until the next attempt starts and closes it as `failed`. |
+| `JobExceptionOccurred` | The exception is recorded on the row of the attempt that threw, and the row is closed as `failed` with the attempt's duration. On the final attempt `JobFailed` has already recorded it, and the row is left as it is. |
 | `JobProcessed` | The attempt's row becomes `completed` with its duration. A released attempt is parked as `queued` instead. |
 | `JobFailed` | The attempt's row becomes `failed` with the exception and its duration. |
 | `JobTimedOut` | The attempt's row becomes `timeout` with its duration and a `JobTimeout` exception. |
@@ -91,8 +91,19 @@ number. A release therefore does not leave a duplicate row or a false failure.
 ### Intermediate Failures
 
 Laravel only fires `JobFailed` for the final attempt. When an earlier attempt throws,
-the exception is recorded on that attempt's row from `JobExceptionOccurred`. When the
-next attempt starts, the earlier row is closed as `failed`.
+the worker raises `JobExceptionOccurred` and then releases the job for a retry. Queue
+Monitor closes the attempt's row as `failed` on `JobExceptionOccurred`, with the
+exception and the duration of the attempt itself. The backoff and the wait until the
+next delivery are not part of it. The next attempt gets a row of its own, linked
+through `retried_from_id`.
+
+For the final attempt the worker raises `JobFailed` first, which records the failure,
+and `JobExceptionOccurred` after it. The second event leaves the row alone, so the
+exception and duration are recorded once.
+
+Rows recorded by versions before 1.12.1 left an intermediate failure `processing`
+until the next attempt started. Such a row is still closed as `failed` when the next
+attempt starts, with no duration, because the time until then includes the backoff.
 
 ## Inferred Timeouts
 
