@@ -45,10 +45,13 @@ final readonly class RecordJobStartedAction
         $jobId = JobKey::of($job);
 
         DB::transaction(function () use ($event, $job, $jobId): void {
-            // Find the LATEST record for this job_id (most recent attempt)
+            // Find the LATEST record for this job_id: the row created last.
+            // Not the highest attempt — a Redis job re-pushed by `queue:retry`
+            // keeps its id and starts again at attempt 1, after rows of the
+            // previous run with higher attempt numbers.
             /** @var JobMonitor|null $jobMonitor */
             $jobMonitor = JobMonitor::query()->where('job_id', $jobId)
-                ->orderByDesc('attempt')->orderByDesc('created_at')
+                ->orderByDesc('id')
                 ->lockForUpdate()->first();
 
             if ($jobMonitor === null) {
@@ -83,36 +86,14 @@ final readonly class RecordJobStartedAction
                     $this->closeUnfinishedAttempt($jobMonitor);
                 }
 
-                // Create a NEW record for this attempt, preserving the previous attempt's data
-                $this->repository->create(new JobMonitorData(
-                    id: null,
-                    uuid: Str::uuid()->toString(),
-                    jobId: $jobId,
-                    jobClass: $jobMonitor->job_class,
-                    displayName: $jobMonitor->display_name,
-                    connection: $jobMonitor->connection,
-                    queue: $jobMonitor->queue,
-                    payload: $jobMonitor->payload,
-                    status: JobStatus::PROCESSING,
-                    attempt: $attempt,
-                    maxAttempts: $jobMonitor->max_attempts,
-                    retriedFromId: $jobMonitor->id,
-                    serverName: $workerContext->serverName,
-                    workerId: $workerContext->workerId,
-                    workerType: $workerContext->workerType->value,
-                    cpuTimeMs: null,
-                    memoryPeakMb: null,
-                    fileDescriptors: null,
-                    durationMs: null,
-                    exception: null,
-                    tags: $jobMonitor->tags,
-                    queuedAt: $jobMonitor->queued_at,
-                    availableAt: $jobMonitor->available_at,
-                    startedAt: now(),
-                    completedAt: null,
-                    createdAt: now(),
-                    updatedAt: now(),
-                ));
+                $this->createAttemptRow($jobMonitor, $jobId, $attempt);
+            } elseif ($jobMonitor->status->isFinished()) {
+                // A first attempt whose row already has an outcome is a new run
+                // of a finished job: `queue:retry` re-pushes a failed Redis job
+                // with its original id and its attempts reset. Rewriting that
+                // row would erase the failure it records, so the run gets a row
+                // of its own, linked to the one it retries.
+                $this->createAttemptRow($jobMonitor, $jobId, max(1, $attempt));
             } else {
                 // First attempt: update the existing record
                 $this->repository->update($jobMonitor->uuid, [
@@ -152,6 +133,48 @@ final readonly class RecordJobStartedAction
             'completed_at' => now(),
             'duration_ms' => null,
         ]);
+    }
+
+    /**
+     * Create the row for a new attempt, linked to the row it follows
+     *
+     * Everything that describes the job itself (class, queue, payload, tags,
+     * when it was queued) is carried over from the previous row; everything
+     * that describes a run starts empty.
+     */
+    private function createAttemptRow(JobMonitor $previous, string $jobId, int $attempt): void
+    {
+        $workerContext = $this->workerContext->capture();
+
+        $this->repository->create(new JobMonitorData(
+            id: null,
+            uuid: Str::uuid()->toString(),
+            jobId: $jobId,
+            jobClass: $previous->job_class,
+            displayName: $previous->display_name,
+            connection: $previous->connection,
+            queue: $previous->queue,
+            payload: $previous->payload,
+            status: JobStatus::PROCESSING,
+            attempt: $attempt,
+            maxAttempts: $previous->max_attempts,
+            retriedFromId: $previous->id,
+            serverName: $workerContext->serverName,
+            workerId: $workerContext->workerId,
+            workerType: $workerContext->workerType->value,
+            cpuTimeMs: null,
+            memoryPeakMb: null,
+            fileDescriptors: null,
+            durationMs: null,
+            exception: null,
+            tags: $previous->tags,
+            queuedAt: $previous->queued_at,
+            availableAt: $previous->available_at,
+            startedAt: now(),
+            completedAt: null,
+            createdAt: now(),
+            updatedAt: now(),
+        ));
     }
 
     /**

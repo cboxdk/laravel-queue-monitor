@@ -96,14 +96,14 @@ final class QueueMetricsSubscriber
         // job_id, and the latest might already be completed.
         $monitor = JobMonitor::where('job_id', $jobId)
             ->where('status', 'processing')
-            ->orderByDesc('attempt')
+            ->orderByDesc('id')
             ->first();
 
         // Fallback: if already transitioned to completed/failed (race with other
         // listeners), pick the most recent attempt that still has no metrics set.
         return $monitor ?? JobMonitor::where('job_id', $jobId)
             ->whereNull('cpu_time_ms')
-            ->orderByDesc('attempt')
+            ->orderByDesc('id')
             ->first();
     }
 }

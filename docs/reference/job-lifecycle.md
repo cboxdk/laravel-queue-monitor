@@ -75,6 +75,7 @@ Two cases need care:
 |---|---|
 | `JobQueued` | A row is created with status `queued` and attempt `1`. |
 | `JobProcessing`, first attempt | The queued row becomes `processing`. If there is no row, because the job is a sync job or monitoring was enabled mid-flight, one is created, using the attempt number the broker reports. |
+| `JobProcessing`, first attempt of a finished job | A new row is created, linked to the finished row through `retried_from_id`. See [Retried Jobs](#retried-jobs). |
 | `JobProcessing`, later attempt | If the previous row is `queued` (it was released), that row is reused and its attempt number is updated. If not, the previous row is closed and a new row is created for this attempt, linked through `retried_from_id`. |
 | `JobExceptionOccurred` | The exception is recorded on the row of the attempt that threw, and the row is closed as `failed` with the attempt's duration. On the final attempt `JobFailed` has already recorded it, and the row is left as it is. |
 | `JobProcessed` | The attempt's row becomes `completed` with its duration. A released attempt is parked as `queued` instead. |
@@ -104,6 +105,21 @@ exception and duration are recorded once.
 Rows recorded by versions before 1.12.1 left an intermediate failure `processing`
 until the next attempt started. Such a row is still closed as `failed` when the next
 attempt starts, with no duration, because the time until then includes the backoff.
+
+### Retried Jobs
+
+`queue:retry` pushes a failed job back onto its queue. On SQS and the database driver
+the job gets a new id, so the retry is recorded as a new job with a row of its own.
+
+On Redis the retried job keeps its id, with its attempts reset, so it starts again at
+attempt 1 under a key that already has a finished retry chain. The finished rows are
+left as they are: the retry run gets new rows, starting at attempt 1, and the first is
+linked through `retried_from_id` to the row recorded last. The job's retry chain then
+holds both runs in the order they ran, and the same attempt number can appear once per
+run.
+
+Earlier versions rewrote the final `failed` row as the retry's attempt 1, which erased
+the failure.
 
 ## Inferred Timeouts
 

@@ -88,9 +88,10 @@ final class EloquentJobMonitorRepository implements JobAttemptRepositoryContract
 
     public function findLatestAttemptByJobId(int|string $jobId): ?JobMonitor
     {
+        // The row created last, not the highest attempt: a Redis job re-pushed
+        // by `queue:retry` keeps its id and starts again at attempt 1.
         return JobMonitor::where('job_id', (string) $jobId)
-            ->orderByDesc('attempt')
-            ->orderByDesc('created_at')
+            ->orderByDesc('id')
             ->first();
     }
 
@@ -135,9 +136,11 @@ final class EloquentJobMonitorRepository implements JobAttemptRepositoryContract
 
         // Strategy: find ALL records with the same job_id (all attempts share one job_id)
         if ($job->job_id !== null) {
+            // In the order the attempts ran. A Redis job re-pushed by
+            // `queue:retry` keeps its id and numbers its attempts from 1
+            // again, so ordering by attempt would interleave the two runs.
             $chain = JobMonitor::where('job_id', $job->job_id)
-                ->orderBy('attempt')
-                ->orderBy('created_at')
+                ->orderBy('id')
                 ->get();
 
             if ($chain->count() > 1) {
@@ -148,7 +151,7 @@ final class EloquentJobMonitorRepository implements JobAttemptRepositoryContract
         // Fallback: use retried_from_id linkage (iterative, bounded to 50 depth)
         $chain = JobMonitor::where('uuid', $uuid)
             ->orWhere('retried_from_id', $job->id)
-            ->orderBy('attempt')
+            ->orderBy('id')
             ->get();
 
         // Walk up the parent chain iteratively (not recursively) with depth limit
@@ -168,7 +171,7 @@ final class EloquentJobMonitorRepository implements JobAttemptRepositoryContract
             $current = $parent;
             $depth++;
         }
-        $chain = $chain->unique('id')->sortBy('attempt');
+        $chain = $chain->unique('id')->sortBy('id');
 
         return $chain->values();
     }

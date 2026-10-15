@@ -38,7 +38,11 @@ interface JobMonitorRepositoryContract
     public function findByJobId(int|string $jobId): ?JobMonitor;
 
     /**
-     * Find the latest attempt record for a job ID (highest attempt number)
+     * Find the latest attempt record for a job ID: the row recorded last
+     *
+     * Usually the highest attempt number. A Redis job re-pushed by
+     * `queue:retry` keeps its id and numbers its attempts from 1 again, so the
+     * row recorded last is the one that describes the current run.
      *
      * Accepts int|string because the database queue driver returns an
      * integer job id while other drivers return a string.

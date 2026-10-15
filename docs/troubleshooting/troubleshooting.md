@@ -519,29 +519,39 @@ value until they are pruned.
 
 A job has one row per attempt, so several rows sharing a `job_id` with different
 `attempt` numbers are expected: they are its retry chain. Do not deduplicate on
-`job_id` alone, or you delete the history of every retried job. Only rows that share
-both `job_id` and `attempt` are duplicates.
+`job_id` alone, or you delete the history of every retried job.
+
+Rows that share both `job_id` and `attempt` are not always duplicates either. A Redis
+job re-pushed with `queue:retry` keeps its job id and numbers its attempts from 1
+again, so each run of it has its own attempt 1. Those rows are linked through
+`retried_from_id`, which a true duplicate is not: a duplicate is a row with the same
+`job_id` and `attempt` that no other row of the job links to and that links to none.
 
 **Solution**:
 ```php
 // Find (job_id, attempt) pairs recorded more than once
-$duplicates = JobMonitor::select('job_id', 'attempt')
+$pairs = JobMonitor::select('job_id', 'attempt')
     ->whereNotNull('job_id')
     ->groupBy('job_id', 'attempt')
     ->havingRaw('COUNT(*) > 1')
     ->get();
 
-// Keep the most recent row of each pair
-foreach ($duplicates as $dup) {
-    $keep = JobMonitor::where('job_id', $dup->job_id)
-        ->where('attempt', $dup->attempt)
-        ->latest('id')
-        ->value('id');
+foreach ($pairs as $pair) {
+    $rows = JobMonitor::where('job_id', $pair->job_id)
+        ->where('attempt', $pair->attempt)
+        ->orderBy('id')
+        ->get();
 
-    JobMonitor::where('job_id', $dup->job_id)
-        ->where('attempt', $dup->attempt)
-        ->where('id', '!=', $keep)
-        ->delete();
+    // Rows in a retry chain: linked to another row, or linked to by one
+    $linked = JobMonitor::where('job_id', $pair->job_id)
+        ->whereNotNull('retried_from_id')
+        ->pluck('retried_from_id');
+
+    $unlinked = $rows->filter(fn (JobMonitor $row): bool => $row->retried_from_id === null
+        && ! $linked->contains($row->id));
+
+    // Keep the most recent unlinked row, delete the other unlinked ones
+    $unlinked->slice(0, -1)->each->delete();
 }
 ```
 
