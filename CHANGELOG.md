@@ -2,6 +2,34 @@
 
 All notable changes to `laravel-queue-monitor` will be documented in this file.
 
+## v1.12.1 - Accurate attempt history - 2026-10-15
+
+### Fixes
+
+- **An intermediate failure records the attempt's own duration.** An attempt that threw with retries left stayed `processing` until the next attempt started, and its duration then ran from its start to that moment. It included the backoff, the wait for redelivery and any worker downtime: a 110 ms job retried a minute later recorded 61 s. The row is now closed as `failed` when the attempt throws, with the duration of the attempt itself. A failed attempt that is never delivered again no longer stays `processing` and counted as stuck.
+- **Durations are exact to the millisecond.** Every duration was measured from the row's `started_at`, which holds whole seconds, so it was up to a second too long: a 107 ms job recorded anything from 107 to 1 106 ms depending on where in the second it started. The worker that runs an attempt now measures from the start it recorded in memory. The column is used only when the outcome is recorded by a process that did not see the start, such as stuck-job resolution or a restarted worker. When one attempt reports two outcomes (`JobExceptionOccurred` then `JobFailed` on the sync, deferred and background drivers; `JobFailed` then `JobTimedOut` for a final attempt that times out), the second keeps the duration the first recorded.
+- **A Redis job retried with `queue:retry` keeps its failure history.** `queue:retry` re-pushes a Redis job with its original id and its attempts reset, so the retry started as attempt 1 under a key whose latest row was the final failure, and rewrote it. The failure was lost and the row ended `completed` with the old exception still set. The retry run now gets rows of its own, linked to the failure through `retried_from_id`. The retry chain lists both runs in the order they ran, and the debounce listener marks the newest queued row.
+- **A released database job no longer leaves a row `queued` forever.** The database driver releases a job by deleting its row and inserting a new one, so the next delivery has a new job id and never found the released row. That row stayed `queued` and inflated the queued counts in alerting and health checks, and the delivery started a new, unlinked history. The next delivery now takes over a parked row (moved to the new id and reused), or links to a failed attempt, whichever of the two is recorded first. Only the released attempt's own row moves, so a slow attempt redelivered under the same id keeps its row and its late outcome. This uses the cache store the workers share (`queue-monitor.cache.store`, else the default store).
+- **Row locks work on a dedicated monitor connection.** With `queue-monitor.database.connection` set, the recording transactions ran on the default connection, so their row locks covered nothing. They now run on the monitor's own connection.
+- A released attempt is parked as `queued` under the row lock the next delivery takes, so a redelivery starting at the same moment can no longer leave the closed row `queued`.
+
+### Documentation
+
+- The job lifecycle page covers intermediate failures, the sync driver's event order, durations, retried Redis jobs and released database jobs.
+- A slow SQS job whose late `DeleteMessage` fails: Amazon SQS usually accepts the superseded receipt handle, but ElasticMQ and other emulators reject it with `ReceiptHandleIsInvalid`, and the attempt is then recorded as `failed` although its work completed.
+- What a custom repository without `JobAttemptRepositoryContract` gets wrong while two attempts are in flight, including CPU and memory landing on the newer attempt.
+- The troubleshooting recipe for duplicate rows no longer deletes the earlier run of a Redis-retried job.
+
+### Upgrading
+
+No configuration changes and no migrations.
+
+- **"Latest attempt" now means the row recorded last (highest id).** `findLatestAttemptByJobId()` used to return the highest attempt number, and `findAttemptByJobId()` broke ties on `created_at`. Both now order by id, because a Redis job retried with `queue:retry` numbers its attempts from 1 again. A custom repository implementing either method should do the same.
+- Released database jobs are connected through the cache. With the `array` store, or a `file` store across several hosts, a released row stays `queued` as before. A job released with a delay longer than seven days is not connected to its next delivery.
+- `job_class` on rows recorded when a job starts processing (sync jobs, `dispatch_sync()`) is the class the worker runs since v1.12.0. For queued listeners, mailables, notifications and closures that is the framework wrapper (`Illuminate\Events\CallQueuedListener`, `Illuminate\Mail\SendQueuedMailable`, `Illuminate\Notifications\SendQueuedNotifications`, `Illuminate\Queue\CallQueuedClosure`), as it already was for queued rows. Views, filters and alerts keyed on the listener or mailable class in `job_class` for sync rows should use `display_name`.
+- `RecordJobStartedAction`, `RecordJobCompletedAction`, `JobAttemptResolver` and `QueueMetricsSubscriber` gained a constructor parameter. They are resolved from the container, so this only matters if you construct them yourself.
+- Rows of an intermediate failure recorded before the upgrade are still closed as `failed` when their next attempt starts, now with no duration.
+
 ## v1.12.0 — Attempt matching and job classes - 2026-10-14
 
 ### Fixes
@@ -431,6 +459,7 @@ First stable release of Queue Monitor for Laravel - a comprehensive job monitori
 
 ```bash
 composer require cboxdk/laravel-queue-monitor
+
 
 
 
