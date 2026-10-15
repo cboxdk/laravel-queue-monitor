@@ -8,6 +8,7 @@ use Carbon\CarbonInterface;
 use Cbox\LaravelQueueMonitor\Database\Factories\JobMonitorFactory;
 use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\Enums\WorkerType;
+use Closure;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -105,6 +106,24 @@ class JobMonitor extends Model
         $prefix = config('queue-monitor.database.table_prefix', 'queue_monitor_');
 
         return $prefix.'jobs';
+    }
+
+    /**
+     * Run a callback in a transaction on the connection the rows live on
+     *
+     * `queue-monitor.database.connection` may point the model at another
+     * connection than the default. A transaction opened with DB::transaction()
+     * would then run on the default connection, and a lockForUpdate() inside it
+     * would lock nothing on the connection the rows are read from.
+     *
+     * @template TReturn
+     *
+     * @param  Closure(): TReturn  $callback
+     * @return TReturn
+     */
+    public static function transaction(Closure $callback): mixed
+    {
+        return (new self)->getConnection()->transaction($callback);
     }
 
     /**

@@ -60,3 +60,52 @@ test('a released attempt whose row was pruned meanwhile is ignored', function ()
 
     expect(JobMonitor::count())->toBe(0);
 });
+
+test('the lock is taken on the monitor connection when it is not the default', function () {
+    config()->set('database.connections.monitor', [
+        'driver' => 'sqlite',
+        'database' => ':memory:',
+        'prefix' => '',
+    ]);
+    config()->set('queue-monitor.database.connection', 'monitor');
+    (require __DIR__.'/../../../database/migrations/create_queue_monitor_jobs_table.php')->up();
+
+    event(new JobProcessing('redis', BrokerJobs::redis('locked-job', 1)));
+
+    $monitor = DB::connection('monitor');
+    $levels = [];
+    $monitor->listen(function (QueryExecuted $query) use (&$levels, $monitor): void {
+        $levels[] = [strtok($query->sql, ' '), $monitor->transactionLevel()];
+    });
+
+    event(new JobProcessed('redis', BrokerJobs::released(BrokerJobs::redis('locked-job', 1))));
+
+    $parkingQueries = array_slice($levels, 1);
+
+    expect(JobMonitor::firstOrFail()->status)->toBe(JobStatus::QUEUED)
+        ->and(JobMonitor::firstOrFail()->getConnectionName())->toBe('monitor')
+        ->and(array_column($parkingQueries, 0))->toContain('update')
+        ->and(array_unique(array_column($parkingQueries, 1)))->toBe([1]);
+});
+
+test('a start on the monitor connection runs its lookup and write in one transaction there', function () {
+    config()->set('database.connections.monitor', [
+        'driver' => 'sqlite',
+        'database' => ':memory:',
+        'prefix' => '',
+    ]);
+    config()->set('queue-monitor.database.connection', 'monitor');
+    (require __DIR__.'/../../../database/migrations/create_queue_monitor_jobs_table.php')->up();
+
+    $monitor = DB::connection('monitor');
+    $levels = [];
+    $monitor->listen(function (QueryExecuted $query) use (&$levels, $monitor): void {
+        $levels[] = [strtok($query->sql, ' '), $monitor->transactionLevel()];
+    });
+
+    event(new JobProcessing('redis', BrokerJobs::redis('locked-job', 1)));
+
+    expect(JobMonitor::count())->toBe(1)
+        ->and(array_column($levels, 0))->toContain('insert')
+        ->and(collect($levels)->filter(fn (array $query): bool => $query[0] !== 'select')->pluck(1)->min())->toBeGreaterThanOrEqual(1);
+});

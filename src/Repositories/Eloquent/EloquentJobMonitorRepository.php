@@ -423,8 +423,12 @@ final class EloquentJobMonitorRepository implements JobAttemptRepositoryContract
 
     private function invalidateDashboardCaches(): void
     {
-        if (DB::transactionLevel() > 0) {
-            DB::afterCommit(fn () => $this->dashboardCache->bust());
+        // The monitor's own connection: a transaction on it is not visible
+        // to DB::transactionLevel() when it is not the default connection.
+        $connection = (new JobMonitor)->getConnection();
+
+        if ($connection->transactionLevel() > 0) {
+            $connection->afterCommit(fn () => $this->dashboardCache->bust());
 
             return;
         }

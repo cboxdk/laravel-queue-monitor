@@ -15,7 +15,6 @@ use Cbox\LaravelQueueMonitor\Support\JobKey;
 use Cbox\LaravelQueueMonitor\Support\QueueName;
 use Cbox\LaravelQueueMonitor\Utilities\JobPayloadSerializer;
 use Illuminate\Contracts\Queue\Job as QueueJob;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 final readonly class RecordJobQueuedAction
@@ -91,7 +90,7 @@ final readonly class RecordJobQueuedAction
         );
 
         /** @var JobMonitor */
-        return DB::transaction(fn (): JobMonitor => $this->repository->create($data));
+        return JobMonitor::transaction(fn (): JobMonitor => $this->repository->create($data));
     }
 
     /**

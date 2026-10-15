@@ -12,7 +12,6 @@ use Cbox\LaravelQueueMonitor\Repositories\Contracts\TagRepositoryContract;
 use Cbox\LaravelQueueMonitor\Support\JobAttemptResolver;
 use Cbox\LaravelQueueMonitor\Support\ReleasedDatabaseJobs;
 use Illuminate\Contracts\Queue\Job;
-use Illuminate\Support\Facades\DB;
 
 final readonly class RecordJobCompletedAction
 {
@@ -98,7 +97,7 @@ final readonly class RecordJobCompletedAction
      */
     private function parkReleasedAttempt(Job $job, JobMonitor $jobMonitor): void
     {
-        DB::transaction(function () use ($job, $jobMonitor): void {
+        JobMonitor::transaction(function () use ($job, $jobMonitor): void {
             /** @var JobMonitor|null $locked */
             $locked = JobMonitor::query()->whereKey($jobMonitor->getKey())
                 ->lockForUpdate()->first();

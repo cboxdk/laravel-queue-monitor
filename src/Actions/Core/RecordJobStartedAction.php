@@ -12,7 +12,6 @@ use Cbox\LaravelQueueMonitor\Services\Contracts\WorkerContextServiceContract;
 use Cbox\LaravelQueueMonitor\Support\JobKey;
 use Cbox\LaravelQueueMonitor\Support\ReleasedDatabaseJobs;
 use Illuminate\Contracts\Queue\Job;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 final readonly class RecordJobStartedAction
@@ -46,7 +45,7 @@ final readonly class RecordJobStartedAction
 
         $jobId = JobKey::of($job);
 
-        DB::transaction(function () use ($event, $job, $jobId): void {
+        JobMonitor::transaction(function () use ($event, $job, $jobId): void {
             $jobMonitor = $this->latestRow($jobId);
 
             // A released database job comes back under a new job id; take over
