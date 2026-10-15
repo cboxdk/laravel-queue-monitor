@@ -20,7 +20,7 @@ when two attempts of the same job run at the same time.
 | Column | Meaning |
 |---|---|
 | `uuid` | Identifies this row, so one attempt. Each attempt has its own uuid. |
-| `job_id` | The job key, shared by every attempt of the job. It is the driver's job id (Redis payload id, SQS message id, database row id). Sync jobs have no driver id, so their key is the payload uuid. |
+| `job_id` | The job key, shared by every attempt of the job. It is the driver's job id (Redis payload id, SQS message id, database row id). Sync jobs have no driver id, so their key is the payload uuid. A database job gets a new row id each time it is released; its rows follow it (see [Released Jobs](#released-jobs)). |
 | `attempt` | The attempt number the broker reported for this run. |
 | `retried_from_id` | The `id` of the previous attempt's row, or `null` for the first attempt. |
 | `job_class` | The fully qualified class name of the queued command. |
@@ -88,6 +88,14 @@ A job released back onto the queue fires `JobProcessed`, but it has not finished
 release comes from rate limiting, job middleware or `$this->release()`. Its row is
 parked as `queued`, and the next delivery reuses the same row and updates its attempt
 number. A release therefore does not leave a duplicate row or a false failure.
+
+The database driver releases a job by deleting its row from the `jobs` table and
+inserting a new one, so the next delivery has a **new job id**. Queue Monitor carries
+the job's rows across: on release it re-keys them to `released:{payload uuid}`, and the
+next delivery takes them over under its new id. Until that delivery starts, the rows'
+`job_id` reads `released:{payload uuid}`. The same happens when a database job is
+released after an exception, so the failed attempt and the retry stay in one chain.
+Every other driver keeps the job id across a release.
 
 ### Intermediate Failures
 

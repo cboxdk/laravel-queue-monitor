@@ -10,6 +10,7 @@ use Cbox\LaravelQueueMonitor\Models\JobMonitor;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\JobMonitorRepositoryContract;
 use Cbox\LaravelQueueMonitor\Services\Contracts\WorkerContextServiceContract;
 use Cbox\LaravelQueueMonitor\Support\JobKey;
+use Cbox\LaravelQueueMonitor\Support\ReleasedDatabaseJobs;
 use Illuminate\Contracts\Queue\Job;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -20,6 +21,7 @@ final readonly class RecordJobStartedAction
         private JobMonitorRepositoryContract $repository,
         private WorkerContextServiceContract $workerContext,
         private RecordJobQueuedAction $recordQueuedAction,
+        private ReleasedDatabaseJobs $releasedDatabaseJobs,
     ) {}
 
     /**
@@ -45,14 +47,13 @@ final readonly class RecordJobStartedAction
         $jobId = JobKey::of($job);
 
         DB::transaction(function () use ($event, $job, $jobId): void {
-            // Find the LATEST record for this job_id: the row created last.
-            // Not the highest attempt — a Redis job re-pushed by `queue:retry`
-            // keeps its id and starts again at attempt 1, after rows of the
-            // previous run with higher attempt numbers.
-            /** @var JobMonitor|null $jobMonitor */
-            $jobMonitor = JobMonitor::query()->where('job_id', $jobId)
-                ->orderByDesc('id')
-                ->lockForUpdate()->first();
+            $jobMonitor = $this->latestRow($jobId);
+
+            // A released database job comes back under a new job id; take over
+            // the rows its release left for it (see ReleasedDatabaseJobs).
+            if ($jobMonitor === null && $this->releasedDatabaseJobs->reclaim($job, $jobId)) {
+                $jobMonitor = $this->latestRow($jobId);
+            }
 
             if ($jobMonitor === null) {
                 $this->createFromProcessing($event);
@@ -107,6 +108,21 @@ final readonly class RecordJobStartedAction
                 ]);
             }
         });
+    }
+
+    /**
+     * The job's latest row, locked for the rest of the transaction
+     *
+     * Latest is the row created last, not the highest attempt: a Redis job
+     * re-pushed by `queue:retry` keeps its id and starts again at attempt 1,
+     * after rows of the previous run with higher attempt numbers.
+     */
+    private function latestRow(string $jobId): ?JobMonitor
+    {
+        /** @var JobMonitor|null */
+        return JobMonitor::query()->where('job_id', $jobId)
+            ->orderByDesc('id')
+            ->lockForUpdate()->first();
     }
 
     /**
