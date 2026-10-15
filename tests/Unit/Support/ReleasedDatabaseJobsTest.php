@@ -117,3 +117,32 @@ test('a delivery is never connected to itself or to a later attempt', function (
 test('an unknown moved id finds nothing', function () {
     expect((new ReleasedDatabaseJobs)->movedRow('database', '404'))->toBeNull();
 });
+
+test('row ids a store hands back as numeric strings still connect', function () {
+    $parked = JobMonitor::factory()->create(['job_id' => '7', 'attempt' => 1, 'status' => JobStatus::QUEUED]);
+    $released = new ReleasedDatabaseJobs;
+
+    $released->recordRelease(trackedDatabaseJob(7, 1), $parked);
+    // Redis stores a number unserialized and returns it as a string.
+    cache()->put('queue_monitor_database-release:released:payload-uuid-db', (string) $parked->id, 60);
+
+    expect($released->adopt(trackedDatabaseJob(9, 2), '9')?->id)->toBe($parked->id);
+
+    cache()->put('queue_monitor_database-release:moved:database:7', (string) $parked->id, 60);
+
+    expect($released->movedRow('database', '7')?->id)->toBe($parked->id);
+});
+
+test('a stale redelivery entry does not orphan a later parked release', function () {
+    $staleRedelivery = JobMonitor::factory()->create(['job_id' => '8', 'attempt' => 2, 'status' => JobStatus::COMPLETED]);
+    $parked = JobMonitor::factory()->create(['job_id' => '12', 'attempt' => 3, 'status' => JobStatus::QUEUED]);
+    $released = new ReleasedDatabaseJobs;
+    cache()->put('queue_monitor_database-release:redelivered:payload-uuid-db', $staleRedelivery->id, 60);
+
+    $released->recordRelease(trackedDatabaseJob(12, 3), $parked);
+
+    expect(cache()->get('queue_monitor_database-release:redelivered:payload-uuid-db'))->toBeNull()
+        ->and($released->adopt(trackedDatabaseJob(13, 4), '13')?->id)->toBe($parked->id)
+        ->and($parked->refresh()->job_id)->toBe('13')
+        ->and($staleRedelivery->refresh()->job_id)->toBe('8');
+});

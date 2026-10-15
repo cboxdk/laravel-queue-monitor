@@ -71,9 +71,9 @@ final readonly class ReleasedDatabaseJobs
 
         $this->cache()->put($this->releasedKey($uuid), $row->id, self::RELEASE_TTL_SECONDS);
 
-        $redeliveredId = $this->cache()->get($this->redeliveredKey($uuid));
+        $redeliveredId = $this->rowId($this->cache()->get($this->redeliveredKey($uuid)));
 
-        if (is_int($redeliveredId)) {
+        if ($redeliveredId !== null) {
             $this->connect($uuid, $row->id, $redeliveredId);
         }
     }
@@ -93,9 +93,9 @@ final readonly class ReleasedDatabaseJobs
             return null;
         }
 
-        $releasedId = $this->cache()->get($this->releasedKey($uuid));
+        $releasedId = $this->rowId($this->cache()->get($this->releasedKey($uuid)));
 
-        if (! is_int($releasedId)) {
+        if ($releasedId === null) {
             return null;
         }
 
@@ -136,9 +136,9 @@ final readonly class ReleasedDatabaseJobs
 
         $this->cache()->put($this->redeliveredKey($uuid), $row->id, self::LINK_TTL_SECONDS);
 
-        $releasedId = $this->cache()->get($this->releasedKey($uuid));
+        $releasedId = $this->rowId($this->cache()->get($this->releasedKey($uuid)));
 
-        if (is_int($releasedId)) {
+        if ($releasedId !== null) {
             $this->connect($uuid, $releasedId, $row->id);
         }
     }
@@ -148,9 +148,9 @@ final readonly class ReleasedDatabaseJobs
      */
     public function movedRow(string $connection, string $jobKey): ?JobMonitor
     {
-        $rowId = $this->cache()->get($this->movedKey($connection, $jobKey));
+        $rowId = $this->rowId($this->cache()->get($this->movedKey($connection, $jobKey)));
 
-        if (! is_int($rowId)) {
+        if ($rowId === null) {
             return null;
         }
 
@@ -177,17 +177,23 @@ final readonly class ReleasedDatabaseJobs
     private function connect(string $uuid, int $releasedId, int $redeliveredId): void
     {
         if ($releasedId === $redeliveredId) {
+            $this->cache()->forget($this->redeliveredKey($uuid));
+
             return;
         }
 
-        JobMonitor::transaction(function () use ($releasedId, $redeliveredId): void {
+        $stale = JobMonitor::transaction(function () use ($releasedId, $redeliveredId): ?string {
             /** @var JobMonitor|null $released */
             $released = JobMonitor::query()->whereKey($releasedId)->lockForUpdate()->first();
             /** @var JobMonitor|null $redelivered */
             $redelivered = JobMonitor::query()->whereKey($redeliveredId)->lockForUpdate()->first();
 
-            if ($released === null || $redelivered === null || $redelivered->attempt <= $released->attempt) {
-                return;
+            if ($released === null) {
+                return 'released';
+            }
+
+            if ($redelivered === null || $redelivered->attempt <= $released->attempt) {
+                return 'redelivered';
             }
 
             if ($released->status === JobStatus::QUEUED) {
@@ -197,16 +203,47 @@ final readonly class ReleasedDatabaseJobs
                 ]);
                 $released->delete();
 
-                return;
+                return null;
             }
 
             if ($redelivered->retried_from_id === null) {
                 $redelivered->update(['retried_from_id' => $released->id]);
             }
+
+            return null;
         });
 
-        $this->cache()->forget($this->releasedKey($uuid));
-        $this->cache()->forget($this->redeliveredKey($uuid));
+        // A stale entry is one whose row is gone or that belongs to an earlier
+        // attempt. Only that entry is dropped: the other side may still meet
+        // its real counterpart, and forgetting it would orphan a parked row.
+        if ($stale !== 'redelivered') {
+            $this->cache()->forget($this->releasedKey($uuid));
+        }
+
+        if ($stale !== 'released') {
+            $this->cache()->forget($this->redeliveredKey($uuid));
+        }
+    }
+
+    /**
+     * A row id read back from the cache
+     *
+     * Stores such as Redis keep a number unserialized and hand it back as a
+     * string, so a numeric string is accepted as well as an int.
+     */
+    private function rowId(mixed $value): ?int
+    {
+        if (is_int($value)) {
+            return $value;
+        }
+
+        if (! is_string($value)) {
+            return null;
+        }
+
+        $id = filter_var($value, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+
+        return is_int($id) ? $id : null;
     }
 
     private function rememberMove(string $connection, string $jobKey, int $rowId): void
