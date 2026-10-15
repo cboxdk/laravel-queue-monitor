@@ -7,10 +7,12 @@ namespace Cbox\LaravelQueueMonitor\Actions\Core;
 use Carbon\CarbonInterface;
 use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\Jobs\StoreJobTagsJob;
+use Cbox\LaravelQueueMonitor\Models\JobMonitor;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\JobMonitorRepositoryContract;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\TagRepositoryContract;
 use Cbox\LaravelQueueMonitor\Support\JobAttemptResolver;
 use Illuminate\Contracts\Queue\Job;
+use Illuminate\Support\Facades\DB;
 
 final readonly class RecordJobCompletedAction
 {
@@ -56,13 +58,7 @@ final readonly class RecordJobCompletedAction
         // is: the next delivery continues on the newer attempt's row, so
         // parking this one as `queued` would leave it queued forever.
         if ($job->isReleased()) {
-            if ($this->attempts->isSuperseded($jobMonitor)) {
-                return;
-            }
-
-            $this->repository->update($jobMonitor->uuid, [
-                'status' => JobStatus::QUEUED,
-            ]);
+            $this->parkReleasedAttempt($jobMonitor);
 
             return;
         }
@@ -82,6 +78,33 @@ final readonly class RecordJobCompletedAction
 
         // Store normalized tags if present
         $this->storeTagsIfPresent($jobMonitor->id, $jobMonitor->tags);
+    }
+
+    /**
+     * Park a released attempt as `queued`, unless a redelivery superseded it
+     *
+     * The check and the update run under the row lock the started action
+     * takes on the job's latest row before it decides between reusing a
+     * parked row and opening a new one. Without it a redelivery could start
+     * between the check and the update: it would see this row `processing`,
+     * close it and open its own, and the update would then park the closed
+     * row as `queued` forever.
+     */
+    private function parkReleasedAttempt(JobMonitor $jobMonitor): void
+    {
+        DB::transaction(function () use ($jobMonitor): void {
+            /** @var JobMonitor|null $locked */
+            $locked = JobMonitor::query()->whereKey($jobMonitor->getKey())
+                ->lockForUpdate()->first();
+
+            if ($locked === null || $this->attempts->isSuperseded($locked)) {
+                return;
+            }
+
+            $this->repository->update($locked->uuid, [
+                'status' => JobStatus::QUEUED,
+            ]);
+        });
     }
 
     /**
