@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Cbox\LaravelQueueMonitor\Actions\Core;
 
-use Carbon\CarbonInterface;
 use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\Jobs\StoreJobTagsJob;
 use Cbox\LaravelQueueMonitor\Models\JobMonitor;
@@ -60,13 +59,15 @@ final readonly class RecordJobCompletedAction
         // is: the next delivery continues on the newer attempt's row, so
         // parking this one as `queued` would leave it queued forever.
         if ($job->isReleased()) {
+            $this->attempts->attemptEnded($job, $jobMonitor);
             $this->parkReleasedAttempt($job, $jobMonitor);
 
             return;
         }
 
         $completedAt = now();
-        $durationMs = $this->calculateDuration($jobMonitor->started_at, $completedAt);
+        $durationMs = $this->attempts->durationMs($job, $jobMonitor, $completedAt);
+        $this->attempts->attemptEnded($job, $jobMonitor);
 
         // Note: cpu_time_ms and memory_peak_mb are set by QueueMetricsSubscriber
         // from laravel-queue-metrics' process-level instrumentation (ProcessMetrics).
@@ -130,17 +131,5 @@ final readonly class RecordJobCompletedAction
         } else {
             $this->tagRepository->storeTags($jobMonitorId, $tags);
         }
-    }
-
-    /**
-     * Calculate duration in milliseconds
-     */
-    private function calculateDuration(?CarbonInterface $startedAt, CarbonInterface $completedAt): ?int
-    {
-        if ($startedAt === null) {
-            return null;
-        }
-
-        return (int) $startedAt->diffInMilliseconds($completedAt);
     }
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Cbox\LaravelQueueMonitor\Support;
 
+use Carbon\CarbonInterface;
 use Cbox\LaravelQueueMonitor\Models\JobMonitor;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\JobAttemptRepositoryContract;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\JobMonitorRepositoryContract;
@@ -81,6 +82,35 @@ final readonly class JobAttemptResolver
         $latest = $this->repository->findLatestAttemptByJobId($row->job_id);
 
         return $latest !== null && $latest->uuid !== $row->uuid;
+    }
+
+    /**
+     * How long the attempt in the row ran, in milliseconds, up to $endedAt
+     *
+     * Measured from the start this process recorded for that attempt when it
+     * has one, which is exact. Otherwise — the outcome is reported by a
+     * process that did not see the start, or after a restart — from the
+     * row's `started_at`, which holds whole seconds and can make the
+     * duration up to a second too long.
+     */
+    public function durationMs(Job $job, JobMonitor $row, CarbonInterface $endedAt): ?int
+    {
+        $startedAt = $this->inFlightAttempts->startedAtFor(JobKey::of($job), $row->attempt)
+            ?? $row->started_at;
+
+        if ($startedAt === null) {
+            return null;
+        }
+
+        return max(0, (int) $startedAt->diffInMilliseconds($endedAt));
+    }
+
+    /**
+     * Forget the start time of the attempt in the row; its outcome is recorded
+     */
+    public function attemptEnded(Job $job, JobMonitor $row): void
+    {
+        $this->inFlightAttempts->forgetStart(JobKey::of($job), $row->attempt);
     }
 
     /**

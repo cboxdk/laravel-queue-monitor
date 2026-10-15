@@ -70,9 +70,8 @@ final class JobExceptionOccurredListener
 
                 $data['status'] = JobStatus::FAILED;
                 $data['completed_at'] = $completedAt;
-                $data['duration_ms'] = $monitor->started_at !== null
-                    ? max(0, (int) $monitor->started_at->diffInMilliseconds($completedAt))
-                    : null;
+                $data['duration_ms'] = $this->attempts->durationMs($event->job, $monitor, $completedAt);
+                $this->attempts->attemptEnded($event->job, $monitor);
             }
 
             $monitor->update($data);

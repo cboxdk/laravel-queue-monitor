@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Cbox\LaravelQueueMonitor\Actions\Core;
 
-use Carbon\CarbonInterface;
 use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\Repositories\Contracts\JobMonitorRepositoryContract;
 use Cbox\LaravelQueueMonitor\Support\JobAttemptResolver;
@@ -39,7 +38,8 @@ final readonly class RecordJobTimeoutAction
         }
 
         $completedAt = now();
-        $durationMs = $this->calculateDuration($jobMonitor->started_at, $completedAt);
+        $durationMs = $this->attempts->durationMs($job, $jobMonitor, $completedAt);
+        $this->attempts->attemptEnded($job, $jobMonitor);
 
         $this->repository->update($jobMonitor->uuid, [
             'status' => JobStatus::TIMEOUT,
@@ -48,17 +48,5 @@ final readonly class RecordJobTimeoutAction
             'exception_class' => 'JobTimeout',
             'exception_message' => 'Job exceeded maximum execution time',
         ]);
-    }
-
-    /**
-     * Calculate duration in milliseconds
-     */
-    private function calculateDuration(?CarbonInterface $startedAt, CarbonInterface $completedAt): ?int
-    {
-        if ($startedAt === null) {
-            return null;
-        }
-
-        return (int) $startedAt->diffInMilliseconds($completedAt);
     }
 }

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Cbox\LaravelQueueMonitor\Actions\Core;
 
-use Carbon\CarbonInterface;
 use Cbox\LaravelQueueMonitor\DataTransferObjects\ExceptionData;
 use Cbox\LaravelQueueMonitor\Enums\JobStatus;
 use Cbox\LaravelQueueMonitor\Jobs\StoreJobTagsJob;
@@ -47,7 +46,8 @@ final readonly class RecordJobFailedAction
         }
 
         $completedAt = now();
-        $durationMs = $this->calculateDuration($jobMonitor->started_at, $completedAt);
+        $durationMs = $this->attempts->durationMs($job, $jobMonitor, $completedAt);
+        $this->attempts->attemptEnded($job, $jobMonitor);
         $exceptionData = $exception instanceof Throwable ? ExceptionData::fromThrowable($exception) : null;
 
         $this->repository->update($jobMonitor->uuid, [
@@ -79,17 +79,5 @@ final readonly class RecordJobFailedAction
         } else {
             $this->tagRepository->storeTags($jobMonitorId, $tags);
         }
-    }
-
-    /**
-     * Calculate duration in milliseconds
-     */
-    private function calculateDuration(?CarbonInterface $startedAt, CarbonInterface $completedAt): ?int
-    {
-        if ($startedAt === null) {
-            return null;
-        }
-
-        return (int) $startedAt->diffInMilliseconds($completedAt);
     }
 }

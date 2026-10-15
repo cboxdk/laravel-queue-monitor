@@ -208,6 +208,14 @@ Either way the job ran twice, once per attempt, which is the problem to fix. A
 > can take, and keep the worker `--timeout` below it. See the
 > [Horizon guide](../guides/horizon) for the same rule under Horizon.
 
+## Durations
+
+`duration_ms` is measured by the worker that ran the attempt, from the moment it
+started the attempt to the moment its outcome is recorded, to the millisecond. The
+`started_at` column only holds whole seconds, so it is used only when the outcome is
+recorded by a process that did not see the start: a stuck-job resolution, or a worker
+that restarted in between. A duration measured that way can be up to a second too long.
+
 ## How Attempts Are Matched
 
 Each outcome is written to the row matching both the job key and the attempt number
